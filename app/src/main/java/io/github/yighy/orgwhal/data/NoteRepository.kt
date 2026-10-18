@@ -238,6 +238,16 @@ class NoteRepository(context: Context) {
         uri
     }
 
+    /** Writes [text] in place of the whole notebook [fileUri]. */
+    suspend fun replaceFile(fileUri: String, text: String) = withContext(Dispatchers.IO) {
+        writeLock.withLock {
+            val folder = folder() ?: error("No folder")
+            val uri = Uri.parse(fileUri)
+            folder.write(uri, text)
+            reloadFile(folder, uri)
+        }
+    }
+
     suspend fun createFile(name: String): Uri = withContext(Dispatchers.IO) {
         val folder = folder() ?: error("No folder")
         folder.createFile(name).also { refresh() }

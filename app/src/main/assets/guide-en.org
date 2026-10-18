@@ -288,4 +288,4 @@ On that new note, tap *Inbox ▾* at the top to put it in another notebook, unde
 * Useful settings
 - *Appearance*: light, dark or system theme; wallpaper colors; *Use English language*.
 - *Notes*: show note content in notebooks, strike through done notes, space between notes, state keywords, hidden properties.
-- *About*: version, source code, license, and *Add the guide notebook* to get this notebook back.
+- *About*: version, source code, license, and *Add the guide notebook* to get this notebook back, or to replace it with a newer version's after an update.

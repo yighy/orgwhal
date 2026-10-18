@@ -81,6 +81,11 @@
     <string name="msg_choose_folder_first">Choisissez d\'abord le dossier de vos notes</string>
     <string name="msg_file_not_saved">Le fichier n’a pas été enregistré correctement</string>
     <string name="msg_guide_added">Carnet guide ajouté</string>
+    <string name="msg_guide_replaced">Carnet guide remplacé par celui de cette version</string>
+    <string name="guide_exists_title">Le guide est déjà là</string>
+    <string name="guide_exists_text">L’ouvrir tel quel, ou le remplacer par le guide de cette version ? Le remplacer perd les modifications qui y ont été faites.</string>
+    <string name="guide_replace">Remplacer</string>
+    <string name="open">Ouvrir</string>
     <string name="msg_id_copied">ID copié</string>
     <string name="msg_link_copied">Lien copié</string>
     <string name="msg_link_not_found">Rien ne s’appelle « %1$s » dans les notes</string>

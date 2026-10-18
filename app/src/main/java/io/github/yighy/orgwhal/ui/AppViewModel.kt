@@ -375,26 +375,56 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var guideChoicePending by mutableStateOf(false)
         private set
 
+    /** Whether to ask what to do with the guide notebook already in the folder: open or replace it. */
+    var guideExists by mutableStateOf(false)
+        private set
+
     fun dismissGuideOffer() {
         offerGuide = false
         guideChoicePending = false
+        guideExists = false
     }
 
-    private fun guideFile() = library.value.files.firstOrNull { it.ref.name.equals("${Guide.FILE_NAME}.org", ignoreCase = true) }
+    /** The guide notebook in the folder, also by its name when the app was Narwhal. */
+    private fun guideFile() = library.value.files.firstOrNull { file ->
+        listOf(Guide.FILE_NAME, Guide.OLD_FILE_NAME).any { file.ref.name.equals("$it.org", ignoreCase = true) }
+    }
 
-    /** Adds the guide notebook to the folder and opens it (or opens the one already there). */
+    /** This version's guide, its examples dated from today. */
+    private fun guideText(): String {
+        val template = getApplication<Application>().assets.open(Guide.ASSET).use { it.readBytes().toString(Charsets.UTF_8) }
+        return Guide.fill(template, LocalDate.now(), UUID.randomUUID().toString().uppercase())
+    }
+
+    /** Adds the guide notebook to the folder and opens it; one already there, asks first. */
     fun addGuide() {
         offerGuide = false
         guideChoicePending = false
-        guideFile()?.let { openNotebook(it.uri); return }
+        if (guideFile() != null) {
+            guideExists = true
+            return
+        }
         viewModelScope.launch {
-            val uri = attempt {
-                val app = getApplication<Application>()
-                val template = app.assets.open(Guide.ASSET).use { it.readBytes().toString(Charsets.UTF_8) }
-                repository.createFile(Guide.FILE_NAME, Guide.fill(template, LocalDate.now(), UUID.randomUUID().toString().uppercase()))
-            } ?: return@launch
+            val uri = attempt { repository.createFile(Guide.FILE_NAME, guideText()) } ?: return@launch
             openNotebook(uri.toString())
             message(R.string.msg_guide_added)
+        }
+    }
+
+    /** Opens the guide notebook already in the folder, as it is. */
+    fun openGuide() {
+        guideExists = false
+        guideFile()?.let { openNotebook(it.uri) }
+    }
+
+    /** Writes this version's guide in place of the one in the folder (its changes lost), and opens it. */
+    fun replaceGuide() {
+        guideExists = false
+        val file = guideFile() ?: return
+        viewModelScope.launch {
+            attempt { repository.replaceFile(file.uri, guideText()) } ?: return@launch
+            openNotebook(file.uri)
+            message(R.string.msg_guide_replaced)
         }
     }
 

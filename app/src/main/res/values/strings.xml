@@ -83,6 +83,11 @@
     <string name="msg_choose_folder_first">Choose a folder for your notes first</string>
     <string name="msg_file_not_saved">The file was not saved correctly</string>
     <string name="msg_guide_added">Guide notebook added</string>
+    <string name="msg_guide_replaced">Guide notebook replaced with this version\'s</string>
+    <string name="guide_exists_title">The guide is already there</string>
+    <string name="guide_exists_text">Open it as it is, or replace it with the guide of this version? Replacing it loses the changes made to it.</string>
+    <string name="guide_replace">Replace</string>
+    <string name="open">Open</string>
     <string name="msg_id_copied">ID copied</string>
     <string name="msg_link_copied">Link copied</string>
     <string name="msg_link_not_found">Nothing named “%1$s” in the notes</string>

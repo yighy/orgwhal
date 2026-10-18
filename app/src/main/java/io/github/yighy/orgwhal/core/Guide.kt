@@ -13,6 +13,9 @@ object Guide {
     /** File name, without .org (made by the folder). */
     const val FILE_NAME = "orgwhal-guide"
 
+    /** Its name up to 0.16.0, when the app was Narwhal. */
+    const val OLD_FILE_NAME = "narwhal-guide"
+
     const val ASSET = "guide-en.org"
 
     private val DATE = Regex("""\{\{date:([+-]?\d+)\}\}""")

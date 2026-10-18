@@ -249,6 +249,16 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
         )
     }
 
+    if (viewModel.guideExists) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissGuideOffer,
+            title = { Text(stringResource(R.string.guide_exists_title)) },
+            text = { Text(stringResource(R.string.guide_exists_text)) },
+            confirmButton = { TextButton(onClick = viewModel::replaceGuide) { Text(stringResource(R.string.guide_replace)) } },
+            dismissButton = { TextButton(onClick = viewModel::openGuide) { Text(stringResource(R.string.open)) } },
+        )
+    }
+
     if (library.folderUri == null) {
         WelcomeScreen(onPickFolder = { pickFolder.launch(null) })
         return
