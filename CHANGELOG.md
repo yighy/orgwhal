@@ -4,6 +4,16 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-10-18
+
+### Added
+- Setting to wrap long table fields onto several lines, the table fitting the screen instead of
+  scrolling sideways (Settings, Wrap table fields; on by default); the file keeps one line per
+  row, and a field being edited wraps as well
+- Typing id: in a table field suggests notes to link to, as in the note's text
+- In a long notebook, agenda, search or note, scrolling down brings up a faint button that goes
+  straight to the bottom; a tap on the top bar goes back to the top
+
 ## [0.23.0] - 2026-10-15
 
 ### Changed
@@ -360,7 +370,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/yighy/orgwhal/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/yighy/orgwhal/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/yighy/orgwhal/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/yighy/orgwhal/compare/v0.20.1...v0.21.0
