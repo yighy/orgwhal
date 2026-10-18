@@ -4,6 +4,17 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-10-18
+
+### Added
+- Template notes: a note tagged :template: is offered when making a new note (the Template
+  chip), which starts as a copy of it (title, state, tags, priority, properties, content; not its
+  clocking); as in Emacs' capture templates, %u is written as today's inactive date, %U with the
+  time, %t and %T active, and %? goes. The templates show as the note would be made, with a
+  search (accents aside); a title already typed stays
+- Setting for where template notes are left out (Settings, Template notes): nowhere, the agenda
+  (and reminders), or the agenda and the search (the default; t.template still finds them)
+
 ## [0.27.0] - 2026-10-18
 
 ### Added
@@ -396,7 +407,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/yighy/orgwhal/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/yighy/orgwhal/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/yighy/orgwhal/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/yighy/orgwhal/compare/v0.24.0...v0.25.0
