@@ -25,6 +25,7 @@
     <string name="choose_folder">Choisir le dossier</string>
     <string name="clear_search">Effacer la recherche</string>
     <string name="clear_selection">Désélectionner</string>
+    <string name="scroll_to_bottom">Aller tout en bas</string>
     <string name="clock">Pointage</string>
     <string name="clock_in">Démarrer le pointage</string>
     <string name="clock_out">Arrêter le pointage</string>

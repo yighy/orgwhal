@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -82,6 +83,7 @@ fun AgendaScreen(
     }
     val todayCount = agenda.overdue.size + agenda.days.first().entries.size
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val listState = rememberLazyListState()
 
     Scaffold(
         topBar = {
@@ -93,13 +95,15 @@ fun AgendaScreen(
                 },
                 colors = blendedTopBarColors(),
                 scrollBehavior = scrollBehavior,
+                modifier = Modifier.tapToTop { listState.animateScrollToItem(0); scrollBehavior.state.expand() },
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding)) {
             PullToRefresh(viewModel) {
                 LazyColumn(
+                    state = listState,
                     contentPadding = PaddingValues(bottom = 48.dp),
                     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
                 ) {
@@ -135,6 +139,7 @@ fun AgendaScreen(
                     agendaItems(viewModel, library, agenda, today)
                 }
             }
+            JumpButton(listState, Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
         }
     }
 }

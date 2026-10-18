@@ -345,6 +345,7 @@ fun NoteScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
     Scaffold(
         modifier = Modifier
             .sharedContainer("note-${note.fileUri}#${note.index}", RectangleShape)
@@ -353,6 +354,7 @@ fun NoteScreen(
             TopAppBar(
                 title = {},
                 colors = blendedTopBarColors(),
+                modifier = Modifier.tapToTop { scrollState.animateScrollTo(0) },
                 navigationIcon = {
                     IconButton(onClick = ::leave) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
                 },
@@ -487,7 +489,6 @@ fun NoteScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        val scrollState = rememberScrollState()
         val screenFocus = LocalFocusManager.current
         Column(
             Modifier
@@ -847,6 +848,10 @@ fun NoteScreen(
                         if (editing != Editing.Content) startEditing(Editing.Content)
                     },
             )
+        }
+        // Over the page, not while typing
+        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.BottomCenter) {
+            JumpButton(scrollState, Modifier.padding(bottom = 16.dp), enabled = !keyboard)
         }
     }
 

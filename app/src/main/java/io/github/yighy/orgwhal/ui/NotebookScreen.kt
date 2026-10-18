@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.foundation.lazy.LazyListState
 import io.github.yighy.orgwhal.data.TableRecalc
 import io.github.yighy.orgwhal.core.Blocks
 import androidx.compose.ui.res.pluralStringResource
@@ -126,6 +127,7 @@ fun NotebookScreen(
     val selection = viewModel.selection?.takeIf { it.fileUri == file.uri }
     val selecting = selection != null
     val scrollBehavior = largeBarScrollBehavior(selecting)
+    val listState = rememberLazyListState()
 
     BackHandler(enabled = viewModel.searchActive) { viewModel.setSearch(false) }
     BackHandler(enabled = selecting) { viewModel.clearSelection() }
@@ -139,6 +141,7 @@ fun NotebookScreen(
             .sharedContainer("notebook-${file.uri}", NotebookCardShape)
             .imePadding(),
         topBar = {
+            Box(Modifier.tapToTop { listState.animateScrollToItem(0); scrollBehavior.state.expand() }) {
             TopBarWithSelection(selecting, selectionBar = { SelectionTopBar(viewModel, library, file) }, largeBar = scrollBehavior.state) {
                 SearchableTopBar(
                     title = file.title,
@@ -173,6 +176,7 @@ fun NotebookScreen(
 
                 }
             }
+            }
         },
         floatingActionButton = {
             if (prefaceDraft == null && !selecting) {
@@ -201,6 +205,7 @@ fun NotebookScreen(
                     onPrefaceDraftChange = { new -> prefaceDraft?.let { prefaceDraft = typedText(it, new, prefaceHistory) } },
                     onCommitPreface = ::commitPreface,
                     onEditPreface = { editPreface(it) },
+                    listState = listState,
                     selected = selection?.indices.orEmpty(),
                     showContent = settings.showContentInNotebook,
                     spacing = settings.noteSpacing.padding.dp,
@@ -211,6 +216,12 @@ fun NotebookScreen(
             }
             if (selecting) {
                 SelectionToolbar(viewModel, file, Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
+            } else if (!viewModel.searchActive) {
+                JumpButton(
+                    listState,
+                    Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+                    enabled = prefaceDraft == null,
+                )
             }
         }
     }
@@ -239,6 +250,7 @@ private fun NotebookOutline(
     preface: String,
     prefaceRaw: String,
     prefaceDraft: TextFieldValue?,
+    listState: LazyListState,
     onPrefaceDraftChange: (TextFieldValue) -> Unit,
     onCommitPreface: () -> Unit,
     onEditPreface: (cursor: Int?) -> Unit,
@@ -275,7 +287,6 @@ private fun NotebookOutline(
     val request = viewModel.moveRequests
     val currentRequest by rememberUpdatedState(request)
     var settledRequest by remember { mutableStateOf(request) }
-    val listState = rememberLazyListState()
     LaunchedEffect(move) {
         delay(MOVE_SETTLE_MS)
         settledMove = move

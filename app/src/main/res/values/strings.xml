@@ -27,6 +27,7 @@
     <string name="choose_folder">Choose folder</string>
     <string name="clear_search">Clear search</string>
     <string name="clear_selection">Clear selection</string>
+    <string name="scroll_to_bottom">Go to the bottom</string>
     <string name="clock">Clock</string>
     <string name="clock_in">Start the clock</string>
     <string name="clock_out">Stop the clock</string>

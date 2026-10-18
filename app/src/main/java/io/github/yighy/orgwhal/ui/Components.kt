@@ -1,5 +1,17 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.composed
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
@@ -444,8 +456,9 @@ fun SearchResults(
     val agenda = remember(query, results, today) {
         query.agendaDays?.takeIf { !idle }?.let { Agenda.build(results, today, it) }
     }
-    Column(modifier) {
-        LazyColumn(contentPadding = PaddingValues(bottom = 112.dp)) {
+    val listState = rememberLazyListState()
+    Box(modifier) {
+        LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 112.dp)) {
             if (agenda != null) {
                 agendaItems(viewModel, library, agenda, today)
                 return@LazyColumn
@@ -471,8 +484,109 @@ fun SearchResults(
                 )
             }
         }
+        JumpButton(listState, Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
     }
 }
+
+/**
+ * A small, faint button over the bottom of a long list, to jump to its end: it shows while the
+ * list is scrolled down by hand and goes a moment after it stops. The top is a tap on the top bar.
+ */
+@Composable
+fun JumpButton(state: LazyListState, modifier: Modifier = Modifier, enabled: Boolean = true) = JumpButton(
+    interactions = state.interactionSource,
+    inProgress = { state.isScrollInProgress },
+    position = { state.firstVisibleItemIndex * 1_000_000L + state.firstVisibleItemScrollOffset },
+    canDown = { state.canScrollForward },
+    long = { state.layoutInfo.let { it.totalItemsCount > it.visibleItemsInfo.size * JUMP_SCREENS } },
+    onBottom = { state.animateScrollToItem((state.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)) },
+    modifier = modifier,
+    enabled = enabled,
+)
+
+/** [JumpButton] for a page scrolled as a whole (a note). */
+@Composable
+fun JumpButton(state: ScrollState, modifier: Modifier = Modifier, enabled: Boolean = true) = JumpButton(
+    interactions = state.interactionSource,
+    inProgress = { state.isScrollInProgress },
+    position = { state.value.toLong() },
+    canDown = { state.canScrollForward },
+    long = { state.maxValue > state.viewportSize * (JUMP_SCREENS - 1) },
+    onBottom = { state.animateScrollTo(state.maxValue) },
+    modifier = modifier,
+    enabled = enabled,
+)
+
+@Composable
+private fun JumpButton(
+    interactions: InteractionSource,
+    inProgress: () -> Boolean,
+    position: () -> Long,
+    canDown: () -> Boolean,
+    long: () -> Boolean,
+    onBottom: suspend () -> Unit,
+    modifier: Modifier,
+    enabled: Boolean,
+) {
+    var down by remember { mutableStateOf(false) }
+    var byHand by remember { mutableStateOf(false) }
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(interactions) {
+        interactions.interactions.collect { if (it is DragInteraction.Start) byHand = true }
+    }
+    LaunchedEffect(Unit) {
+        var last = position()
+        snapshotFlow(position).collect { now ->
+            if (now != last) down = now > last
+            last = now
+        }
+    }
+    // Only scrolled by hand (a fling included), not when the screen scrolls by itself
+    val scrolling = inProgress()
+    LaunchedEffect(scrolling, byHand) {
+        if (scrolling) {
+            if (byHand) shown = true
+        } else {
+            delay(JUMP_HIDE_MS)
+            shown = false
+            byHand = false
+        }
+    }
+    val visible = enabled && shown && down && long() && canDown()
+    val scope = rememberCoroutineScope()
+    AnimatedVisibility(visible, modifier, enter = fadeIn(), exit = fadeOut()) {
+        Surface(
+            onClick = { scope.launch { onBottom() } },
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f),
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ) {
+            Icon(
+                Icons.Default.KeyboardArrowDown,
+                stringResource(R.string.scroll_to_bottom),
+                modifier = Modifier.padding(6.dp).size(24.dp),
+            )
+        }
+    }
+}
+
+/** A tap on a top bar, beside its buttons, brings its screen back to the top with [onTop]. */
+fun Modifier.tapToTop(onTop: suspend () -> Unit): Modifier = composed {
+    val scope = rememberCoroutineScope()
+    val current by rememberUpdatedState(onTop)
+    pointerInput(Unit) { detectTapGestures { scope.launch { current() } } }
+}
+
+/** Opens a large app bar folded away by scrolling, as the list is back at its top. */
+suspend fun TopAppBarState.expand() {
+    animate(heightOffset, 0f) { value, _ -> heightOffset = value }
+}
+
+/** How many screens long a list must be for [JumpButton] to show. */
+private const val JUMP_SCREENS = 3
+
+/** How long [JumpButton] stays once the scrolling stops. */
+private const val JUMP_HIDE_MS = 1500L
 
 /** State, priority, title and a details line (tags, planning, [subtitle]). */
 @Composable
