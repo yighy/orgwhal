@@ -560,6 +560,8 @@ private fun OutlineRow(
                         onToggleCheckbox = onToggleCheckbox,
                         tableNamed = tables,
                         liveFormulas = liveFormulas,
+                        // A swipe is the note's: its tables scroll once it is open
+                        scrollTables = false,
                     )
                 }
             }

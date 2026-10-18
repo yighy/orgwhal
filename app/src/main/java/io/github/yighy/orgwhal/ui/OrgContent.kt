@@ -1,5 +1,14 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.draw.clipToBounds
 import kotlin.math.roundToInt
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.compositionLocalOf
@@ -120,6 +129,11 @@ fun OrgContent(
     showLogbook: Boolean = false,
     /** Given, holds the table field being edited, for completion while typing in it. */
     cellDraft: CellDraft? = null,
+    /**
+     * Whether a table wider than the screen scrolls sideways; else it is cut at the right, faded
+     * there (in a notebook's list, where a swipe is the note's).
+     */
+    scrollTables: Boolean = true,
 ) {
     val blocks = remember(text) { Blocks.parse(text) }
     // Plain text, the usual case, shows as written
@@ -142,7 +156,33 @@ fun OrgContent(
                 // Drawers open with a tap; the logbook only where asked, the clock's time
                 // showing it elsewhere
                 is Blocks.Drawer -> if (showLogbook || !block.name.equals("LOGBOOK", ignoreCase = true)) {
-                    DrawerBlock(block, style, onOpenLink, tapFrom(block.innerStart), toggleFrom(block.innerStart))
+                    // Its text shown as the rest of the content (tables, lists…); a change to it is
+                    // made in the drawer as the text then has it
+                    val drawerIndex = blocks.filterIsInstance<Blocks.Drawer>().indexOf(block)
+                    fun inDrawer(change: (String) -> String): (String) -> String = { full ->
+                        Blocks.parse(full).filterIsInstance<Blocks.Drawer>().getOrNull(drawerIndex)?.let { d ->
+                            full.replaceRange(d.innerStart, d.innerStart + d.inner.length, change(d.inner))
+                        } ?: full
+                    }
+                    DrawerBlock(block) { innerModifier ->
+                        OrgContent(
+                            block.inner,
+                            style,
+                            onOpenLink,
+                            innerModifier,
+                            onTextTap = tapFrom(block.innerStart),
+                            onToggleCheckbox = toggleFrom(block.innerStart),
+                            onRecalculate = onRecalculate?.let { done ->
+                                { inner, skipped -> done(inner?.let { inDrawer { _ -> it }(text) }, skipped) }
+                            },
+                            tableNamed = tableNamed,
+                            liveFormulas = liveFormulas,
+                            onEditTable = onEditTable?.let { edit -> { change -> edit(inDrawer(change)) } },
+                            onCellEditing = onCellEditing,
+                            cellDraft = cellDraft,
+                            scrollTables = scrollTables,
+                        )
+                    }
                 }
                 is Blocks.Text -> FoldableText(block.text, block.range.first, style, onOpenLink, ::tapFrom, ::toggleFrom)
                 is Blocks.Table -> Column {
@@ -269,6 +309,7 @@ fun OrgContent(
                                 }
                             }
                         },
+                        scrolls = scrollTables,
                         editing = editing,
                         editor = { line, column, cellStyle ->
                             // Kept in view above the keyboard as it comes up, with the field's
@@ -471,10 +512,8 @@ private fun FormulaBar(table: Blocks.Table, stale: Boolean, onRecalculate: (() -
 @Composable
 private fun DrawerBlock(
     drawer: Blocks.Drawer,
-    style: TextStyle,
-    onOpenLink: (String) -> Unit,
-    onTextTap: ((Int) -> Unit)?,
-    onToggleCheckbox: ((Int) -> Unit)?,
+    /** Its text, shown with the modifier given when unfolded. */
+    content: @Composable (Modifier) -> Unit,
 ) {
     var open by rememberSaveable(drawer.name, drawer.innerStart) { mutableStateOf(false) }
     val rotation = chevronRotation(open)
@@ -494,16 +533,7 @@ private fun DrawerBlock(
             )
             Text(drawer.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Unfold(open) {
-            LinkedText(
-                drawer.inner,
-                style,
-                onOpenLink,
-                Modifier.padding(start = 20.dp, top = 4.dp),
-                onTextTap = onTextTap,
-                onToggleCheckbox = onToggleCheckbox,
-            )
-        }
+        Unfold(open) { content(Modifier.padding(start = 20.dp, top = 4.dp)) }
     }
 }
 
@@ -580,6 +610,8 @@ private fun OrgTable(
     onCellTap: ((Int, Int) -> Unit)? = null,
     /** Given, a long press on a field shows it as the field's menu, until it is dismissed. */
     cellMenu: (@Composable (Int, Int, () -> Unit) -> Unit)? = null,
+    /** Whether it scrolls sideways when wider than the screen; else it is cut, faded at the right. */
+    scrolls: Boolean = true,
     /** The field shown by [editor] instead of its text, with the style it would have. */
     editing: Pair<Int, Int>? = null,
     editor: @Composable (Int, Int, TextStyle) -> Unit = { _, _, _ -> },
@@ -603,7 +635,14 @@ private fun OrgTable(
     // Where the table is in the page that scrolls around it, for its header to stay in view
     val sticky = LocalStickyTables.current
     var top by remember { mutableFloatStateOf(0f) }
-    BoxWithConstraints(modifier) {
+    // Its whole width, to fade it where it is cut
+    var tableWidth by remember { mutableIntStateOf(0) }
+    var shownWidth by remember { mutableIntStateOf(0) }
+    BoxWithConstraints(
+        modifier.then(
+            if (scrolls) Modifier else Modifier.onSizeChanged { shownWidth = it.width }.clipToBounds().fadeRight(tableWidth > shownWidth),
+        ),
+    ) {
         val screen = constraints.maxWidth
         Layout(
             content = {
@@ -643,7 +682,16 @@ private fun OrgTable(
             },
             modifier = Modifier
                 .onGloballyPositioned { table -> sticky?.content?.let { top = it.localPositionOf(table, Offset.Zero).y } }
-                .horizontalScroll(sideways)
+                // Only when wider than the screen: else a swipe goes on to what holds it (a
+                // note's row in a notebook, swiped for its actions)
+                .then(
+                    if (scrolls) {
+                        Modifier.horizontalScroll(sideways, enabled = sideways.canScrollForward || sideways.canScrollBackward)
+                    } else {
+                        Modifier.wrapContentWidth(Alignment.Start, unbounded = true)
+                    },
+                )
+                .onSizeChanged { tableWidth = it.width }
                 .clip(shape)
                 .border(1.dp, line, shape),
         ) { measurables, _ ->
@@ -690,6 +738,21 @@ private fun OrgTable(
         }
     }
 }
+
+/** Fades the right edge of what is cut there ([cut]), to show it goes on. */
+private fun Modifier.fadeRight(cut: Boolean): Modifier = if (!cut) this else this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val right = size.width
+        val w = 48.dp.toPx().coerceAtMost(right / 2)
+        drawRect(
+            Brush.horizontalGradient(listOf(Color.Black, Color.Transparent), startX = right - w, endX = right),
+            topLeft = Offset(right - w, 0f),
+            size = Size(w, size.height),
+            blendMode = BlendMode.DstIn,
+        )
+    }
 
 /**
  * Widths for columns [natural]ly this wide that fit in [available]: the widest narrowed to one

@@ -195,7 +195,7 @@ The best way to predict the future is to invent it.
 #+END_QUOTE
 
 ** Drawers
-A drawer keeps details folded under a name; tap "DETAILS" to open it.
+A drawer keeps details folded under a name; tap "DETAILS" to open it. What it holds shows as the rest of the note: a table in it is a grid whose fields are edited in place, its checkboxes tick.
 :DETAILS:
 Plate number: AB-123-CD
 Insurance: contract 456789
