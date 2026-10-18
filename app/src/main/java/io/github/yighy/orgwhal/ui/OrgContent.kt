@@ -1,5 +1,9 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.Layout
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.runtime.SideEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
@@ -107,6 +111,8 @@ fun OrgContent(
     onCellEditing: (Boolean) -> Unit = {},
     /** The :LOGBOOK: drawer folds as the others, for its clock lines; else it is hidden. */
     showLogbook: Boolean = false,
+    /** Given, holds the table field being edited, for completion while typing in it. */
+    cellDraft: CellDraft? = null,
 ) {
     val blocks = remember(text) { Blocks.parse(text) }
     // Plain text, the usual case, shows as written
@@ -153,17 +159,27 @@ fun OrgContent(
                     // new row or column opening its field
                     var editing by remember(tableIndex) { mutableStateOf<Pair<Int, Int>?>(null) }
                     var draft by remember(tableIndex) { mutableStateOf(TextFieldValue()) }
+                    val wrapTables = LocalWrapTables.current
+                    // Shared with the screen as it changes (the field alone recomposes then)
+                    fun setDraft(value: TextFieldValue) {
+                        draft = value
+                        cellDraft?.value = value
+                    }
                     fun stored(line: Int, column: Int) = block.rows.getOrNull(line)?.getOrNull(column).orEmpty()
                     val scope = rememberCoroutineScope()
                     if (editing != null) {
                         DisposableEffect(Unit) {
                             onCellEditing(true)
-                            onDispose { onCellEditing(false) }
+                            onDispose {
+                                onCellEditing(false)
+                                cellDraft?.value = null
+                            }
                         }
+                        SideEffect { cellDraft?.set = { value -> if (editing != null) setDraft(value) } }
                     }
                     /** Opens the field at [line] and [column], its [value] selected. */
                     fun edit(line: Int, column: Int, value: String = stored(line, column)) {
-                        draft = TextFieldValue(value, TextRange(0, value.length))
+                        setDraft(TextFieldValue(value, TextRange(0, value.length)))
                         editing = line to column
                     }
                     /** Saves the field being edited, if it changed, then [then] in the same save (a new row or column). */
@@ -264,15 +280,29 @@ fun OrgContent(
                                 value = draft,
                                 // Only while this field is the one edited: losing the focus, it
                                 // sends its text again, which would go into the next field
-                                onValueChange = { if (editing == line to column) draft = it },
+                                onValueChange = {
+                                    when {
+                                        editing != line to column -> {}
+                                        // Wrapped, a new line typed (or pasted) goes to the next field
+                                        '\n' in it.text -> {
+                                            setDraft(TextFieldValue(it.text.replace('\n', ' ').trimEnd()))
+                                            next()
+                                        }
+                                        else -> setDraft(it)
+                                    }
+                                },
                                 style = cellStyle,
                                 onFocusLost = { if (editing == line to column) save() },
                                 onDone = ::next,
                                 imeAction = ImeAction.Next,
                                 keyboardType = if (TableFormulas.isNumber(stored(line, column))) KeyboardType.Decimal else KeyboardType.Text,
-                                // A field is one line: Enter goes to the next
-                                singleLine = true,
-                                modifier = Modifier.width(IntrinsicSize.Min).bringIntoViewRequester(bring).onSizeChanged { size = it },
+                                // A field is one line: Enter goes to the next. Wrapped as shown,
+                                // it takes its column's width
+                                singleLine = !wrapTables,
+                                modifier = Modifier
+                                    .then(if (wrapTables) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Min))
+                                    .bringIntoViewRequester(bring)
+                                    .onSizeChanged { size = it },
                             )
                         },
                     )
@@ -528,7 +558,11 @@ private fun CodeBlock(block: Blocks.Begin, style: TextStyle, modifier: Modifier)
     }
 }
 
-/** A table in a grid that scrolls sideways; rows above the first rule are the header. */
+/**
+ * A table in a grid that scrolls sideways; rows above the first rule are the header. Each column
+ * is as wide as its widest field and each row as high as its highest; with [LocalWrapTables],
+ * the widest columns narrow until the table fits, their fields going on several lines.
+ */
 @Composable
 private fun OrgTable(
     table: Blocks.Table,
@@ -550,48 +584,103 @@ private fun OrgTable(
     val header = table.headerRows
     // Columns of numbers align right, as Emacs writes them
     val numeric = remember(table) { Blocks.numericColumns(rows.drop(header).map { it.second }, table.columns) }
-    Row(
-        modifier
-            .horizontalScroll(rememberScrollState())
-            .clip(shape)
-            .border(1.dp, line, shape),
-    ) {
-        // Column by column, each as wide as its widest cell; cells are one line, so rows line up
-        repeat(table.columns) { c ->
-            Column(Modifier.width(IntrinsicSize.Max)) {
+    val wrap = LocalWrapTables.current
+    val floor = with(LocalDensity.current) { MIN_WRAPPED_COLUMN.roundToPx() }
+    BoxWithConstraints(modifier) {
+        val screen = constraints.maxWidth
+        Layout(
+            content = {
                 rows.forEach { (i, cells) ->
-                    val isHeader = i < header
-                    var menu by remember { mutableStateOf(false) }
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .then(
-                                if (onCellTap != null) {
-                                    Modifier.combinedClickable(
-                                        onClick = { onCellTap(i, c) },
-                                        onLongClick = cellMenu?.let { { menu = true } },
-                                    )
-                                } else {
-                                    Modifier
-                                },
-                            )
-                            .background(if (isHeader) headerColor else Color.Transparent)
-                            .border(if (editing == i to c) 2.dp else 0.5.dp, if (editing == i to c) MaterialTheme.colorScheme.primary else line)
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        contentAlignment = if (numeric[c] && !isHeader) Alignment.CenterEnd else Alignment.CenterStart,
-                    ) {
-                        val cellStyle = if (isHeader) style.copy(fontWeight = FontWeight.Bold) else style
-                        if (editing == i to c) {
-                            editor(i, c, if (numeric[c] && !isHeader) cellStyle.copy(textAlign = TextAlign.End) else cellStyle)
-                        } else {
-                            LinkedText(cells.getOrElse(c) { "" }, cellStyle, onOpenLink, maxLines = 1)
+                    repeat(table.columns) { c ->
+                        val isHeader = i < header
+                        var menu by remember { mutableStateOf(false) }
+                        Box(
+                            Modifier
+                                .then(
+                                    if (onCellTap != null) {
+                                        Modifier.combinedClickable(
+                                            onClick = { onCellTap(i, c) },
+                                            onLongClick = cellMenu?.let { { menu = true } },
+                                        )
+                                    } else {
+                                        Modifier
+                                    },
+                                )
+                                .background(if (isHeader) headerColor else Color.Transparent)
+                                .border(if (editing == i to c) 2.dp else 0.5.dp, if (editing == i to c) MaterialTheme.colorScheme.primary else line)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            contentAlignment = if (numeric[c] && !isHeader) Alignment.CenterEnd else Alignment.CenterStart,
+                        ) {
+                            val cellStyle = if (isHeader) style.copy(fontWeight = FontWeight.Bold) else style
+                            if (editing == i to c) {
+                                editor(i, c, if (numeric[c] && !isHeader) cellStyle.copy(textAlign = TextAlign.End) else cellStyle)
+                            } else {
+                                LinkedText(cells.getOrElse(c) { "" }, cellStyle, onOpenLink, maxLines = if (wrap) Int.MAX_VALUE else 1)
+                            }
+                            if (menu) cellMenu?.invoke(i, c) { menu = false }
                         }
-                        if (menu) cellMenu?.invoke(i, c) { menu = false }
                     }
+                }
+            },
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .clip(shape)
+                .border(1.dp, line, shape),
+        ) { measurables, _ ->
+            val grid = measurables.chunked(table.columns)
+            val natural = IntArray(table.columns) { c -> grid.maxOfOrNull { it[c].maxIntrinsicWidth(Constraints.Infinity) } ?: 0 }
+            val widths = if (wrap && screen != Constraints.Infinity) fitColumns(natural, screen, floor) else natural
+            val heights = grid.map { row -> row.indices.maxOf { c -> row[c].minIntrinsicHeight(widths[c]) } }
+            val placeables = grid.mapIndexed { r, row -> row.mapIndexed { c, cell -> cell.measure(Constraints.fixed(widths[c], heights[r])) } }
+            layout(widths.sum(), heights.sum()) {
+                var y = 0
+                placeables.forEachIndexed { r, row ->
+                    var x = 0
+                    row.forEachIndexed { c, cell ->
+                        cell.place(x, y)
+                        x += widths[c]
+                    }
+                    y += heights[r]
                 }
             }
         }
     }
+}
+
+/**
+ * Widths for columns [natural]ly this wide that fit in [available]: the widest narrowed to one
+ * same width, not below [floor] (the table then wider than [available]).
+ */
+internal fun fitColumns(natural: IntArray, available: Int, floor: Int): IntArray {
+    if (natural.sum() <= available) return natural
+    // The width the widest share: what is left once the narrower have theirs
+    val sorted = natural.sorted()
+    var left = available
+    var cap = floor
+    for ((k, w) in sorted.withIndex()) {
+        val share = left / (sorted.size - k)
+        if (w > share) {
+            cap = maxOf(share, floor)
+            break
+        }
+        left -= w
+    }
+    return IntArray(natural.size) { minOf(natural[it], cap) }
+}
+
+/** The narrowest a column gets for its fields to wrap. */
+private val MIN_WRAPPED_COLUMN = 72.dp
+
+/**
+ * The table field being edited in place and its text, for the screen to complete what is typed
+ * in it ("id:" links) as in the note's text.
+ */
+class CellDraft {
+    var value by mutableStateOf<TextFieldValue?>(null)
+    internal var set: (TextFieldValue) -> Unit = {}
+
+    /** Puts [value] in the field being edited. */
+    fun replace(value: TextFieldValue) = set(value)
 }
 
 /** How long a menu takes to close, after which a field it opened can take the focus. */

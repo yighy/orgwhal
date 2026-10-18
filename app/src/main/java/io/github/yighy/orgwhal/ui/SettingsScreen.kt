@@ -147,6 +147,12 @@ fun SettingsScreen(
                 checked = settings.monospace,
                 onCheckedChange = viewModel::setMonospace,
             )
+            SwitchItem(
+                title = stringResource(R.string.settings_wrap_tables),
+                summary = stringResource(R.string.settings_wrap_tables_summary),
+                checked = settings.wrapTables,
+                onCheckedChange = viewModel::setWrapTables,
+            )
             ListItem(
                 onClick = { pickSpacing = true },
                 supportingContent = { Text(stringResource(settings.noteSpacing.label)) },

@@ -64,6 +64,8 @@ class AppSettings(context: Context) {
         val strikeDone: Boolean = true,
         /** Notes' content (and notebooks' prefaces) in a fixed-width font, as in Emacs. */
         val monospace: Boolean = false,
+        /** Long table fields wrap onto several lines, columns fitting the screen (display only). */
+        val wrapTables: Boolean = true,
         val noteSpacing: NoteSpacing = NoteSpacing.Comfortable,
         val remindScheduled: Boolean = true,
         val remindDeadline: Boolean = true,
@@ -105,6 +107,7 @@ class AppSettings(context: Context) {
             showContentInNotebook = prefs.getBoolean(KEY_SHOW_CONTENT, true),
             strikeDone = prefs.getBoolean(KEY_STRIKE_DONE, true),
             monospace = prefs.getBoolean(KEY_MONOSPACE, false),
+            wrapTables = prefs.getBoolean(KEY_WRAP_TABLES, true),
             noteSpacing = NoteSpacing.entries.firstOrNull { it.name == prefs.getString(KEY_NOTE_SPACING, null) } ?: NoteSpacing.Comfortable,
             remindScheduled = prefs.getBoolean(KEY_REMIND_SCHEDULED, true),
             remindDeadline = prefs.getBoolean(KEY_REMIND_DEADLINE, true),
@@ -216,6 +219,8 @@ class AppSettings(context: Context) {
 
     fun setMonospace(on: Boolean) = save({ putBoolean(KEY_MONOSPACE, on) }) { it.copy(monospace = on) }
 
+    fun setWrapTables(on: Boolean) = save({ putBoolean(KEY_WRAP_TABLES, on) }) { it.copy(wrapTables = on) }
+
     fun setShowContentInNotebook(show: Boolean) =
         save({ putBoolean(KEY_SHOW_CONTENT, show) }) { it.copy(showContentInNotebook = show) }
 
@@ -289,6 +294,7 @@ class AppSettings(context: Context) {
         private const val KEY_SHOW_CONTENT = "show_content_in_notebook"
         private const val KEY_STRIKE_DONE = "strike_done"
         private const val KEY_MONOSPACE = "monospace"
+        private const val KEY_WRAP_TABLES = "wrap_tables"
         private const val KEY_NOTE_SPACING = "note_spacing"
         private const val KEY_REMIND_SCHEDULED = "remind_scheduled"
         private const val KEY_REMIND_DEADLINE = "remind_deadline"

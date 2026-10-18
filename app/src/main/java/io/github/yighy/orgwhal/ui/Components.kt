@@ -747,6 +747,9 @@ private fun rawOffset(shown: Int, parts: List<ShownPart>): Int? {
 /** Whether done notes show struck through (a setting). */
 val LocalStrikeDone = compositionLocalOf { true }
 
+/** Whether long table fields wrap onto several lines (a setting). */
+val LocalWrapTables = compositionLocalOf { true }
+
 /** Whether notes' content shows in a fixed-width font (a setting). */
 val LocalMonospace = compositionLocalOf { false }
 

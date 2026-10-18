@@ -272,8 +272,12 @@ fun NoteScreen(
     // Closing the keyboard ends the editing (and saves), instead of leaving a cursor behind
     ClearFocusWhenKeyboardHides()
 
-    // "id:" and "file:" completion while editing the title or the content, gone with the keyboard
-    val typing = draft.takeIf { editing != Editing.None && it.selection.collapsed && keyboardShown() }
+    // "id:" and "file:" completion while editing the title, the content or a table field, gone
+    // with the keyboard
+    val cellDraft = remember { CellDraft() }
+    val keyboard = keyboardShown()
+    val cellTyping = cellDraft.value?.takeIf { editing == Editing.None && it.selection.collapsed && keyboard }
+    val typing = cellTyping ?: draft.takeIf { editing != Editing.None && it.selection.collapsed && keyboard }
     val query = typing?.let { IdLinks.queryAt(it.text, it.selection.start) }
     // Each note's notebook and ancestors, so that a parent's title also finds its sub-notes
     val paths = remember(library) {
@@ -306,12 +310,26 @@ fun NoteScreen(
     /** Puts a link to the notebook in place of the "file:" being typed. */
     fun insertFileLink(file: NoteRepository.LoadedFile) {
         val q = fileQuery ?: return
-        val link = "[[file:${file.ref.path}][${file.title.replace('[', '(').replace(']', ')')}]]"
+        val title = file.title.replace('[', '(').replace(']', ')')
+        val link = "[[file:${file.ref.path}][${if (cellTyping != null) title.replace('|', '/') else title}]]"
+        if (cellTyping != null) {
+            cellDraft.replace(TextFieldValue(cellTyping.text.replaceRange(q.start, q.end, link), TextRange(q.start + link.length)))
+            return
+        }
         draft = TextFieldValue(draft.text.replaceRange(q.start, q.end, link), TextRange(q.start + link.length))
     }
 
     fun insertLink(target: OrgNote) {
         val q = query ?: return
+        // In a table field: its title without "|", which would split the field
+        if (cellTyping != null) {
+            scope.launch {
+                val (id, _) = viewModel.idFor(target) ?: return@launch
+                val link = IdLinks.format(id, displayTitle(target.title).replace('|', '/'))
+                cellDraft.replace(TextFieldValue(cellTyping.text.replaceRange(q.start, q.end, link), TextRange(q.start + link.length)))
+            }
+            return
+        }
         val what = editing
         val text = draft.text
         scope.launch {
@@ -760,6 +778,7 @@ fun NoteScreen(
                             tableNamed = tables,
                             liveFormulas = settings.tableRecalc != TableRecalc.Never,
                             showLogbook = true,
+                            cellDraft = cellDraft,
                             onEditTable = if (settings.editCells) {
                                 { change ->
                                     saved = Editing.Content to change(content)
