@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import io.github.yighy.orgwhal.data.TemplatesHidden
 import io.github.yighy.orgwhal.data.ReminderButton
 import io.github.yighy.orgwhal.data.TableRecalc
 import androidx.activity.compose.LocalActivity
@@ -72,6 +73,7 @@ fun SettingsScreen(
     var editKeywords by remember { mutableStateOf(false) }
     var pickLinkRenaming by remember { mutableStateOf(false) }
     var pickTableRecalc by remember { mutableStateOf(false) }
+    var pickTemplatesHidden by remember { mutableStateOf(false) }
     var pickTheme by remember { mutableStateOf(false) }
     val english = remember { AppLanguage.isEnglish(context) }
     val activity = LocalActivity.current
@@ -196,6 +198,10 @@ fun SettingsScreen(
                 onClick = { pickTableRecalc = true },
                 supportingContent = { Text(stringResource(settings.tableRecalc.label) + "\n" + stringResource(R.string.settings_tables_summary)) },
             ) { Text(stringResource(R.string.settings_tables)) }
+            ListItem(
+                onClick = { pickTemplatesHidden = true },
+                supportingContent = { Text(stringResource(settings.templatesHidden.label) + "\n" + stringResource(R.string.settings_templates_summary)) },
+            ) { Text(stringResource(R.string.settings_templates)) }
             SwitchItem(
                 title = stringResource(R.string.settings_edit_cells),
                 summary = stringResource(R.string.settings_edit_cells_summary),
@@ -384,6 +390,18 @@ fun SettingsScreen(
             onSelect = { label ->
                 pickTableRecalc = false
                 TableRecalc.entries.firstOrNull { resources.getString(it.label) == label }?.let(viewModel::setTableRecalc)
+            },
+        )
+    }
+    if (pickTemplatesHidden) {
+        ChoiceDialog(
+            title = stringResource(R.string.settings_templates),
+            options = TemplatesHidden.entries.map { stringResource(it.label) },
+            selected = stringResource(settings.templatesHidden.label),
+            onDismiss = { pickTemplatesHidden = false },
+            onSelect = { label ->
+                pickTemplatesHidden = false
+                TemplatesHidden.entries.firstOrNull { resources.getString(it.label) == label }?.let(viewModel::setTemplatesHidden)
             },
         )
     }

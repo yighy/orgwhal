@@ -1,5 +1,8 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.runtime.collectAsState
+import io.github.yighy.orgwhal.core.Templates
+import io.github.yighy.orgwhal.data.TemplatesHidden
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,9 +78,11 @@ fun AgendaScreen(
     // A notebook that went away no longer filters
     val notebook = viewModel.agendaNotebook?.takeIf { library.file(it) != null }
     val tag = viewModel.agendaTag
-    val agenda = remember(library, today, notebook, tag) {
+    val skipTemplates = viewModel.settings.collectAsState().value.templatesHidden != TemplatesHidden.Nowhere
+    val agenda = remember(library, today, notebook, tag, skipTemplates) {
         val notes = library.notes.filter { n ->
-            (notebook == null || n.fileUri == notebook) && (tag == null || n.tags.any { it.equals(tag, ignoreCase = true) })
+            (notebook == null || n.fileUri == notebook) && (tag == null || n.tags.any { it.equals(tag, ignoreCase = true) }) &&
+                !(skipTemplates && Templates.isTemplate(n))
         }
         Agenda.build(notes, today, 7)
     }

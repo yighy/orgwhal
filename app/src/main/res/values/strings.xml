@@ -128,6 +128,15 @@
     <string name="notification_tomorrow">Tomorrow</string>
     <string name="now">Now</string>
     <string name="today">Today</string>
+    <string name="from_template">Template</string>
+    <string name="search_templates">Search the templates</string>
+    <string name="no_matching_templates">No matching templates</string>
+    <string name="settings_templates">Template notes</string>
+    <string name="settings_templates_summary">Notes tagged :template:, offered when making a new note; they stay in their notebooks</string>
+    <string name="templates_hidden_nowhere">Shown everywhere</string>
+    <string name="templates_hidden_agenda">Left out of the agenda</string>
+    <string name="templates_hidden_agenda_search">Left out of the agenda and the search</string>
+    <string name="choose_template">New note from a template</string>
     <string name="ok">OK</string>
     <string name="other_emoji">Other emoji</string>
     <string name="outdent">Outdent</string>

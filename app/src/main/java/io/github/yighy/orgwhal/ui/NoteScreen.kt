@@ -1,5 +1,9 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.foundation.shape.RoundedCornerShape
+import io.github.yighy.orgwhal.core.Templates
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.animation.animateContentSize
@@ -156,7 +160,7 @@ private enum class Editing { None, Title, Content }
 private enum class DateDialog { Scheduled, Deadline }
 
 /** Metadata being added or picked in place. */
-private enum class MetaEdit { Tags, State, Priority, Property }
+private enum class MetaEdit { Template, Tags, State, Priority, Property }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -239,6 +243,38 @@ fun NoteScreen(
     fun share(text: String) {
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
         context.startActivity(Intent.createChooser(send, null))
+    }
+
+    // Template notes (tagged :template:), offered while a note is being made
+    val templates = remember(library) { library.notes.filter(Templates::isTemplate) }
+    // The title typed before the templates were shown, until one is chosen
+    var typedTitle by remember { mutableStateOf("") }
+    /** Starts the new note from [template]: a title already typed stays, the template gives the rest. */
+    fun useTemplate(template: OrgNote) {
+        metaEdit = null
+        val typed = typedTitle.trim()
+        typedTitle = ""
+        val made = Templates.newNote(template, LocalDateTime.now())
+        viewModel.update(note) { if (typed.isNotEmpty()) made.copy(title = typed) else made }
+    }
+
+    /**
+     * Shows the templates. A title being typed is put aside, not saved (which would make the
+     * note before its template is chosen): the search can then take the keyboard.
+     */
+    fun showTemplates() {
+        typedTitle = if (editing == Editing.Title) draft.text else ""
+        editing = Editing.None
+        metaEdit = MetaEdit.Template
+    }
+
+    /** Closes the templates, back to the title put aside. */
+    fun closeTemplates() {
+        metaEdit = null
+        val typed = typedTitle
+        typedTitle = ""
+        draft = TextFieldValue(typed, TextRange(typed.length))
+        editing = Editing.Title
     }
 
     // A new note is written once it has a title: leaving it without one, after filling it, asks first
@@ -562,10 +598,15 @@ fun NoteScreen(
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .clickable(interactionSource = null, indication = null) { startEditing(Editing.Title) }
+                        .clickable(interactionSource = null, indication = null) {
+                            if (typedTitle.isNotEmpty()) closeTemplates() else startEditing(Editing.Title)
+                        }
                         .padding(vertical = 8.dp),
                 ) {
-                    if (title.isBlank()) {
+                    if (title.isBlank() && typedTitle.isNotBlank()) {
+                        // Put aside while the templates show
+                        Text(typedTitle, style = titleStyle)
+                    } else if (title.isBlank()) {
                         Text(titlePlaceholder, style = titleStyle, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         // Links in the title open their note
@@ -584,6 +625,10 @@ fun NoteScreen(
 
             // Metadata: only what is set, edited in place (dates in a dialog); rows unfold
             // when added and fold away when removed
+            // The templates to start the new note from, as the note would be made
+            MetaSlot(metaEdit == MetaEdit.Template) {
+                TemplateChoice(templates, library, onPick = ::useTemplate, onClose = ::closeTemplates)
+            }
             MetaSlot(note.tags.isNotEmpty() || metaEdit == MetaEdit.Tags) {
                 TagsEditor(
                     tags = note.tags,
@@ -690,7 +735,9 @@ fun NoteScreen(
             }
 
             // What can still be added, on one line that scrolls
+            val templateLabel = stringResource(R.string.from_template)
             val addChips = listOfNotNull(
+                (templateLabel to { showTemplates() }).takeIf { newNote != null && templates.isNotEmpty() && metaEdit != MetaEdit.Template },
                 (stringResource(R.string.tags) to { metaEdit = MetaEdit.Tags }).takeIf { note.tags.isEmpty() && metaEdit != MetaEdit.Tags },
                 (stringResource(R.string.state) to { metaEdit = MetaEdit.State }).takeIf { note.state == null && metaEdit != MetaEdit.State },
                 (stringResource(R.string.priority) to { metaEdit = MetaEdit.Priority }).takeIf { note.priority == null && metaEdit != MetaEdit.Priority },
@@ -715,7 +762,11 @@ fun NoteScreen(
             ) {
                 items(addChips, key = { it.first }) { (label, onClick) ->
                     AssistChip(
-                        onClick = { commit(); onClick() },
+                        // The template takes the title being typed as it is, not saved first
+                        onClick = {
+                            if (label != templateLabel) commit()
+                            onClick()
+                        },
                         label = { Text(label) },
                         leadingIcon = { Icon(Icons.Default.Add, null, Modifier.size(AssistChipDefaults.IconSize)) },
                         modifier = Modifier.animateItem(fadeOutSpec = null),
@@ -920,6 +971,95 @@ private fun MetaSlot(visible: Boolean, content: @Composable () -> Unit) {
         exit = shrinkVertically(motion.defaultSpatialSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
     ) { content() }
 }
+
+/**
+ * The template notes to start a new note from: each shown with the title it would give (its
+ * dates filled), its notebook and the start of its content; a search above narrows them down
+ * (every word found in the title, notebook, tags or content).
+ */
+@Composable
+private fun TemplateChoice(templates: List<OrgNote>, library: NoteRepository.Library, onPick: (OrgNote) -> Unit, onClose: () -> Unit) {
+    val now = remember { LocalDateTime.now() }
+    var query by remember { mutableStateOf("") }
+    val words = query.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+    val shown = remember(templates, words, now) {
+        templates.filter { template ->
+            val made = Templates.newNote(template, now)
+            val notebook = library.file(template.fileUri)?.title ?: template.fileName
+            val text = listOf(made.title, template.title, notebook, made.tags.joinToString(" "), made.content).joinToString("\n")
+            // Accents aside: "seance" finds "Séance"
+            val folded = foldAccents(text)
+            words.all { folded.contains(foldAccents(it), ignoreCase = true) }
+        }
+    }
+    Column {
+        MetaRow(stringResource(R.string.from_template), onClick = onClose) {
+            Icon(Icons.Default.Close, stringResource(R.string.cancel), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        // A plain line of text, like the rest of the note's fields
+        BasicTextField(
+            value = query,
+            onValueChange = { query = it },
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            decorationBox = { field ->
+                Row(Modifier.heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) {
+                        if (query.isEmpty()) {
+                            Text(stringResource(R.string.search_templates), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        field()
+                    }
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = "" }) { Icon(Icons.Default.Clear, stringResource(R.string.clear_search)) }
+                    }
+                }
+            },
+        )
+        if (shown.isEmpty()) {
+            Text(
+                stringResource(R.string.no_matching_templates),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
+        }
+        shown.forEach { template ->
+            val made = remember(template, now) { Templates.newNote(template, now) }
+            val notebook = library.file(template.fileUri)?.title ?: template.fileName
+            val start = made.content.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("|") && !it.startsWith(":") }
+            Surface(
+                onClick = { onPick(template) },
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            ) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        made.state?.let {
+                            StateLabel(it, false)
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(displayTitle(made.title).ifBlank { stringResource(R.string.untitled) }, style = MaterialTheme.typography.titleMedium)
+                    }
+                    Text(
+                        (listOf(notebook) + made.tags.map { ":$it:" } + listOfNotNull(start)).joinToString("  ·  "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** [text] without its accents ("Séance" to "Seance"), to search regardless of them. */
+private fun foldAccents(text: String): String =
+    java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
 
 /** Unfolds [content] when it first appears (if [animate]). */
 @Composable

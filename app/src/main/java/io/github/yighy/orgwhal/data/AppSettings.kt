@@ -45,6 +45,13 @@ enum class TableRecalc(@StringRes val label: Int) {
     Save(R.string.tables_save),
 }
 
+/** Where template notes (:template:) are left out: they stay in their notebooks anyway. */
+enum class TemplatesHidden(@StringRes val label: Int) {
+    Nowhere(R.string.templates_hidden_nowhere),
+    Agenda(R.string.templates_hidden_agenda),
+    AgendaAndSearch(R.string.templates_hidden_agenda_search),
+}
+
 /** The reminder notification's third button, after Done and the snooze: start the clock, or snooze until tomorrow. */
 enum class ReminderButton(@StringRes val label: Int) {
     ClockIn(R.string.notification_clock_in),
@@ -94,12 +101,14 @@ class AppSettings(context: Context) {
         val tableRecalc: TableRecalc = TableRecalc.Never,
         /** Whether a tap on a table field opens it for editing. */
         val editCells: Boolean = true,
+        /** Where template notes are left out (with no reminders when out of the agenda). */
+        val templatesHidden: TemplatesHidden = TemplatesHidden.AgendaAndSearch,
         val themeMode: ThemeMode = ThemeMode.System,
         /** Colors taken from the wallpaper (Android 12+). */
         val dynamicColor: Boolean = true,
     ) {
         val reminderOptions: Agenda.ReminderOptions
-            get() = Agenda.ReminderOptions(remindScheduled, remindDeadline, allDayTime.takeIf { remindAllDay })
+            get() = Agenda.ReminderOptions(remindScheduled, remindDeadline, allDayTime.takeIf { remindAllDay }, skipTemplates = templatesHidden != TemplatesHidden.Nowhere)
     }
 
     private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -126,6 +135,7 @@ class AppSettings(context: Context) {
             linkRenaming = LinkRenaming.entries.firstOrNull { it.name == prefs.getString(KEY_LINK_RENAMING, null) }
                 ?: LinkRenaming.Ask,
             tableRecalc = TableRecalc.entries.firstOrNull { it.name == prefs.getString(KEY_TABLE_RECALC, null) } ?: TableRecalc.Never,
+            templatesHidden = TemplatesHidden.entries.firstOrNull { it.name == prefs.getString(KEY_TEMPLATES_HIDDEN, null) } ?: TemplatesHidden.AgendaAndSearch,
             editCells = prefs.getBoolean(KEY_EDIT_CELLS, true),
             themeMode = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.System,
             dynamicColor = prefs.getBoolean(KEY_DYNAMIC_COLOR, true),
@@ -257,6 +267,8 @@ class AppSettings(context: Context) {
 
     fun setTableRecalc(mode: TableRecalc) = save({ putString(KEY_TABLE_RECALC, mode.name) }) { it.copy(tableRecalc = mode) }
 
+    fun setTemplatesHidden(mode: TemplatesHidden) = save({ putString(KEY_TEMPLATES_HIDDEN, mode.name) }) { it.copy(templatesHidden = mode) }
+
     fun setEditCells(on: Boolean) = save({ putBoolean(KEY_EDIT_CELLS, on) }) { it.copy(editCells = on) }
 
     fun setThemeMode(mode: ThemeMode) = save({ putString(KEY_THEME, mode.name) }) { it.copy(themeMode = mode) }
@@ -293,6 +305,7 @@ class AppSettings(context: Context) {
         private const val KEY_REMINDER_BUTTON = "reminder_button"
         private const val KEY_LINK_RENAMING = "link_renaming"
         private const val KEY_TABLE_RECALC = "table_recalc"
+        private const val KEY_TEMPLATES_HIDDEN = "templates_hidden"
         private const val KEY_EDIT_CELLS = "edit_cells"
         private const val KEY_THEME = "theme_mode"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"

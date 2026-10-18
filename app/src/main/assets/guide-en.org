@@ -71,7 +71,7 @@ The deadline shows in the agenda on its date, in red, then under "Overdue" once 
 ** Formatting
 Org is written as text and shown formatted: *bold*, /italic/, _underline_, +strike-through+, =verbatim= and ~code~.
 
-The *toolbar* over the keyboard (while editing the content) does bold, italic, underline, strike-through, code, list, checkbox, indent / outdent, =id:= and date. Undo and redo stay on the right. While editing the title, a shorter one leaves out lists and indents, and its date button writes an inactive date alone, as a journal's entries are titled (=*** [2026-10-13 Tue]=); *Today* writes today's.
+The *toolbar* over the keyboard (while editing the content) does bold, italic, underline, strike-through, code, list, checkbox, indent / outdent, =id:= and date. Undo and redo stay on the right. While editing the title, a shorter one leaves out lists and indents, and its date button writes an inactive date alone, as a journal's entries are titled (=*** [2026-10-13 Tue]=); *Today* writes today's. A note tagged =:template:= is a template: on a new note, the *Template* chip lists them (a search narrows them down) and starts it as a copy (title, state, tags, content), with =%u= written as today's inactive date, =%U= with the time, =%t= / =%T= active, as in Emacs' capture templates. Templates stay out of the agenda and the search (unless searched for with =t.template=); *Settings → Template notes* changes that.
 
 ** Lists and checkboxes
 - [X] A checked box

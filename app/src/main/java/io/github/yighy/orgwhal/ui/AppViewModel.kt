@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import io.github.yighy.orgwhal.data.TemplatesHidden
 import io.github.yighy.orgwhal.data.ReminderButton
 import io.github.yighy.orgwhal.core.TableFormulas
 import io.github.yighy.orgwhal.core.Blocks
@@ -278,6 +279,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setLinkRenaming(mode: LinkRenaming) = appSettings.setLinkRenaming(mode)
 
     fun setTableRecalc(mode: TableRecalc) = appSettings.setTableRecalc(mode)
+
+    fun setTemplatesHidden(mode: TemplatesHidden) = appSettings.setTemplatesHidden(mode)
 
     fun setEditCells(on: Boolean) = appSettings.setEditCells(on)
 

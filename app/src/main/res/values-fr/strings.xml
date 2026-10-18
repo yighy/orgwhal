@@ -126,6 +126,15 @@
     <string name="notification_tomorrow">Demain</string>
     <string name="now">Maintenant</string>
     <string name="today">Aujourd’hui</string>
+    <string name="from_template">Modèle</string>
+    <string name="search_templates">Rechercher un modèle</string>
+    <string name="no_matching_templates">Aucun modèle ne correspond</string>
+    <string name="settings_templates">Notes modèles</string>
+    <string name="settings_templates_summary">Notes étiquetées :template:, proposées à la création d’une note ; elles restent dans leurs carnets</string>
+    <string name="templates_hidden_nowhere">Affichées partout</string>
+    <string name="templates_hidden_agenda">Exclues de l’agenda</string>
+    <string name="templates_hidden_agenda_search">Exclues de l’agenda et de la recherche</string>
+    <string name="choose_template">Nouvelle note d’après un modèle</string>
     <string name="ok">OK</string>
     <string name="other_emoji">Autre émoji</string>
     <string name="outdent">Diminuer le retrait</string>

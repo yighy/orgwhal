@@ -1,5 +1,8 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.runtime.collectAsState
+import io.github.yighy.orgwhal.core.Templates
+import io.github.yighy.orgwhal.data.TemplatesHidden
 import androidx.compose.ui.composed
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.animation.fadeOut
@@ -448,8 +451,11 @@ fun SearchResults(
     val queryText = listOfNotNull(viewModel.query, viewModel.tag?.let { "t.\"$it\"" }).joinToString(" ")
     val context = remember(library) { searchContext(library) }
     val query = remember(queryText) { SearchQuery.parse(queryText) }
-    val results = remember(query, notes, context) {
-        if (idle) emptyList() else query.apply(notes, context)
+    // Template notes left out as set, unless looked for by their tag
+    val hidden = viewModel.settings.collectAsState().value.templatesHidden
+    val skipTemplates = hidden == TemplatesHidden.AgendaAndSearch && !queryText.contains(Templates.TAG, ignoreCase = true)
+    val results = remember(query, notes, context, skipTemplates) {
+        if (idle) emptyList() else query.apply(if (skipTemplates) notes.filterNot(Templates::isTemplate) else notes, context)
     }
     // ad.N: the matching notes as an agenda of N days
     val today = LocalDate.now()

@@ -72,6 +72,8 @@ object Agenda {
         val deadline: Boolean = true,
         /** Time used for dates without a time of day; null means no reminder for those. */
         val allDayTime: LocalTime? = null,
+        /** No reminders for template notes (:template:). */
+        val skipTemplates: Boolean = false,
     )
 
     /** Reminders due after [from] (exclusive) and up to [to] (inclusive). */
@@ -92,7 +94,7 @@ object Agenda {
     ): List<Reminder> {
         val result = mutableListOf<Reminder>()
         for (note in notes) {
-            if (note.isDone) continue
+            if (note.isDone || options.skipTemplates && Templates.isTemplate(note)) continue
             for ((kind, timestamp) in planning(note)) {
                 if (kind == Kind.Scheduled && !options.scheduled) continue
                 if (kind == Kind.Deadline && !options.deadline) continue
