@@ -4,6 +4,21 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-10-18
+
+### Added
+- A drawer's content shows as the rest of the note: a table in it is a grid whose fields are
+  edited in place, its lists and checkboxes work
+
+### Changed
+- In a notebook's list, tables no longer scroll sideways (a swipe is the note's): one wider than
+  the screen is cut, faded at the right; it scrolls once the note is open
+
+### Fixed
+- A swipe on a note's table now reaches the note (its actions): a table scrolls sideways only
+  when wider than the screen
+- A note's lone logbook shows above the content placeholder, not over it
+
 ## [0.28.0] - 2026-10-18
 
 ### Added
@@ -407,7 +422,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.29.0...HEAD
+[0.29.0]: https://github.com/yighy/orgwhal/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/yighy/orgwhal/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/yighy/orgwhal/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/yighy/orgwhal/compare/v0.25.0...v0.26.0
