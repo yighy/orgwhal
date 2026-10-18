@@ -153,6 +153,12 @@ fun SettingsScreen(
                 checked = settings.wrapTables,
                 onCheckedChange = viewModel::setWrapTables,
             )
+            SwitchItem(
+                title = stringResource(R.string.settings_freeze_first_column),
+                summary = stringResource(R.string.settings_freeze_first_column_summary),
+                checked = settings.freezeFirstColumn,
+                onCheckedChange = viewModel::setFreezeFirstColumn,
+            )
             ListItem(
                 onClick = { pickSpacing = true },
                 supportingContent = { Text(stringResource(settings.noteSpacing.label)) },

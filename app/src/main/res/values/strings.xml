@@ -241,6 +241,8 @@
     <string name="settings_monospace">Fixed-width font</string>
     <string name="settings_wrap_tables">Wrap table fields</string>
     <string name="settings_wrap_tables_summary">Long fields go on several lines, the table fitting the screen, instead of scrolling sideways; the file keeps one line per row</string>
+    <string name="settings_freeze_first_column">Freeze the first column</string>
+    <string name="settings_freeze_first_column_summary">A table wider than the screen keeps its first column at the left as it scrolls sideways</string>
     <string name="settings_monospace_summary">For the notes\' content, as in Emacs: tables and text aligned with spaces line up</string>
     <string name="settings_tables">Table formulas</string>
     <string name="settings_tables_summary">Recalculate tables with formulas when a note shows them</string>

@@ -142,7 +142,7 @@ The link "meeting-point" leads here: <<meeting-point>> in front of the station.
 | Apples |        6 |
 | Pears  |        4 |
 
-Columns of numbers align right. While the note's text is edited, table lines show in a fixed-width font, so that they line up as in Emacs; *Settings → Fixed-width font* shows all notes' content in it. Long fields go on several lines so that the table fits the screen; *Settings → Wrap table fields* turns it off, the table then scrolling sideways. Links can be typed in a field too: =id:= suggests notes, as in the text.
+Columns of numbers align right. While the note's text is edited, table lines show in a fixed-width font, so that they line up as in Emacs; *Settings → Fixed-width font* shows all notes' content in it. Long fields go on several lines so that the table fits the screen; *Settings → Wrap table fields* turns it off, the table then scrolling sideways. Every other row is tinted; in a note, the header of a long table stays at the top as you scroll down, and *Settings → Freeze the first column* keeps the first column at the left as a wide table scrolls sideways. Links can be typed in a field too: =id:= suggests notes, as in the text.
 
 Tap a field to change it right in the table; another field, a tap elsewhere or closing the keyboard saves it, and the table realigns as Emacs writes it. *Enter* goes on to the field below, as in Emacs; on the last row it adds a new row. A long press on a field adds a row or column next to it, or deletes its own; the formulas follow. Tap elsewhere in the note to edit its text. This can be turned off in *Settings → Edit table cells on tap*.
 

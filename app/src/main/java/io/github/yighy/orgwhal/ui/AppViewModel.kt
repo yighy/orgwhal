@@ -258,6 +258,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setWrapTables(on: Boolean) = appSettings.setWrapTables(on)
 
+    fun setFreezeFirstColumn(on: Boolean) = appSettings.setFreezeFirstColumn(on)
+
     fun setNoteSpacing(spacing: NoteSpacing) = appSettings.setNoteSpacing(spacing)
 
     fun setHiddenProperties(names: Set<String>) = appSettings.setHiddenProperties(names)

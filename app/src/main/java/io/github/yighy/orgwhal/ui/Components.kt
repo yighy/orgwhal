@@ -861,6 +861,9 @@ private fun rawOffset(shown: Int, parts: List<ShownPart>): Int? {
 /** Whether done notes show struck through (a setting). */
 val LocalStrikeDone = compositionLocalOf { true }
 
+/** Whether a wide table keeps its first column at the left as it scrolls sideways (a setting). */
+val LocalFreezeFirstColumn = compositionLocalOf { false }
+
 /** Whether long table fields wrap onto several lines (a setting). */
 val LocalWrapTables = compositionLocalOf { true }
 

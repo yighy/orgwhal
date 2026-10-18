@@ -1,5 +1,12 @@
 package io.github.yighy.orgwhal.ui
 
+import kotlin.math.roundToInt
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.foundation.ScrollState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.layout.Layout
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -578,7 +585,8 @@ private fun OrgTable(
     editor: @Composable (Int, Int, TextStyle) -> Unit = { _, _, _ -> },
 ) {
     val line = MaterialTheme.colorScheme.outlineVariant
-    val headerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    // The header in a color of its own, not to be taken for a tinted row
+    val headerColor = MaterialTheme.colorScheme.secondaryContainer
     val shape = RoundedCornerShape(8.dp)
     val rows = table.rows.withIndex().mapNotNull { (i, cells) -> cells?.let { i to it } }
     val header = table.headerRows
@@ -586,13 +594,23 @@ private fun OrgTable(
     val numeric = remember(table) { Blocks.numericColumns(rows.drop(header).map { it.second }, table.columns) }
     val wrap = LocalWrapTables.current
     val floor = with(LocalDensity.current) { MIN_WRAPPED_COLUMN.roundToPx() }
+    // Fields are opaque, for the first column and the header to pass over the others; every
+    // other row is tinted, so as not to lose one's row
+    val base = MaterialTheme.colorScheme.background
+    val stripe = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+    val freezeFirst = LocalFreezeFirstColumn.current
+    val sideways = rememberScrollState()
+    // Where the table is in the page that scrolls around it, for its header to stay in view
+    val sticky = LocalStickyTables.current
+    var top by remember { mutableFloatStateOf(0f) }
     BoxWithConstraints(modifier) {
         val screen = constraints.maxWidth
         Layout(
             content = {
-                rows.forEach { (i, cells) ->
+                rows.forEachIndexed { r, (i, cells) ->
                     repeat(table.columns) { c ->
                         val isHeader = i < header
+                        val striped = !isHeader && (r - header) % 2 == 1
                         var menu by remember { mutableStateOf(false) }
                         Box(
                             Modifier
@@ -606,12 +624,13 @@ private fun OrgTable(
                                         Modifier
                                     },
                                 )
-                                .background(if (isHeader) headerColor else Color.Transparent)
+                                .background(if (isHeader) headerColor else base)
+                                .then(if (striped) Modifier.background(stripe) else Modifier)
                                 .border(if (editing == i to c) 2.dp else 0.5.dp, if (editing == i to c) MaterialTheme.colorScheme.primary else line)
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                             contentAlignment = if (numeric[c] && !isHeader) Alignment.CenterEnd else Alignment.CenterStart,
                         ) {
-                            val cellStyle = if (isHeader) style.copy(fontWeight = FontWeight.Bold) else style
+                            val cellStyle = if (isHeader) style.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer) else style
                             if (editing == i to c) {
                                 editor(i, c, if (numeric[c] && !isHeader) cellStyle.copy(textAlign = TextAlign.End) else cellStyle)
                             } else {
@@ -623,21 +642,46 @@ private fun OrgTable(
                 }
             },
             modifier = Modifier
-                .horizontalScroll(rememberScrollState())
+                .onGloballyPositioned { table -> sticky?.content?.let { top = it.localPositionOf(table, Offset.Zero).y } }
+                .horizontalScroll(sideways)
                 .clip(shape)
                 .border(1.dp, line, shape),
         ) { measurables, _ ->
             val grid = measurables.chunked(table.columns)
             val natural = IntArray(table.columns) { c -> grid.maxOfOrNull { it[c].maxIntrinsicWidth(Constraints.Infinity) } ?: 0 }
-            val widths = if (wrap && screen != Constraints.Infinity) fitColumns(natural, screen, floor) else natural
+            // Not narrower than a column's longest word (within reason), rather than cut in it
+            val words = IntArray(table.columns) { c -> grid.maxOfOrNull { it[c].minIntrinsicWidth(Constraints.Infinity) } ?: 0 }
+            val widths = if (wrap && screen != Constraints.Infinity) {
+                fitColumns(natural, screen, floor).mapIndexed { c, w -> maxOf(w, minOf(words[c], natural[c], screen / 2)) }.toIntArray()
+            } else {
+                natural
+            }
             val heights = grid.map { row -> row.indices.maxOf { c -> row[c].minIntrinsicHeight(widths[c]) } }
             val placeables = grid.mapIndexed { r, row -> row.mapIndexed { c, cell -> cell.measure(Constraints.fixed(widths[c], heights[r])) } }
-            layout(widths.sum(), heights.sum()) {
+            val width = widths.sum()
+            val height = heights.sum()
+            val headerHeight = heights.take(rows.count { it.first < header }).sum()
+            layout(width, height) {
+                // Scrolled sideways, the first column stays at the left (unless it takes most
+                // of the screen); scrolled past, the header stays at the top, until the last row
+                val freeze = freezeFirst && table.columns > 1 && width > screen && widths[0] <= screen / 2
+                val dx = if (freeze) sideways.value else 0
+                val dy = if (sticky != null && headerHeight > 0) {
+                    (sticky.scroll.value - top).roundToInt().coerceIn(0, (height - headerHeight - heights.last()).coerceAtLeast(0))
+                } else {
+                    0
+                }
                 var y = 0
                 placeables.forEachIndexed { r, row ->
+                    val inHeader = rows[r].first < header
                     var x = 0
                     row.forEachIndexed { c, cell ->
-                        cell.place(x, y)
+                        val frozen = freeze && c == 0
+                        cell.place(
+                            x + if (frozen) dx else 0,
+                            y + if (inHeader) dy else 0,
+                            zIndex = (if (inHeader) 2f else 0f) + if (frozen) 1f else 0f,
+                        )
                         x += widths[c]
                     }
                     y += heights[r]
@@ -667,6 +711,17 @@ internal fun fitColumns(natural: IntArray, available: Int, floor: Int): IntArray
     }
     return IntArray(natural.size) { minOf(natural[it], cap) }
 }
+
+/**
+ * The page scrolling around tables ([scroll], its [content] laid out), for their headers to stay
+ * in view as they are scrolled past.
+ */
+class StickyTables(val scroll: ScrollState) {
+    var content: LayoutCoordinates? = null
+}
+
+/** Given by a page scrolling as a whole (a note), whose tables keep their header in view. */
+val LocalStickyTables = compositionLocalOf<StickyTables?> { null }
 
 /** The narrowest a column gets for its fields to wrap. */
 private val MIN_WRAPPED_COLUMN = 72.dp

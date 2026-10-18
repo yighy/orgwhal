@@ -1,5 +1,7 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.scaleOut
@@ -346,6 +348,7 @@ fun NoteScreen(
     }
 
     val scrollState = rememberScrollState()
+    val stickyTables = remember { StickyTables(scrollState) }
     Scaffold(
         modifier = Modifier
             .sharedContainer("note-${note.fileUri}#${note.index}", RectangleShape)
@@ -499,6 +502,7 @@ fun NoteScreen(
                 // A tap on nothing (under the content) ends the editing in place, saving it
                 .clickable(interactionSource = null, indication = null) { screenFocus.clearFocus() }
                 .verticalScroll(scrollState)
+                .onGloballyPositioned { stickyTables.content = it }
                 .padding(horizontal = 16.dp),
         ) {
             // Breadcrumbs: notebook · ancestors (or where a new note goes); for a note just
@@ -761,7 +765,7 @@ fun NoteScreen(
                     }
                     // A logbook alone shows folded, over the placeholder
                     val empty = remember(content) { Blocks.showsNothing(content) }
-                    if (content.isNotBlank()) {
+                    if (content.isNotBlank()) CompositionLocalProvider(LocalStickyTables provides stickyTables) {
                         OrgContent(
                             content,
                             contentStyle,

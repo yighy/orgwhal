@@ -66,6 +66,8 @@ class AppSettings(context: Context) {
         val monospace: Boolean = false,
         /** Long table fields wrap onto several lines, columns fitting the screen (display only). */
         val wrapTables: Boolean = true,
+        /** A table wider than the screen keeps its first column at the left as it scrolls sideways. */
+        val freezeFirstColumn: Boolean = false,
         val noteSpacing: NoteSpacing = NoteSpacing.Comfortable,
         val remindScheduled: Boolean = true,
         val remindDeadline: Boolean = true,
@@ -108,6 +110,7 @@ class AppSettings(context: Context) {
             strikeDone = prefs.getBoolean(KEY_STRIKE_DONE, true),
             monospace = prefs.getBoolean(KEY_MONOSPACE, false),
             wrapTables = prefs.getBoolean(KEY_WRAP_TABLES, true),
+            freezeFirstColumn = prefs.getBoolean(KEY_FREEZE_FIRST_COLUMN, false),
             noteSpacing = NoteSpacing.entries.firstOrNull { it.name == prefs.getString(KEY_NOTE_SPACING, null) } ?: NoteSpacing.Comfortable,
             remindScheduled = prefs.getBoolean(KEY_REMIND_SCHEDULED, true),
             remindDeadline = prefs.getBoolean(KEY_REMIND_DEADLINE, true),
@@ -221,6 +224,8 @@ class AppSettings(context: Context) {
 
     fun setWrapTables(on: Boolean) = save({ putBoolean(KEY_WRAP_TABLES, on) }) { it.copy(wrapTables = on) }
 
+    fun setFreezeFirstColumn(on: Boolean) = save({ putBoolean(KEY_FREEZE_FIRST_COLUMN, on) }) { it.copy(freezeFirstColumn = on) }
+
     fun setShowContentInNotebook(show: Boolean) =
         save({ putBoolean(KEY_SHOW_CONTENT, show) }) { it.copy(showContentInNotebook = show) }
 
@@ -295,6 +300,7 @@ class AppSettings(context: Context) {
         private const val KEY_STRIKE_DONE = "strike_done"
         private const val KEY_MONOSPACE = "monospace"
         private const val KEY_WRAP_TABLES = "wrap_tables"
+        private const val KEY_FREEZE_FIRST_COLUMN = "freeze_first_column"
         private const val KEY_NOTE_SPACING = "note_spacing"
         private const val KEY_REMIND_SCHEDULED = "remind_scheduled"
         private const val KEY_REMIND_DEADLINE = "remind_deadline"

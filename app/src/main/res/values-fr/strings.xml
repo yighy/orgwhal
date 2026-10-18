@@ -239,6 +239,8 @@
     <string name="settings_monospace">Police à largeur fixe</string>
     <string name="settings_wrap_tables">Retour à la ligne dans les tableaux</string>
     <string name="settings_wrap_tables_summary">Les cellules longues passent sur plusieurs lignes, le tableau tenant dans l’écran, au lieu de défiler sur le côté ; le fichier garde une ligne par rangée</string>
+    <string name="settings_freeze_first_column">Figer la première colonne</string>
+    <string name="settings_freeze_first_column_summary">Un tableau plus large que l’écran garde sa première colonne à gauche quand il défile sur le côté</string>
     <string name="settings_monospace_summary">Pour le contenu des notes, comme dans Emacs : tableaux et textes alignés par des espaces tombent juste</string>
     <string name="settings_tables">Formules des tableaux</string>
     <string name="settings_tables_summary">Recalculer les tableaux à formules quand une note les affiche</string>

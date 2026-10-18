@@ -113,7 +113,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by viewModel.settings.collectAsState()
             OrgwhalTheme(settings.themeMode, settings.dynamicColor) {
-                CompositionLocalProvider(LocalStrikeDone provides settings.strikeDone, LocalMonospace provides settings.monospace, LocalWrapTables provides settings.wrapTables) {
+                CompositionLocalProvider(LocalStrikeDone provides settings.strikeDone, LocalMonospace provides settings.monospace, LocalWrapTables provides settings.wrapTables, LocalFreezeFirstColumn provides settings.freezeFirstColumn) {
                     OrgwhalApp(viewModel, notificationsAllowed, ::askForNotifications)
                 }
             }
