@@ -4,6 +4,13 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-10-18
+
+### Added
+- The toolbar over the keyboard also shows while a note's title is edited: emphasis, id: link,
+  date, undo and redo (no lists nor indents); its date button writes an inactive date alone, as
+  a journal's entries are titled ([2026-10-13 Tue]), and Today writes today's
+
 ## [0.26.0] - 2026-10-18
 
 ### Added
@@ -389,7 +396,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.26.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.27.0...HEAD
+[0.27.0]: https://github.com/yighy/orgwhal/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/yighy/orgwhal/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/yighy/orgwhal/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/yighy/orgwhal/compare/v0.23.0...v0.24.0
