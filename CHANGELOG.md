@@ -4,6 +4,18 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-10-18
+
+### Added
+- Every other table row is tinted, so as not to lose one's row; the header has a color of its own
+- In a note, the header of a table taller than the screen stays at the top as it is scrolled
+  past
+- Setting to keep a wide table's first column at the left as it scrolls sideways (Settings,
+  Freeze the first column; off by default)
+
+### Fixed
+- Wrapped table columns no longer get narrower than their longest word, which was cut in two
+
 ## [0.24.0] - 2026-10-18
 
 ### Added
@@ -370,7 +382,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/yighy/orgwhal/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/yighy/orgwhal/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/yighy/orgwhal/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/yighy/orgwhal/compare/v0.21.0...v0.22.0
