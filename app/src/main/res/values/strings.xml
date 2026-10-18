@@ -127,6 +127,7 @@
     <string name="notification_text">%1$s %2$s · %3$s</string>
     <string name="notification_tomorrow">Tomorrow</string>
     <string name="now">Now</string>
+    <string name="today">Today</string>
     <string name="ok">OK</string>
     <string name="other_emoji">Other emoji</string>
     <string name="outdent">Outdent</string>

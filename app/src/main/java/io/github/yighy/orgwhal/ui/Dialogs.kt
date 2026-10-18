@@ -139,6 +139,10 @@ fun TimestampDialog(
     onDismiss: () -> Unit,
     onConfirm: (String?) -> Unit,
     onNow: (() -> Unit)? = null,
+    /** The label of [onNow]'s button. */
+    nowLabel: Int = R.string.now,
+    /** A date alone, without asking for a time. */
+    dateOnly: Boolean = false,
 ) {
     val parts = remember(initial) { OrgTime.parts(initial) }
     var pickedDate by remember { mutableStateOf<LocalDate?>(null) }
@@ -155,7 +159,7 @@ fun TimestampDialog(
             onDismissRequest = {
                 val date = picked()
                 if (date != null && (initial == null || date != initialDate)) {
-                    onConfirm(OrgTime.build(date, parts?.time, initial))
+                    onConfirm(OrgTime.build(date, parts?.time.takeUnless { dateOnly }, initial))
                 } else {
                     onDismiss()
                 }
@@ -164,13 +168,14 @@ fun TimestampDialog(
                 TextButton(
                     enabled = dateState.selectedDateMillis != null,
                     onClick = {
-                        pickedDate = Instant.ofEpochMilli(dateState.selectedDateMillis!!).atZone(ZoneOffset.UTC).toLocalDate()
+                        val picked = Instant.ofEpochMilli(dateState.selectedDateMillis!!).atZone(ZoneOffset.UTC).toLocalDate()
+                        if (dateOnly) onConfirm(OrgTime.build(picked, null, initial)) else pickedDate = picked
                     },
-                ) { Text(stringResource(R.string.next)) }
+                ) { Text(stringResource(if (dateOnly) R.string.ok else R.string.next)) }
             },
             dismissButton = {
                 Row {
-                    if (onNow != null) TextButton(onClick = onNow) { Text(stringResource(R.string.now)) }
+                    if (onNow != null) TextButton(onClick = onNow) { Text(stringResource(nowLabel)) }
                     if (initial != null) TextButton(onClick = { onConfirm(null) }) { Text(stringResource(R.string.remove)) }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                 }

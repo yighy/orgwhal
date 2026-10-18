@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import io.github.yighy.orgwhal.core.OrgTime
 import androidx.compose.foundation.layout.imeAnimationTarget
@@ -138,10 +139,11 @@ fun editToolbarShown(): Boolean = keyboardShown() || EditingDialog.open
 /**
  * Bar over the keyboard while a note's text is edited: bold, italic, underline, strike-through,
  * code, list, checkbox, indent, outdent, link (id: then its suggestions), date (as for scheduled
- * times, or changing the one at the cursor); undo and redo stay at the end.
+ * times, or changing the one at the cursor); undo and redo stay at the end. For a [title], one
+ * line: no list nor indent, and the date is inactive and alone, as a journal's entries are titled.
  */
 @Composable
-fun EditToolbar(value: TextFieldValue, onChange: (TextFieldValue) -> Unit, history: EditHistory) {
+fun EditToolbar(value: TextFieldValue, onChange: (TextFieldValue) -> Unit, history: EditHistory, title: Boolean = false) {
     fun apply(edit: (TextEditing.Edit) -> TextEditing.Edit) {
         val changed = edit(value.toEdit()).toValue()
         if (changed.text == value.text && changed.selection == value.selection) return
@@ -166,10 +168,12 @@ fun EditToolbar(value: TextFieldValue, onChange: (TextFieldValue) -> Unit, histo
                 IconButton(onClick = { emphasis('_') }) { Icon(OrgwhalIcons.Underline, stringResource(R.string.underline)) }
                 IconButton(onClick = { emphasis('+') }) { Icon(OrgwhalIcons.Strike, stringResource(R.string.strike)) }
                 IconButton(onClick = { emphasis('~') }) { Icon(OrgwhalIcons.Code, stringResource(R.string.code)) }
-                IconButton(onClick = { apply(TextEditing::toggleList) }) { Icon(OrgwhalIcons.ListBulleted, stringResource(R.string.list)) }
-                IconButton(onClick = { apply(TextEditing::toggleCheckbox) }) { Icon(OrgwhalIcons.CheckBox, stringResource(R.string.checkbox)) }
-                IconButton(onClick = { apply(TextEditing::indent) }) { Icon(OrgwhalIcons.Indent, stringResource(R.string.indent)) }
-                IconButton(onClick = { apply(TextEditing::outdent) }) { Icon(OrgwhalIcons.Outdent, stringResource(R.string.outdent)) }
+                if (!title) {
+                    IconButton(onClick = { apply(TextEditing::toggleList) }) { Icon(OrgwhalIcons.ListBulleted, stringResource(R.string.list)) }
+                    IconButton(onClick = { apply(TextEditing::toggleCheckbox) }) { Icon(OrgwhalIcons.CheckBox, stringResource(R.string.checkbox)) }
+                    IconButton(onClick = { apply(TextEditing::indent) }) { Icon(OrgwhalIcons.Indent, stringResource(R.string.indent)) }
+                    IconButton(onClick = { apply(TextEditing::outdent) }) { Icon(OrgwhalIcons.Outdent, stringResource(R.string.outdent)) }
+                }
                 IconButton(onClick = { insertWord("id:") }) { Icon(OrgwhalIcons.Link, stringResource(R.string.link_to_note)) }
                 IconButton(onClick = {
                     datePicking = TextEditing.timestampAt(value.toEdit())
@@ -195,17 +199,23 @@ fun EditToolbar(value: TextFieldValue, onChange: (TextFieldValue) -> Unit, histo
     }
     if (dateOpen) {
         val range = datePicking
+        val initial = range?.let { value.text.substring(it) }
         TimestampDialog(
-            initial = range?.let { value.text.substring(it) },
+            initial = initial,
             onDismiss = { dateOpen = false },
-            // The current time, inactive as Org writes when something happened (not in the agenda)
+            // The current time, inactive as Org writes when something happened (not in the
+            // agenda); for a title, today's date alone
             onNow = {
                 dateOpen = false
-                val now = OrgTime.inactive(LocalDateTime.now())
+                val now = if (title) OrgTime.inactiveDate(LocalDate.now()) else OrgTime.inactive(LocalDateTime.now())
                 if (range != null) apply { TextEditing.insert(TextEditing.Edit(it.text, range.first, range.last + 1), now) } else insertWord(now)
             },
-            onConfirm = { timestamp ->
+            nowLabel = if (title) R.string.today else R.string.now,
+            dateOnly = title,
+            onConfirm = { picked ->
                 dateOpen = false
+                // In a title, inactive unless it was active already
+                val timestamp = picked?.let { if (title && initial?.startsWith('<') != true) OrgTime.toInactive(it) else it }
                 when {
                     range != null -> apply { TextEditing.insert(TextEditing.Edit(it.text, range.first, range.last + 1), timestamp.orEmpty()) }
                     timestamp != null -> insertWord(timestamp)

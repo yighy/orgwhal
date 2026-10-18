@@ -125,6 +125,7 @@
     <string name="notification_text">%1$s %2$s · %3$s</string>
     <string name="notification_tomorrow">Demain</string>
     <string name="now">Maintenant</string>
+    <string name="today">Aujourd’hui</string>
     <string name="ok">OK</string>
     <string name="other_emoji">Autre émoji</string>
     <string name="outdent">Diminuer le retrait</string>

@@ -451,6 +451,8 @@ fun NoteScreen(
                 // List, checkbox, indent… over the keyboard while the content is edited
                 if (editing == Editing.Content && editToolbarShown()) {
                     EditToolbar(draft, onChange = { if (editing == Editing.Content) draft = it }, history = history)
+                } else if (editing == Editing.Title && editToolbarShown()) {
+                    EditToolbar(draft, onChange = { if (editing == Editing.Title) draft = it }, history = titleTyping, title = true)
                 }
             }
         },

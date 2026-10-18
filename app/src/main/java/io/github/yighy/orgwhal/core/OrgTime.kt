@@ -62,6 +62,13 @@ object OrgTime {
     /** Events of a note: active timestamps in its title and content (not its planning line). */
     fun events(note: OrgNote): List<String> = events(note.title + "\n" + note.content)
 
+    /** An inactive date such as "[2026-10-13 Tue]", as a journal's entries are titled. */
+    fun inactiveDate(day: LocalDate): String = inactive(day.atStartOfDay()).replace(Regex(""" \d{1,2}:\d{2}]$"""), "]")
+
+    /** [timestamp] made inactive ("<…>" to "[…]"), out of the agenda. */
+    fun toInactive(timestamp: String): String =
+        if (timestamp.startsWith('<') && timestamp.endsWith('>')) "[" + timestamp.substring(1, timestamp.length - 1) + "]" else timestamp
+
     /** An inactive timestamp such as "[2026-10-06 Tue 14:03]" (for CREATED). */
     fun inactive(at: java.time.LocalDateTime): String = OrgRange(
         OrgDateTime.Builder()
