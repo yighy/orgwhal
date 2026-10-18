@@ -797,7 +797,8 @@ fun NoteScreen(
                 var cellEditEnded by remember { mutableLongStateOf(0L) }
                 fun editingCell() = cellEditing || SystemClock.uptimeMillis() - cellEditEnded < CELL_TAP_MS
                 val focusManager = LocalFocusManager.current
-                Box(
+                // One under the other: a logbook alone, then the placeholder
+                Column(
                     Modifier
                         .fillMaxWidth()
                         .clickable(interactionSource = null, indication = null) {
@@ -816,7 +817,7 @@ fun NoteScreen(
                             }
                         }
                     }
-                    // A logbook alone shows folded, over the placeholder
+                    // A logbook alone shows folded, above the placeholder
                     val empty = remember(content) { Blocks.showsNothing(content) }
                     if (content.isNotBlank()) CompositionLocalProvider(LocalStickyTables provides stickyTables) {
                         OrgContent(
