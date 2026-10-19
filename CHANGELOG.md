@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.33.1] - 2026-10-19
+
+### Fixed
+- A tap in the menu (☰) right after opening it works: the drawer slides in a short, fixed time,
+  and no longer takes a tap as a drag while its spring settles
+
 ## [0.33.0] - 2026-10-19
 
 ### Added
@@ -482,7 +488,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.33.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.33.1...HEAD
+[0.33.1]: https://github.com/yighy/orgwhal/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/yighy/orgwhal/compare/v0.32.1...v0.33.0
 [0.32.1]: https://github.com/yighy/orgwhal/compare/v0.32.0...v0.32.1
 [0.32.0]: https://github.com/yighy/orgwhal/compare/v0.31.1...v0.32.0
