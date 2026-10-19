@@ -39,6 +39,18 @@ class TextEditingTest {
     }
 
     @Test
+    fun aDrawerCloses() {
+        assertEquals(e(":NOTES:\n|\n:END:"), typed(":NOTES:|", '\n'))
+        assertEquals(e("Avant\n  :LOGBOOK:\n  |\n  :END:\nAprès"), typed("Avant\n  :LOGBOOK:|\nAprès", '\n'))
+        // Already closed, :END: itself, properties
+        assertNull(typed(":NOTES:|\nnote\n:END:", '\n'))
+        assertNull(typed(":END:|", '\n'))
+        assertNull(typed(":PROPERTIES:|", '\n'))
+        // Closed further down only after another drawer: this one is still open
+        assertEquals(e(":A:\n|\n:END:\n:B:\n:END:"), typed(":A:|\n:B:\n:END:", '\n'))
+    }
+
+    @Test
     fun bracketsClose() {
         assertEquals(e("see [|]"), typed("see |", '['))
         assertEquals(e("f(|)"), typed("f|", '('))

@@ -34,7 +34,7 @@ object TextEditing {
         if (typedOne) {
             val c = n[p]
             return when {
-                c == '\n' -> if (lists) continueList(o, p) else null
+                c == '\n' -> if (lists) closeDrawer(o, p) ?: continueList(o, p) else null
                 c in PAIRS.values && o.getOrNull(p) == c -> Edit(o, p + 1)
                 c in PAIRS -> Edit(n.substring(0, p + 1) + PAIRS.getValue(c) + n.substring(p + 1), p + 1)
                 else -> null
@@ -46,6 +46,30 @@ object TextEditing {
             return Edit(n.removeRange(p - 1, p), p - 1)
         }
         return null
+    }
+
+    private val DRAWER = Regex("""^([ \t]*):([A-Za-z][\w-]*):[ \t]*$""")
+
+    /**
+     * New line at [p] at the end of a drawer's first line (":NOTES:"): its ":END:" under the new
+     * one, the cursor between them, unless something closes it already (an :END: before the next
+     * drawer). Not for :END: itself nor :PROPERTIES: (properties have their own place).
+     */
+    private fun closeDrawer(text: String, p: Int): Edit? {
+        val lineStart = text.lastIndexOf('\n', p - 1) + 1
+        val lineEnd = text.indexOf('\n', p).let { if (it < 0) text.length else it }
+        if (text.substring(p, lineEnd).isNotBlank()) return null
+        val m = DRAWER.matchEntire(text.substring(lineStart, p)) ?: return null
+        val name = m.groupValues[2]
+        if (name.equals("END", ignoreCase = true) || name.equals("PROPERTIES", ignoreCase = true)) return null
+        val after = text.substring(lineEnd).split('\n').drop(1)
+        for (line in after) {
+            val other = DRAWER.matchEntire(line) ?: continue
+            if (other.groupValues[2].equals("END", ignoreCase = true)) return null
+            break
+        }
+        val indent = m.groupValues[1]
+        return Edit(text.substring(0, p) + "\n" + indent + "\n" + indent + ":END:" + text.substring(p), p + 1 + indent.length)
     }
 
     /** New line at [p] after a list item: another item, or the end of the list if it was empty. */
