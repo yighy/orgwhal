@@ -23,6 +23,8 @@ object TextEditing {
      * - "[", "(" or "{" gets its closing pair, the cursor between them
      * - typing a closing one just before the same one steps over it
      * - deleting an opening one with its empty pair right after deletes both
+     * - "<<" (a target) gets its ">>", "<<<" (a radio target) its ">>>"; ">" steps over theirs,
+     *   and deleting a "<" of an empty one deletes them
      */
     fun afterTyping(old: Edit, new: Edit, lists: Boolean = true): Edit? {
         if (!old.collapsed || !new.collapsed) return null
@@ -36,6 +38,11 @@ object TextEditing {
             return when {
                 c == '\n' -> if (lists) closeDrawer(o, p) ?: continueList(o, p) else null
                 c in PAIRS.values && o.getOrNull(p) == c -> Edit(o, p + 1)
+                c == '<' && o.regionMatches(p - 1, "<", 0, 1) && !o.regionMatches(p - 2, "<", 0, 1) && o.getOrNull(p) != '>' ->
+                    Edit(n.substring(0, p + 1) + ">>" + n.substring(p + 1), p + 1)
+                c == '<' && o.regionMatches(p - 2, "<<", 0, 2) && o.startsWith(">>", p) && !o.startsWith(">>>", p) ->
+                    Edit(n.substring(0, p + 1) + ">" + n.substring(p + 1), p + 1)
+                c == '>' && o.getOrNull(p) == '>' && inTarget(o, p) -> Edit(o, p + 1)
                 c in PAIRS -> Edit(n.substring(0, p + 1) + PAIRS.getValue(c) + n.substring(p + 1), p + 1)
                 else -> null
             }
@@ -45,7 +52,25 @@ object TextEditing {
         if (deletedOne && PAIRS[o[p - 1]]?.let { it == o.getOrNull(p) } == true) {
             return Edit(n.removeRange(p - 1, p), p - 1)
         }
+        // An empty target: "<<|>>" losing a "<" loses its ">>" too ("<<<|>>>" its last ">")
+        if (deletedOne && o[p - 1] == '<' && o.regionMatches(p - 2, "<", 0, 1)) {
+            val closing = o.substring(p).takeWhile { it == '>' }.length
+            val opening = o.substring(0, p).takeLastWhile { it == '<' }.length
+            if (closing == opening && (opening == 2 || opening == 3)) {
+                // "<|" left of a target, "<<|>>" of a radio one
+                return Edit(n.removeRange(p - 1, p - 1 + if (opening == 2) 2 else 1), p - 1)
+            }
+        }
         return null
+    }
+
+    /** Whether [p] is within a target being written: "<<" before it on its line, not yet closed. */
+    private fun inTarget(text: String, p: Int): Boolean {
+        val lineStart = text.lastIndexOf('\n', p - 1) + 1
+        val before = text.substring(lineStart, p)
+        val open = before.lastIndexOf("<<")
+        // Its name, and the ">" already stepped over
+        return open >= 0 && '>' !in before.substring(open + 2).trimEnd('>')
     }
 
     private val DRAWER = Regex("""^([ \t]*):([A-Za-z][\w-]*):[ \t]*$""")

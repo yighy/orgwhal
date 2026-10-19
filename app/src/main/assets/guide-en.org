@@ -73,6 +73,8 @@ Org is written as text and shown formatted: *bold*, /italic/, _underline_, +stri
 
 The *toolbar* over the keyboard (while editing the content) does bold, italic, underline, strike-through, code, list, checkbox, indent / outdent, =id:= and date. Undo and redo stay on the right. While editing the title or a table's field, a shorter one leaves out lists and indents, and its date button writes an inactive date alone, as a journal's entries are titled (=*** [2026-10-13 Tue]=); *Today* writes today's. A note tagged =:template:= is a template: on a new note, the *Template* chip lists them (a search narrows them down) and starts it as a copy (title, state, tags, content), with =%u= written as today's inactive date, =%U= with the time, =%t= / =%T= active, as in Emacs' capture templates. Templates stay out of the agenda and the search (unless searched for with =t.template=); *Settings → Template notes* changes that.
 
+Typing helps with Org's syntax: brackets close themselves; =#= at the start of a line offers the keywords (=#+transclude:=, =#+NAME:=, =#+TBLFM:=, and blocks written whole, the cursor inside); a line =:NOTES:= followed by a new line gets its =:END:=; =<<= gets its =>>= and offers the names that links wait for (written in a link, with nothing there yet), warning when the name is already used elsewhere.
+
 ** Lists and checkboxes
 - [X] A checked box
 - [ ] A box to check: tap it
@@ -112,7 +114,7 @@ Example: [[id:{{id}}][The target note]].
 
 At the bottom of the note linked to, *Linked from* lists the notes that point to it.
 
-When a note is renamed, the links that still show the old title, or lead to the note by it ([[Title]], [[*Title]]), can be updated (*Settings → Links to a renamed note*).
+When a note is renamed, the links that still show the old title, or lead to the note by it ([[Title]], [[*Title]]), can be updated (*Settings → Links to a renamed note*). So can the links to a renamed target or =#+NAME= (=#+transclude:= lines and =remote()= formulas too).
 
 ** The target note
 :PROPERTIES:

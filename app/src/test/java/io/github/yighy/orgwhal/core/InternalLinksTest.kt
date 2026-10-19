@@ -49,6 +49,17 @@ class InternalLinksTest {
     }
 
     @Test
+    fun aTargetBeingWrittenIsOfferedTheLinksWaitingForOne() {
+        assertEquals(InternalLinks.Query(5, 12, "éch"), InternalLinks.targetQueryAt("Voir <<éch>> ici", 10))
+        assertEquals(InternalLinks.Query(0, 4, ""), InternalLinks.targetQueryAt("<<>>", 2))
+        assertNull(InternalLinks.targetQueryAt("<<<radio>>>", 5))
+        assertNull(InternalLinks.targetQueryAt("<<fait>> puis", 13))
+        val a = note("Séance", "#+transclude: [[échauffement]]\nVoir [[Plan]], [[*Absente]], [[https://x.org][site]]").copy(fileUri = "a", index = 0)
+        val b = note("Plan").copy(fileUri = "a", index = 1)
+        assertEquals(listOf("échauffement"), InternalLinks.waiting(listOf(a, b)).map { it.name })
+    }
+
+    @Test
     fun aRenamedTargetOrNameIsFollowed() {
         assertEquals("objectif" to "but", InternalLinks.renamedName("<<objectif>>Viser 50.", "<<but>>Viser 50."))
         assertEquals("reps" to "séries", InternalLinks.renamedName("#+NAME: reps\n| a |", "#+NAME: séries\n| a |"))

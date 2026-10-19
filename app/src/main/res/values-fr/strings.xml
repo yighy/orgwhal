@@ -77,6 +77,9 @@
     <string name="keyword_source">Bloc de code</string>
     <string name="keyword_transclude">Affiche ici le contenu d’une autre note</string>
     <string name="keyword_verse">Poème, ses lignes gardées</string>
+    <string name="name_taken">Déjà un nom ailleurs</string>
+    <string name="target_taken">Déjà une cible ailleurs</string>
+    <string name="target_waiting">Un lien l’attend dans %1$s</string>
     <string name="link_kind_name">Élément nommé</string>
     <string name="link_kind_target">Cible</string>
     <string name="link_to_note">Lien vers une note</string>

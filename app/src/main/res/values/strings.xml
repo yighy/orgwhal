@@ -79,6 +79,9 @@
     <string name="keyword_source">Code block</string>
     <string name="keyword_transclude">Shows another note’s content here</string>
     <string name="keyword_verse">Verse, its lines kept</string>
+    <string name="name_taken">Already a name elsewhere</string>
+    <string name="target_taken">Already a target elsewhere</string>
+    <string name="target_waiting">A link waits for it in %1$s</string>
     <string name="link_kind_name">Named element</string>
     <string name="link_kind_target">Target</string>
     <string name="link_to_note">Link to a note</string>

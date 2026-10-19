@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontFamily
 import io.github.yighy.orgwhal.core.KeywordCompletion
 import androidx.compose.material.icons.filled.Clear
@@ -334,6 +335,20 @@ fun NoteScreen(
     val keywordQuery = typing?.takeIf { cellTyping == null && editing == Editing.Content && query == null && titleQuery == null }
         ?.let { KeywordCompletion.queryAt(it.text, it.selection.start) }
     val keywordChoices = keywordQuery?.let { KeywordCompletion.choices(it) }.orEmpty()
+    // "<<" in the content: the names links wait for (none leads there yet), and a warning when
+    // the name is already one somewhere else
+    val targetQuery = typing?.takeIf { cellTyping == null && editing == Editing.Content && query == null && titleQuery == null && keywordQuery == null }
+        ?.let { InternalLinks.targetQueryAt(it.text, it.selection.start) }
+    val waitingTargets = remember(library) { InternalLinks.waiting(library.notes) }
+    val targetSuggestions = targetQuery?.let { q ->
+        val words = q.text.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        waitingTargets.filter { w -> words.all { w.name.contains(it, ignoreCase = true) } }.take(20)
+    }.orEmpty()
+    val targetTaken = targetQuery?.text?.trim()?.takeIf { it.isNotEmpty() }?.let { name ->
+        library.notes.firstOrNull { other ->
+            !(other.fileUri == note.fileUri && other.index == note.index) && name in InternalLinks.namesIn(other.content)
+        }?.let { other -> other to ("<<$name>>" in other.content) }
+    }
     val nameSuggestions = remember(titleQuery?.text, library) {
         titleQuery?.let { InternalLinks.names(library.notes, it.text) }.orEmpty()
     }
@@ -412,6 +427,21 @@ fun NoteScreen(
         val (text, cursor) = choice.text(q.indent)
         history.record(draft, typing = false)
         draft = TextFieldValue(draft.text.replaceRange(q.start, q.end, text), TextRange(q.start + cursor))
+    }
+
+    fun insertTarget(waiting: InternalLinks.Waiting) {
+        val q = targetQuery ?: return
+        val target = "<<${waiting.name}>>"
+        history.record(draft, typing = false)
+        draft = TextFieldValue(draft.text.replaceRange(q.start, q.end, target), TextRange(q.start + target.length))
+    }
+
+    /** "Notebook › parents › title" of [of]. */
+    fun pathOf(of: OrgNote): String {
+        val ofFile = library.file(of.fileUri)
+        return (listOf(ofFile?.title ?: of.fileName) +
+            ofFile?.notes?.let { NoteTree.ancestors(it, of.index) }.orEmpty().map { displayTitle(it.title) } +
+            displayTitle(of.title)).joinToString("  ›  ")
     }
 
     fun insertNameLink(name: InternalLinks.Name) {
@@ -499,6 +529,33 @@ fun NoteScreen(
                                     onClick = { insertFileLink(target) },
                                     supportingContent = { Text(target.ref.path, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                 ) { Text(target.title) }
+                            }
+                        }
+                    }
+                }
+                if (targetSuggestions.isNotEmpty() || targetTaken != null) {
+                    Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
+                        LazyColumn(Modifier.heightIn(max = 240.dp)) {
+                            targetTaken?.let { (other, isTarget) ->
+                                item(key = "taken") {
+                                    ListItem(
+                                        leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.error) },
+                                        supportingContent = { Text(pathOf(other), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                    ) {
+                                        Text(
+                                            stringResource(if (isTarget) R.string.target_taken else R.string.name_taken),
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
+                            }
+                            items(targetSuggestions, key = { "waiting:" + it.name }) { waiting ->
+                                ListItem(
+                                    onClick = { insertTarget(waiting) },
+                                    supportingContent = {
+                                        Text(stringResource(R.string.target_waiting, pathOf(waiting.note)), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    },
+                                ) { Text(waiting.name) }
                             }
                         }
                     }

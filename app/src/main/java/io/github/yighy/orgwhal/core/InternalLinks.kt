@@ -126,6 +126,44 @@ object InternalLinks {
     /** A dedicated target, <<name>> (not a radio one, <<<name>>>). */
     val TARGET = Regex("""(?<!<)<<([^<>\n]+)>>(?!>)""")
 
+    /**
+     * A target being written before [cursor], "<<" then its name: [start] is its first "<", [end]
+     * the end of what a name picked replaces (the ">>" closing it included).
+     */
+    fun targetQueryAt(text: String, cursor: Int): Query? {
+        if (cursor < 2 || cursor > text.length) return null
+        val lineStart = text.lastIndexOf('\n', cursor - 1) + 1
+        val before = text.substring(lineStart, cursor)
+        val open = before.lastIndexOf("<<")
+        // Not a radio target (<<<name>>>)
+        if (open < 0 || before.getOrNull(open - 1) == '<') return null
+        val typed = before.substring(open + 2)
+        if (typed.length > 60 || typed.any { it == '<' || it == '>' }) return null
+        val lineEnd = text.indexOf('\n', cursor).let { if (it < 0) text.length else it }
+        val rest = text.substring(cursor, lineEnd)
+        val close = TARGET_CLOSE.find(rest)?.value?.length ?: 0
+        if (rest.startsWith(">>>")) return null
+        return Query(lineStart + open, cursor + close, typed)
+    }
+
+    private val TARGET_CLOSE = Regex("""^[^<>]*>>""")
+
+    /** A link that leads nowhere yet, [name] its target, in [note]: a target can be made for it. */
+    data class Waiting(val name: String, val note: OrgNote)
+
+    /** The links of [notes] to a name that nothing has (no target, #+NAME nor title), one each. */
+    fun waiting(notes: List<OrgNote>): List<Waiting> = notes.asSequence()
+        .flatMap { note ->
+            Links.find(note.raw).asSequence()
+                .filter { note.raw.startsWith("[[", it.range.first) }
+                .map { it.target.trim() }
+                .filter { t -> t.isNotEmpty() && isInternal(t) && t[0] != '*' && t[0] != '#' && t.none { it == '[' || it == ']' || it == '<' || it == '>' } }
+                .map { Waiting(it, note) }
+        }
+        .distinctBy { it.name }
+        .filter { find(notes, it.name) == null }
+        .toList()
+
     /** The targets (<<name>>) and #+NAME names of [content]. */
     fun namesIn(content: String): Set<String> =
         (TARGET.findAll(content).map { it.groupValues[1].trim() } + NAME.findAll(content).map { it.groupValues[1].trim() })

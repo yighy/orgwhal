@@ -39,6 +39,19 @@ class TextEditingTest {
     }
 
     @Test
+    fun aTargetCloses() {
+        assertEquals(e("Voir <<|>>"), typed("Voir <|", '<'))
+        assertEquals(e("<<<|>>>"), typed("<<|>>", '<'))
+        // ">" steps over the closing ones
+        assertEquals(e("<<but>|>"), typed("<<but|>>", '>'))
+        assertEquals(e("<<but>>|"), typed("<<but>|>", '>'))
+        // A comparison is left alone
+        assertNull(typed("a <|", ' '))
+        assertEquals(e("<|"), backspace("<<|>>"))
+        assertEquals(e("<<|>>"), backspace("<<<|>>>"))
+    }
+
+    @Test
     fun aDrawerCloses() {
         assertEquals(e(":NOTES:\n|\n:END:"), typed(":NOTES:|", '\n'))
         assertEquals(e("Avant\n  :LOGBOOK:\n  |\n  :END:\nAprès"), typed("Avant\n  :LOGBOOK:|\nAprès", '\n'))
