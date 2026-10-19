@@ -4,6 +4,17 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-10-19
+
+### Added
+- A #+transclude: line (as Emacs' org-transclusion writes it) shows, in its place and read only,
+  what its link leads to: a note's content, a table or block named with #+NAME, or the paragraph
+  (or list item) of a target <<name>>; :lines 2-5 keeps those lines. A tap on the frame's title
+  opens the note it comes from; the file keeps the line alone
+
+### Changed
+- Targets (<<name>>) show small and grey in the text, and are left out of transcluded content
+
 ## [0.31.1] - 2026-10-19
 
 ### Changed
@@ -449,7 +460,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.31.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/yighy/orgwhal/compare/v0.31.1...v0.32.0
 [0.31.1]: https://github.com/yighy/orgwhal/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/yighy/orgwhal/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/yighy/orgwhal/compare/v0.29.0...v0.30.0
