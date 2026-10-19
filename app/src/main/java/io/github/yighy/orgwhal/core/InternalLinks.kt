@@ -63,6 +63,66 @@ object InternalLinks {
         }
     }
 
+    /**
+     * A link being typed after "[[": [start] is its first "[", [end] the end of what a link picked
+     * replaces (the "]]" closing it included), [text] what is typed so far.
+     */
+    data class Query(val start: Int, val end: Int, val text: String)
+
+    /** The link being typed just before [cursor] ("[[" then a few letters), or null (id:, file:… have their own). */
+    fun queryAt(text: String, cursor: Int): Query? {
+        if (cursor < 2 || cursor > text.length) return null
+        val start = text.lastIndexOf("[[", cursor - 2)
+        if (start < 0) return null
+        val typed = text.substring(start + 2, cursor)
+        if (typed.length > 60 || typed.any { it == '[' || it == ']' || it == '\n' } || !isInternal(typed)) return null
+        val rest = text.substring(cursor)
+        val close = CLOSE.find(rest)?.value?.length ?: if (rest.startsWith("]")) 1 else 0
+        return Query(start, cursor + close, typed)
+    }
+
+    private val CLOSE = Regex("""^[^\[\]\n]*]]""")
+
+    /**
+     * A link to [note] by its title, as written in the notebook [from]: [[Title]], or [[*Title]]
+     * if a target of that name comes first; null if neither leads to it (another note has its
+     * title) or the title cannot be a link's (brackets in it): an id: link is then the way.
+     */
+    fun linkTo(notes: List<OrgNote>, note: OrgNote, from: String): String? {
+        val title = clean(IdLinks.plainText(note.title))
+        if (title.isEmpty() || title.any { it == '[' || it == ']' } || title[0] == '*' || title[0] == '#' || !isInternal(title)) return null
+        val order = notes.sortedBy { it.fileUri != from }
+        fun leadsHere(target: String) = find(order, target)?.let { it.fileUri == note.fileUri && it.index == note.index } == true
+        return when {
+            leadsHere(title) -> "[[$title]]"
+            leadsHere("*$title") -> "[[*$title]]"
+            else -> null
+        }
+    }
+
+    /** A name a link can lead to, in [note]: a target <<name>> ([target]), or an element's #+NAME. */
+    data class Name(val name: String, val note: OrgNote, val target: Boolean)
+
+    /** The names (targets, #+NAME) with every word of [query], those starting with the first word first. */
+    fun names(notes: List<OrgNote>, query: String, limit: Int = 10): List<Name> {
+        val words = query.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        return notes.asSequence()
+            .flatMap { note ->
+                TARGET.findAll(note.raw).map { Name(it.groupValues[1].trim(), note, true) } +
+                    NAME.findAll(note.content).map { Name(it.groupValues[1].trim(), note, false) }
+            }
+            .filter { n -> n.name.isNotEmpty() && n.name.none { it == '[' || it == ']' } && words.all { n.name.contains(it, ignoreCase = true) } }
+            .distinctBy { it.name }
+            .sortedWith(
+                compareByDescending<Name> { words.isNotEmpty() && it.name.startsWith(words.first(), ignoreCase = true) }
+                    .thenBy { it.name.length }
+            )
+            .take(limit)
+            .toList()
+    }
+
+    private val TARGET = Regex("""(?<!<)<<([^<>\n]+)>>(?!>)""")
+
     /** [text] with its bracket links that [change] gives a new text (else null) replaced by it. */
     private fun replaceLinks(text: String, change: (Links.Link) -> String?): String {
         val changes = Links.find(text)

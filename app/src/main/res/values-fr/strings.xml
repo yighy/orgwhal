@@ -69,6 +69,8 @@
     <string name="link_renaming_always">Les mettre à jour</string>
     <string name="link_renaming_ask">Demander à chaque fois</string>
     <string name="link_renaming_never">Les laisser tels quels</string>
+    <string name="link_kind_name">Élément nommé</string>
+    <string name="link_kind_target">Cible</string>
     <string name="link_to_note">Lien vers une note</string>
     <string name="linked_from">Liée depuis</string>
     <string name="list">Liste</string>

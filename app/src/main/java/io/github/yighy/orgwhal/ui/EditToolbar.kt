@@ -139,8 +139,9 @@ fun editToolbarShown(): Boolean = keyboardShown() || EditingDialog.open
 /**
  * Bar over the keyboard while a note's text is edited: bold, italic, underline, strike-through,
  * code, list, checkbox, indent, outdent, link (id: then its suggestions), date (as for scheduled
- * times, or changing the one at the cursor); undo and redo stay at the end. For a [title], one
- * line: no list nor indent, and the date is inactive and alone, as a journal's entries are titled.
+ * times, or changing the one at the cursor); undo and redo stay at the end. For a [title] (or a
+ * table field), one line: no list nor indent, and the date is inactive and alone, as a journal's
+ * entries are titled.
  */
 @Composable
 fun EditToolbar(value: TextFieldValue, onChange: (TextFieldValue) -> Unit, history: EditHistory, title: Boolean = false) {

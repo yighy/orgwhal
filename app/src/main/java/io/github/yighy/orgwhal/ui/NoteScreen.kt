@@ -140,6 +140,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import io.github.yighy.orgwhal.core.IdLinks
+import io.github.yighy.orgwhal.core.InternalLinks
 import io.github.yighy.orgwhal.core.Keywords
 import io.github.yighy.orgwhal.core.NoteTree
 import io.github.yighy.orgwhal.core.OrgNote
@@ -317,12 +318,17 @@ fun NoteScreen(
     val cellTyping = cellDraft.value?.takeIf { editing == Editing.None && it.selection.collapsed && keyboard }
     val typing = cellTyping ?: draft.takeIf { editing != Editing.None && it.selection.collapsed && keyboard }
     val query = typing?.let { IdLinks.queryAt(it.text, it.selection.start) }
+    // "[[" then a few letters: a link by title (or to a target, a #+NAME)
+    val titleQuery = typing?.takeIf { query == null }?.let { InternalLinks.queryAt(it.text, it.selection.start) }
     // Each note's notebook and ancestors, so that a parent's title also finds its sub-notes
     val paths = remember(library) {
         library.files.associate { file -> file.uri to NoteTree.ancestorTitles(file.notes).map { listOf(file.title) + it } }
     }
-    val suggestions = remember(query?.text, library) {
-        query?.let { q -> IdLinks.suggestions(library.notes, q.text) { paths[it.fileUri]?.getOrNull(it.index).orEmpty() } }.orEmpty()
+    val suggestions = remember(query?.text, titleQuery?.text, library) {
+        (query?.text ?: titleQuery?.text)?.let { q -> IdLinks.suggestions(library.notes, q) { paths[it.fileUri]?.getOrNull(it.index).orEmpty() } }.orEmpty()
+    }
+    val nameSuggestions = remember(titleQuery?.text, library) {
+        titleQuery?.let { InternalLinks.names(library.notes, it.text) }.orEmpty()
     }
     val fileQuery = typing?.takeIf { query == null }?.let { IdLinks.queryAt(it.text, it.selection.start, "file:") }
     val fileSuggestions = remember(fileQuery?.text, library) {
@@ -357,30 +363,46 @@ fun NoteScreen(
         draft = TextFieldValue(draft.text.replaceRange(q.start, q.end, link), TextRange(q.start + link.length))
     }
 
-    fun insertLink(target: OrgNote) {
-        val q = query ?: return
-        // In a table field: its title without "|", which would split the field
-        if (cellTyping != null) {
-            scope.launch {
-                val (id, _) = viewModel.idFor(target) ?: return@launch
-                val link = IdLinks.format(id, displayTitle(target.title).replace('|', '/'))
-                cellDraft.replace(TextFieldValue(cellTyping.text.replaceRange(q.start, q.end, link), TextRange(q.start + link.length)))
-            }
-            return
+    /** Puts a link in place of [start] to [end] of the text being typed, as it is now. */
+    fun linkPlacer(start: Int, end: Int): (String) -> Unit {
+        val cell = cellTyping
+        if (cell != null) {
+            return { link -> cellDraft.replace(TextFieldValue(cell.text.replaceRange(start, end, link), TextRange(start + link.length))) }
         }
         val what = editing
         val text = draft.text
-        scope.launch {
-            val (id, _) = viewModel.idFor(target) ?: return@launch
-            val link = IdLinks.format(id, displayTitle(target.title))
-            val linked = text.replaceRange(q.start, q.end, link)
+        return { link ->
+            val linked = text.replaceRange(start, end, link)
             if (editing == what) {
-                draft = TextFieldValue(linked, TextRange(q.start + link.length))
+                draft = TextFieldValue(linked, TextRange(start + link.length))
             } else {
                 // The field was saved meanwhile (focus moved): save the link too
                 viewModel.update(currentNote) { withText(it, what, linked) }
             }
         }
+    }
+
+    fun insertLink(target: OrgNote) {
+        val (start, end) = query?.let { it.start to it.end } ?: titleQuery?.let { it.start to it.end } ?: return
+        val place = linkPlacer(start, end)
+        // After "[[": by its title if that leads to it, as in Org; else (and after "id:") by its id
+        val byTitle = titleQuery?.let { InternalLinks.linkTo(library.notes, target, note.fileUri) }
+            ?.takeUnless { cellTyping != null && '|' in it }
+        if (byTitle != null) {
+            place(byTitle)
+            return
+        }
+        scope.launch {
+            val (id, _) = viewModel.idFor(target) ?: return@launch
+            // In a table field: its title without "|", which would split the field
+            val title = displayTitle(target.title).let { if (cellTyping != null) it.replace('|', '/') else it }
+            place(IdLinks.format(id, title))
+        }
+    }
+
+    fun insertNameLink(name: InternalLinks.Name) {
+        val q = titleQuery ?: return
+        linkPlacer(q.start, q.end)("[[${name.name}]]")
     }
 
     val scrollState = rememberScrollState()
@@ -467,9 +489,22 @@ fun NoteScreen(
                         }
                     }
                 }
-                if (suggestions.isNotEmpty()) {
+                if (suggestions.isNotEmpty() || nameSuggestions.isNotEmpty()) {
                     Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
                         LazyColumn(Modifier.heightIn(max = 240.dp)) {
+                            items(nameSuggestions, key = { "name:" + it.name }) { name ->
+                                ListItem(
+                                    onClick = { insertNameLink(name) },
+                                    supportingContent = {
+                                        val kind = stringResource(if (name.target) R.string.link_kind_target else R.string.link_kind_name)
+                                        val nameFile = library.file(name.note.fileUri)
+                                        val path = listOf(nameFile?.title ?: name.note.fileName) +
+                                            nameFile?.notes?.let { NoteTree.ancestors(it, name.note.index) }.orEmpty().map { displayTitle(it.title) } +
+                                            displayTitle(name.note.title)
+                                        Text("$kind · " + path.joinToString("  ›  "), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    },
+                                ) { Text(name.name) }
+                            }
                             items(suggestions, key = { it.fileUri + "#" + it.index }) { target ->
                                 ListItem(
                                     onClick = { insertLink(target) },
@@ -489,6 +524,9 @@ fun NoteScreen(
                     EditToolbar(draft, onChange = { if (editing == Editing.Content) draft = it }, history = history)
                 } else if (editing == Editing.Title && editToolbarShown()) {
                     EditToolbar(draft, onChange = { if (editing == Editing.Title) draft = it }, history = titleTyping, title = true)
+                } else if (editing == Editing.None && editToolbarShown()) {
+                    // A table field: one line, as a title
+                    cellDraft.value?.let { EditToolbar(it, onChange = cellDraft::replace, history = cellDraft.history, title = true) }
                 }
             }
         },

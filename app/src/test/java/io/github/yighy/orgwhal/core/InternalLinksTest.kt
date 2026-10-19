@@ -15,6 +15,38 @@ class InternalLinksTest {
     }
 
     @Test
+    fun aLinkBeingTypedIsFound() {
+        // "[" closes itself: "[[" gives "[[]]", the cursor in the middle
+        assertEquals(InternalLinks.Query(5, 13, "Jour"), InternalLinks.queryAt("Voir [[Jour]] la", 11))
+        assertEquals(InternalLinks.Query(0, 4, ""), InternalLinks.queryAt("[[]]", 2))
+        assertEquals(InternalLinks.Query(0, 4, "Ab"), InternalLinks.queryAt("[[Ab", 4))
+        assertNull(InternalLinks.queryAt("[[id:ab]]", 7))
+        assertNull(InternalLinks.queryAt("[[Ab]] cd", 9))
+        assertNull(InternalLinks.queryAt("[[Ab][cd]]", 8))
+    }
+
+    @Test
+    fun aNoteIsLinkedByItsTitleWhenThatLeadsToIt() {
+        val a = note("Journal [1/2]").copy(fileUri = "a", index = 0)
+        val b = note("Courses").copy(fileUri = "a", index = 1)
+        val target = note("Plan", "Voir <<Courses>>").copy(fileUri = "b", index = 0)
+        val twin = note("Plan").copy(fileUri = "b", index = 1)
+        val dated = note("Séance [2026-10-13 Tue]").copy(fileUri = "a", index = 2)
+        val notes = listOf(a, b, target, twin, dated)
+        assertEquals("[[Journal]]", InternalLinks.linkTo(notes, a, "a"))
+        assertEquals("[[*Courses]]", InternalLinks.linkTo(notes, b, "a"))
+        assertNull(InternalLinks.linkTo(notes, twin, "b"))
+        assertNull(InternalLinks.linkTo(notes, dated, "a"))
+    }
+
+    @Test
+    fun targetsAndNamesAreSuggested() {
+        val n = note("Budget", "<<départ>> et <<<radio>>>\n#+NAME: dépenses\n| a |")
+        assertEquals(listOf("départ", "dépenses"), InternalLinks.names(listOf(n), "dé").map { it.name })
+        assertEquals(listOf(true, false), InternalLinks.names(listOf(n), "").map { it.target })
+    }
+
+    @Test
     fun theLinkOfAMadeNoteLeadsToItsId() {
         assertEquals(
             "Voir [[id:X1][Idée vide]], [[id:X1][mon idée]], pas [[Autre]]",

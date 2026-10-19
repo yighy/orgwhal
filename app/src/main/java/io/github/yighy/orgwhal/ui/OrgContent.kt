@@ -206,6 +206,7 @@ fun OrgContent(
                     // new row or column opening its field
                     var editing by remember(tableIndex) { mutableStateOf<Pair<Int, Int>?>(null) }
                     var draft by remember(tableIndex) { mutableStateOf(TextFieldValue()) }
+                    var history by remember(tableIndex) { mutableStateOf(EditHistory()) }
                     val wrapTables = LocalWrapTables.current
                     // Shared with the screen as it changes (the field alone recomposes then)
                     fun setDraft(value: TextFieldValue) {
@@ -227,6 +228,8 @@ fun OrgContent(
                     /** Opens the field at [line] and [column], its [value] selected. */
                     fun edit(line: Int, column: Int, value: String = stored(line, column)) {
                         setDraft(TextFieldValue(value, TextRange(0, value.length)))
+                        history = EditHistory()
+                        cellDraft?.history = history
                         editing = line to column
                     }
                     /** Saves the field being edited, if it changed, then [then] in the same save (a new row or column). */
@@ -336,7 +339,7 @@ fun OrgContent(
                                             setDraft(TextFieldValue(it.text.replace('\n', ' ').trimEnd()))
                                             next()
                                         }
-                                        else -> setDraft(it)
+                                        else -> setDraft(typedText(draft, it, history, lists = false))
                                     }
                                 },
                                 style = cellStyle,
@@ -795,6 +798,9 @@ private val MIN_WRAPPED_COLUMN = 72.dp
  */
 class CellDraft {
     var value by mutableStateOf<TextFieldValue?>(null)
+
+    /** Undo and redo of the field being edited (for the bar over the keyboard). */
+    var history by mutableStateOf(EditHistory())
     internal var set: (TextFieldValue) -> Unit = {}
 
     /** Puts [value] in the field being edited. */
