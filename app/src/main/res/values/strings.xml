@@ -90,6 +90,8 @@
     <string name="open">Open</string>
     <string name="msg_id_copied">ID copied</string>
     <string name="msg_link_copied">Link copied</string>
+    <string name="missing_link_title">Make this note?</string>
+    <string name="missing_link_text">No note “%1$s” yet. Make it at the end of %2$s? The links to it will lead there even once it is renamed.</string>
     <string name="msg_link_not_found">Nothing named “%1$s” in the notes</string>
     <string name="msg_no_app">No app can open %1$s</string>
     <string name="msg_no_file">No file %1$s in the folder</string>
@@ -233,7 +235,7 @@
     <string name="settings_license">License</string>
     <string name="settings_license_summary">GNU General Public License v3</string>
     <string name="settings_link_renaming">Links to a renamed note</string>
-    <string name="settings_link_renaming_summary">Links that still show the old title</string>
+    <string name="settings_link_renaming_summary">Links that still show the old title or lead to the note by it</string>
     <string name="settings_notes">Notes</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_off">Off: reminders can\'t be shown. Tap to allow.</string>
@@ -413,7 +415,7 @@
         <item quantity="other">years</item>
     </plurals>
     <plurals name="update_links_text">
-        <item quantity="one">%1$d note links to this note as “%2$s”. Show the new title “%3$s” in these links instead?</item>
-        <item quantity="other">%1$d notes link to this note as “%2$s”. Show the new title “%3$s” in these links instead?</item>
+        <item quantity="one">%1$d note links to this note as “%2$s”. Update these links to the new title “%3$s”?</item>
+        <item quantity="other">%1$d notes link to this note as “%2$s”. Update these links to the new title “%3$s”?</item>
     </plurals>
 </resources>

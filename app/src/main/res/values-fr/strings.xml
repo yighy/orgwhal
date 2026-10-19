@@ -88,6 +88,8 @@
     <string name="open">Ouvrir</string>
     <string name="msg_id_copied">ID copié</string>
     <string name="msg_link_copied">Lien copié</string>
+    <string name="missing_link_title">Créer cette note ?</string>
+    <string name="missing_link_text">Pas encore de note « %1$s ». La créer à la fin de %2$s ? Les liens y mèneront même si elle est renommée.</string>
     <string name="msg_link_not_found">Rien ne s’appelle « %1$s » dans les notes</string>
     <string name="msg_no_app">Aucune appli ne peut ouvrir %1$s</string>
     <string name="msg_no_file">Aucun fichier %1$s dans le dossier</string>
@@ -231,7 +233,7 @@
     <string name="settings_license">Licence</string>
     <string name="settings_license_summary">Licence publique générale GNU v3</string>
     <string name="settings_link_renaming">Liens vers une note renommée</string>
-    <string name="settings_link_renaming_summary">Les liens qui affichent encore l’ancien titre</string>
+    <string name="settings_link_renaming_summary">Les liens qui affichent encore l’ancien titre ou mènent à la note par lui</string>
     <string name="settings_notes">Notes</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_off">Désactivées : les rappels ne peuvent pas s’afficher. Touchez pour autoriser.</string>
@@ -438,8 +440,8 @@
         <item quantity="other">ans</item>
     </plurals>
     <plurals name="update_links_text">
-        <item quantity="one">%1$d note pointe vers cette note sous le nom « %2$s ». Afficher plutôt le nouveau titre « %3$s » dans ces liens ?</item>
-        <item quantity="many">%1$d notes pointent vers cette note sous le nom « %2$s ». Afficher plutôt le nouveau titre « %3$s » dans ces liens ?</item>
-        <item quantity="other">%1$d notes pointent vers cette note sous le nom « %2$s ». Afficher plutôt le nouveau titre « %3$s » dans ces liens ?</item>
+        <item quantity="one">%1$d note pointe vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>
+        <item quantity="many">%1$d notes pointent vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>
+        <item quantity="other">%1$d notes pointent vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>
     </plurals>
 </resources>

@@ -112,7 +112,7 @@ Example: [[id:{{id}}][The target note]].
 
 At the bottom of the note linked to, *Linked from* lists the notes that point to it.
 
-When a note is renamed, the links that still show the old title can be updated (*Settings → Links to a renamed note*).
+When a note is renamed, the links that still show the old title, or lead to the note by it ([[Title]], [[*Title]]), can be updated (*Settings → Links to a renamed note*).
 
 ** The target note
 :PROPERTIES:
@@ -131,6 +131,8 @@ Without a scheme, a link leads within the notes, as in Org:
 - to a target written in the text: [[meeting-point]];
 - to a table or block named with =#+NAME=: [[expenses]];
 - to a note by its title: [[*Tables and formulas]].
+
+A link to a note not there yet, such as [[*Ideas for the weekend]], offers to make it, as Emacs does, at the end of the notebook; *⋮ → Move to…* puts it elsewhere. The links to it in that notebook become =id:= links, their text kept, so that they follow the note when it is renamed.
 
 ** A target
 The link "meeting-point" leads here: <<meeting-point>> in front of the station.

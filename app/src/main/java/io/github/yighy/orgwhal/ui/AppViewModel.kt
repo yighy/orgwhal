@@ -540,7 +540,45 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         val notes = library.value.notes.sortedBy { it.fileUri != current }
         val note = InternalLinks.find(notes, target)
-        if (note != null) openNote(note) else message(R.string.msg_link_not_found, target)
+        val title = InternalLinks.titleFor(target)
+        when {
+            note != null -> openNote(note)
+            // As Emacs does: a note can be made for it, in the notebook of the link
+            title != null && current != null -> missingLink = MissingLink(target, title, current)
+            else -> message(R.string.msg_link_not_found, target)
+        }
+    }
+
+    /** A link to a note not there yet: [title] is the one it gives, [fileUri] the notebook it is in. */
+    data class MissingLink(val target: String, val title: String, val fileUri: String)
+
+    /** The missing link whose note is offered to be made. */
+    var missingLink by mutableStateOf<MissingLink?>(null)
+        private set
+
+    fun dismissMissingLink() {
+        missingLink = null
+    }
+
+    /**
+     * Makes the note of the missing link, at the end of the link's notebook, and opens it. The
+     * links in that notebook lead to it by its id from then on: they follow it when renamed.
+     */
+    fun createMissingLink() {
+        val link = missingLink ?: return
+        missingLink = null
+        viewModelScope.launch {
+            val note = attempt {
+                val created = repository.createNote(Uri.parse(link.fileUri), link.title)
+                val edit = created.toEdit().let { it.copy(properties = it.properties + newNoteProperties(it)) }
+                val saved = if (edit != created.toEdit()) repository.saveNote(created, edit) else created
+                val (id, stored) = repository.ensureId(saved)
+                repository.changeNotes(listOf(link.fileUri)) { InternalLinks.toIdLinks(it, link.target, id, link.title) }
+                stored
+            } ?: return@launch
+            openNote(note)
+            message(R.string.msg_shared_added, library.value.file(note.fileUri)?.title.orEmpty())
+        }
     }
 
     fun openById(id: String) {
@@ -602,8 +640,22 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { saveLatest(note) { change(it.toEdit()) } }
     }
 
-    /** Links to a renamed note that still show its old title, until the user says to update them. */
-    data class LinkRename(val id: String, val oldTitle: String, val newTitle: String, val notes: Int)
+    /**
+     * Links to a renamed note that still show its old title or lead to it by it, until the user
+     * says to update them: id links ([id], if it has one), [[title]] ones if [plain] (the note
+     * was the one they led to), [[*title]] ones if [starred].
+     */
+    data class LinkRename(
+        val id: String?,
+        val oldTitle: String,
+        val newTitle: String,
+        val plain: Boolean,
+        val starred: Boolean,
+        val notes: Int,
+    ) {
+        fun apply(text: String): String =
+            InternalLinks.renameLinks(id?.let { IdLinks.renameLinks(text, it, oldTitle, newTitle) } ?: text, oldTitle, newTitle, plain, starred)
+    }
 
     var linkRename by mutableStateOf<LinkRename?>(null)
         private set
@@ -614,14 +666,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
      */
     fun rename(note: OrgNote, title: String) {
         val oldTitle = note.title
+        // The links by title that led to this note before (not to another with the same name)
+        val before = library.value.notes.sortedBy { it.fileUri != note.fileUri }
+        fun ledHere(target: String) = InternalLinks.find(before, target)?.let { it.fileUri == note.fileUri && it.index == note.index } == true
+        val shown = IdLinks.plainText(oldTitle).trim()
+        val plain = ledHere(shown)
+        val starred = ledHere("*$shown")
         viewModelScope.launch {
             val saved = saveLatest(note) { it.toEdit().copy(title = title) } ?: return@launch
             val mode = settings.value.linkRenaming
             if (mode == LinkRenaming.Never) return@launch
-            val id = saved.id ?: return@launch
-            val notes = library.value.notes.count { IdLinks.renameLinks(it.raw, id, oldTitle, title) != it.raw }
+            val draft = LinkRename(saved.id, oldTitle, title, plain, starred, 0)
+            val notes = library.value.notes.count { draft.apply(it.raw) != it.raw }
             if (notes == 0) return@launch
-            val rename = LinkRename(id, oldTitle, title, notes)
+            val rename = draft.copy(notes = notes)
             if (mode == LinkRenaming.Always) renameLinks(rename) else linkRename = rename
         }
     }
@@ -633,7 +691,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun renameLinks(rename: LinkRename) {
-        val changed = attempt { repository.renameLinks(rename.id, rename.oldTitle, rename.newTitle) } ?: return
+        val changed = attempt { repository.changeNotes(change = rename::apply) } ?: return
         pluralMessage(R.plurals.msg_links_updated, changed)
     }
 

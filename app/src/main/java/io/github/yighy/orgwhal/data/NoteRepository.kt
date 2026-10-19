@@ -346,13 +346,14 @@ class NoteRepository(context: Context) {
     }
 
     /**
-     * In every file, gives the links to [id] still described as [oldTitle] the description of
-     * [newTitle]. Returns the number of notes changed.
+     * Changes the text of the notes with [change], in the files [fileUris], or else in every file.
+     * Returns the number of notes changed.
      */
-    suspend fun renameLinks(id: String, oldTitle: String, newTitle: String): Int {
-        fun renamed(raw: String) = IdLinks.renameLinks(raw, id, oldTitle, newTitle)
+    suspend fun changeNotes(fileUris: Collection<String>? = null, change: (String) -> String): Int {
+        fun renamed(raw: String) = change(raw)
         var changed = 0
         _library.value.files.forEach { file ->
+            if (fileUris != null && file.uri !in fileUris) return@forEach
             val notes = file.notes.filter { renamed(it.raw) != it.raw }
             if (notes.isEmpty()) return@forEach
             modifyFile(file.uri, notes) { doc, indices ->

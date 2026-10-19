@@ -249,6 +249,16 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
         )
     }
 
+    viewModel.missingLink?.let { link ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissMissingLink,
+            title = { Text(stringResource(R.string.missing_link_title)) },
+            text = { Text(stringResource(R.string.missing_link_text, link.title, library.file(link.fileUri)?.title.orEmpty())) },
+            confirmButton = { TextButton(onClick = viewModel::createMissingLink) { Text(stringResource(R.string.create)) } },
+            dismissButton = { TextButton(onClick = viewModel::dismissMissingLink) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
     if (viewModel.guideExists) {
         AlertDialog(
             onDismissRequest = viewModel::dismissGuideOffer,

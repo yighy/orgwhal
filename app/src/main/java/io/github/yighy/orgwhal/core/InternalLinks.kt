@@ -24,6 +24,62 @@ object InternalLinks {
         }
     }
 
+    /** The title of the note [target] would lead to, to make it when missing ([[#id]] gives none). */
+    fun titleFor(target: String): String? {
+        val t = target.trim()
+        return when {
+            t.startsWith("#") -> null
+            t.startsWith("*") -> t.substring(1).trim().ifEmpty { null }
+            else -> t.ifEmpty { null }
+        }
+    }
+
+    /**
+     * [text] with its links to [target] (the note just made for it, titled [title]) made to lead
+     * to the note's [id]: [[target]] shows the title, [[target][text]] keeps its text.
+     */
+    fun toIdLinks(text: String, target: String, id: String, title: String): String =
+        replaceLinks(text) { link ->
+            if (link.target.trim() != target.trim()) null
+            else link.description?.let { "[[id:$id][$it]]" } ?: IdLinks.format(id, title)
+        }
+
+    /**
+     * [text] with its links to a note by its title [oldTitle] ([[title]] if [plain], [[*title]]
+     * if [starred]) made to lead to [newTitle]; their own text is kept, unless it was the old title.
+     */
+    fun renameLinks(text: String, oldTitle: String, newTitle: String, plain: Boolean, starred: Boolean): String {
+        val new = clean(IdLinks.plainText(newTitle))
+        if (!plain && !starred || new.isEmpty() || '[' in new || ']' in new) return text
+        val old = clean(IdLinks.plainText(oldTitle))
+        val oldShown = IdLinks.description(oldTitle)
+        return replaceLinks(text) { link ->
+            val t = link.target.trim()
+            val star = t.startsWith("*")
+            if (!(if (star) starred else plain) || !clean(t.removePrefix("*")).equals(old, ignoreCase = true)) return@replaceLinks null
+            val target = if (star) "*$new" else new
+            val description = link.description?.takeIf { it.trim() != oldShown }
+            if (description == null) "[[$target]]" else "[[$target][$description]]"
+        }
+    }
+
+    /** [text] with its bracket links that [change] gives a new text (else null) replaced by it. */
+    private fun replaceLinks(text: String, change: (Links.Link) -> String?): String {
+        val changes = Links.find(text)
+            .filter { text.startsWith("[[", it.range.first) }
+            .mapNotNull { link -> change(link)?.let { link.range to it } }
+        if (changes.isEmpty()) return text
+        return buildString {
+            var last = 0
+            changes.forEach { (range, replacement) ->
+                append(text, last, range.first)
+                append(replacement)
+                last = range.last + 1
+            }
+            append(text, last, text.length)
+        }
+    }
+
     private val NAME = Regex("""^[ \t]*#\+NAME:[ \t]*(.+)$""", setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
 
     // Titles compare without their links and cookies, as Org's search ignores them

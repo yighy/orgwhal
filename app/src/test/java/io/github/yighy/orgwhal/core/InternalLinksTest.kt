@@ -7,6 +7,34 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InternalLinksTest {
+    @Test
+    fun aMissingLinkGivesItsTitle() {
+        assertEquals("Acheter du bois", InternalLinks.titleFor("*Acheter du bois"))
+        assertEquals("Journal", InternalLinks.titleFor("Journal"))
+        assertNull(InternalLinks.titleFor("#custom"))
+    }
+
+    @Test
+    fun theLinkOfAMadeNoteLeadsToItsId() {
+        assertEquals(
+            "Voir [[id:X1][Idée vide]], [[id:X1][mon idée]], pas [[Autre]]",
+            InternalLinks.toIdLinks("Voir [[Idée vide]], [[Idée vide][mon idée]], pas [[Autre]]", "Idée vide", "X1", "Idée vide"),
+        )
+    }
+
+    @Test
+    fun titleLinksFollowARename() {
+        val text = "[[Old]] [[*old]] [[Old][Old]] [[Old][mine]] [[Older]] [[id:X][Old]]"
+        assertEquals(
+            "[[New]] [[*New]] [[New]] [[New][mine]] [[Older]] [[id:X][Old]]",
+            InternalLinks.renameLinks(text, "Old", "New", plain = true, starred = true),
+        )
+        assertEquals(
+            "[[Old]] [[*New]] [[Old][Old]] [[Old][mine]] [[Older]] [[id:X][Old]]",
+            InternalLinks.renameLinks(text, "Old", "New", plain = false, starred = true),
+        )
+    }
+
 
     private fun note(title: String, content: String = "", properties: List<Pair<String, String>> = emptyList()) =
         OrgNote("f", "f.org", 0, 1, null, false, null, title, emptyList(), null, null, null, properties, content, "* $title\n$content")
