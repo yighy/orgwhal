@@ -4,6 +4,18 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-19
+
+### Added
+- A link to a note not there yet ([[Title]], [[*Title]]) offers to make it, as Emacs does, at
+  the end of the link's notebook (Move to… puts it elsewhere); the links to it in that notebook
+  become id: links, their text kept, so that they follow the note when it is renamed
+
+### Changed
+- Renaming a note can also update the links that lead to it by its title ([[Title]],
+  [[*Title]]), as set in Settings, Links to a renamed note; a link's own text is kept, and links
+  that led elsewhere (another note with that title, a <<target>>) are left as they are
+
 ## [0.29.0] - 2026-10-18
 
 ### Added
@@ -422,7 +434,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.29.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/yighy/orgwhal/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/yighy/orgwhal/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/yighy/orgwhal/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/yighy/orgwhal/compare/v0.26.0...v0.27.0
