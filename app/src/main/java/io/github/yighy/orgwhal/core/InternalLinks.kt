@@ -126,6 +126,40 @@ object InternalLinks {
     /** A dedicated target, <<name>> (not a radio one, <<<name>>>). */
     val TARGET = Regex("""(?<!<)<<([^<>\n]+)>>(?!>)""")
 
+    /** The targets (<<name>>) and #+NAME names of [content]. */
+    fun namesIn(content: String): Set<String> =
+        (TARGET.findAll(content).map { it.groupValues[1].trim() } + NAME.findAll(content).map { it.groupValues[1].trim() })
+            .filter { it.isNotEmpty() }
+            .toSet()
+
+    /**
+     * The target or #+NAME renamed from [before] to [after] (the content as saved), as old to new
+     * name: one gone and one come, else null (more changed at once: which became which is unknown).
+     */
+    fun renamedName(before: String, after: String): Pair<String, String>? {
+        val old = namesIn(before)
+        val new = namesIn(after)
+        val gone = old - new
+        val come = new - old
+        return if (gone.size == 1 && come.size == 1) gone.first() to come.first() else null
+    }
+
+    private val REMOTE_LINE = Regex("""^[ \t]*#\+TBLFM:.*$""", setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
+
+    /**
+     * [text] with what led to the name [old] (a target, a #+NAME) made to lead to [new]: its links
+     * ([[old]], their own text kept, #+transclude: ones too) and the remote(old, …) of formulas.
+     */
+    fun renameNameLinks(text: String, old: String, new: String): String {
+        if (new.any { it == '[' || it == ']' }) return text
+        val linked = replaceLinks(text) { link ->
+            if (link.target.trim() != old) null else link.description?.let { "[[$new][$it]]" } ?: "[[$new]]"
+        }
+        if ("remote" !in linked) return linked
+        val remote = Regex("""(remote\([ \t]*)""" + Regex.escape(old) + """([ \t]*,)""", RegexOption.IGNORE_CASE)
+        return REMOTE_LINE.replace(linked) { line -> remote.replace(line.value) { it.groupValues[1] + new + it.groupValues[2] } }
+    }
+
     /** [text] with its bracket links that [change] gives a new text (else null) replaced by it. */
     private fun replaceLinks(text: String, change: (Links.Link) -> String?): String {
         val changes = Links.find(text)

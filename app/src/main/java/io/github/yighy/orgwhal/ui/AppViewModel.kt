@@ -652,9 +652,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val plain: Boolean,
         val starred: Boolean,
         val notes: Int,
+        /** A target or #+NAME renamed ([oldTitle] to [newTitle]), not a note: what led to it follows. */
+        val name: Boolean = false,
     ) {
-        fun apply(text: String): String =
-            InternalLinks.renameLinks(id?.let { IdLinks.renameLinks(text, it, oldTitle, newTitle) } ?: text, oldTitle, newTitle, plain, starred)
+        fun apply(text: String): String = when {
+            name -> InternalLinks.renameNameLinks(text, oldTitle, newTitle)
+            else -> InternalLinks.renameLinks(id?.let { IdLinks.renameLinks(text, it, oldTitle, newTitle) } ?: text, oldTitle, newTitle, plain, starred)
+        }
     }
 
     var linkRename by mutableStateOf<LinkRename?>(null)
@@ -677,6 +681,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             val mode = settings.value.linkRenaming
             if (mode == LinkRenaming.Never) return@launch
             val draft = LinkRename(saved.id, oldTitle, title, plain, starred, 0)
+            val notes = library.value.notes.count { draft.apply(it.raw) != it.raw }
+            if (notes == 0) return@launch
+            val rename = draft.copy(notes = notes)
+            if (mode == LinkRenaming.Always) renameLinks(rename) else linkRename = rename
+        }
+    }
+
+    /**
+     * Saves a new content; a target (<<name>>) or #+NAME renamed in it then, as set in the
+     * settings, has the links and remote() formulas that led to it updated, asks first, or not.
+     */
+    fun saveContent(note: OrgNote, content: String) {
+        val renamed = InternalLinks.renamedName(note.content, content)
+        viewModelScope.launch {
+            saveLatest(note) { it.toEdit().copy(content = content) } ?: return@launch
+            val (old, new) = renamed ?: return@launch
+            val mode = settings.value.linkRenaming
+            if (mode == LinkRenaming.Never) return@launch
+            // Still somewhere else: the links still lead there
+            if (library.value.notes.any { old in InternalLinks.namesIn(it.content) }) return@launch
+            val draft = LinkRename(null, old, new, plain = false, starred = false, notes = 0, name = true)
             val notes = library.value.notes.count { draft.apply(it.raw) != it.raw }
             if (notes == 0) return@launch
             val rename = draft.copy(notes = notes)

@@ -49,6 +49,23 @@ class InternalLinksTest {
     }
 
     @Test
+    fun aRenamedTargetOrNameIsFollowed() {
+        assertEquals("objectif" to "but", InternalLinks.renamedName("<<objectif>>Viser 50.", "<<but>>Viser 50."))
+        assertEquals("reps" to "séries", InternalLinks.renamedName("#+NAME: reps\n| a |", "#+NAME: séries\n| a |"))
+        // Nothing renamed, or two at once
+        assertNull(InternalLinks.renamedName("<<a>> x", "<<a>> y"))
+        assertNull(InternalLinks.renamedName("<<a>> <<b>>", "<<c>> <<d>>"))
+        assertEquals(
+            "[[but]], [[but][le but]], [[objectifs]]\n#+transclude: [[but]] :lines 1-2\n#+TBLFM: \$2=remote(but, @2\$1)",
+            InternalLinks.renameNameLinks(
+                "[[objectif]], [[objectif][le but]], [[objectifs]]\n#+transclude: [[objectif]] :lines 1-2\n#+TBLFM: \$2=remote(objectif, @2\$1)",
+                "objectif",
+                "but",
+            ),
+        )
+    }
+
+    @Test
     fun theLinkOfAMadeNoteLeadsToItsId() {
         assertEquals(
             "Voir [[id:X1][Idée vide]], [[id:X1][mon idée]], pas [[Autre]]",

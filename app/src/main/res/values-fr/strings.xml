@@ -449,6 +449,11 @@
         <item quantity="many">ans</item>
         <item quantity="other">ans</item>
     </plurals>
+    <plurals name="update_name_links_text">
+        <item quantity="one">%1$d note mène à « %2$s ». La mettre à jour vers « %3$s » ?</item>
+        <item quantity="many">%1$d notes mènent à « %2$s ». Les mettre à jour vers « %3$s » ?</item>
+        <item quantity="other">%1$d notes mènent à « %2$s ». Les mettre à jour vers « %3$s » ?</item>
+    </plurals>
     <plurals name="update_links_text">
         <item quantity="one">%1$d note pointe vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>
         <item quantity="many">%1$d notes pointent vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>

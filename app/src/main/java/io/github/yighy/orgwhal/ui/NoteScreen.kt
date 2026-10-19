@@ -224,7 +224,8 @@ fun NoteScreen(
         if (text == before) return
         saved = what to text
         // A new title can be offered to the links that still show the old one
-        if (what == Editing.Title) viewModel.rename(currentNote, text) else viewModel.update(currentNote) { withText(it, what, text) }
+        // …and a renamed target or #+NAME to what leads to it
+        if (what == Editing.Title) viewModel.rename(currentNote, text) else viewModel.saveContent(currentNote, text)
     }
 
     /** Edits the title or content, with the cursor at [cursor] (the end by default). */

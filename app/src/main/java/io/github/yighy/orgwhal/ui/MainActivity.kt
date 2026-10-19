@@ -394,7 +394,7 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
             text = {
                 Text(
                     pluralStringResource(
-                        R.plurals.update_links_text,
+                        if (rename.name) R.plurals.update_name_links_text else R.plurals.update_links_text,
                         rename.notes,
                         rename.notes,
                         IdLinks.description(rename.oldTitle),

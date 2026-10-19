@@ -424,6 +424,10 @@
         <item quantity="one">year</item>
         <item quantity="other">years</item>
     </plurals>
+    <plurals name="update_name_links_text">
+        <item quantity="one">%1$d note leads to “%2$s”. Update it to lead to “%3$s”?</item>
+        <item quantity="other">%1$d notes lead to “%2$s”. Update them to lead to “%3$s”?</item>
+    </plurals>
     <plurals name="update_links_text">
         <item quantity="one">%1$d note links to this note as “%2$s”. Update these links to the new title “%3$s”?</item>
         <item quantity="other">%1$d notes link to this note as “%2$s”. Update these links to the new title “%3$s”?</item>
