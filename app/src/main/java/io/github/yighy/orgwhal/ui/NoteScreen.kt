@@ -1,5 +1,7 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.text.font.FontFamily
+import io.github.yighy.orgwhal.core.KeywordCompletion
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.foundation.shape.RoundedCornerShape
 import io.github.yighy.orgwhal.core.Templates
@@ -327,6 +329,10 @@ fun NoteScreen(
     val suggestions = remember(query?.text, titleQuery?.text, library) {
         (query?.text ?: titleQuery?.text)?.let { q -> IdLinks.suggestions(library.notes, q) { paths[it.fileUri]?.getOrNull(it.index).orEmpty() } }.orEmpty()
     }
+    // "#" at the start of a line of the content: the keywords (#+transclude:, blocks…)
+    val keywordQuery = typing?.takeIf { cellTyping == null && editing == Editing.Content && query == null && titleQuery == null }
+        ?.let { KeywordCompletion.queryAt(it.text, it.selection.start) }
+    val keywordChoices = keywordQuery?.let { KeywordCompletion.choices(it) }.orEmpty()
     val nameSuggestions = remember(titleQuery?.text, library) {
         titleQuery?.let { InternalLinks.names(library.notes, it.text) }.orEmpty()
     }
@@ -398,6 +404,13 @@ fun NoteScreen(
             val title = displayTitle(target.title).let { if (cellTyping != null) it.replace('|', '/') else it }
             place(IdLinks.format(id, title))
         }
+    }
+
+    fun insertKeyword(choice: KeywordCompletion.Choice) {
+        val q = keywordQuery ?: return
+        val (text, cursor) = choice.text(q.indent)
+        history.record(draft, typing = false)
+        draft = TextFieldValue(draft.text.replaceRange(q.start, q.end, text), TextRange(q.start + cursor))
     }
 
     fun insertNameLink(name: InternalLinks.Name) {
@@ -485,6 +498,18 @@ fun NoteScreen(
                                     onClick = { insertFileLink(target) },
                                     supportingContent = { Text(target.ref.path, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                 ) { Text(target.title) }
+                            }
+                        }
+                    }
+                }
+                if (keywordChoices.isNotEmpty()) {
+                    Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
+                        LazyColumn(Modifier.heightIn(max = 240.dp)) {
+                            items(keywordChoices, key = { it.name }) { choice ->
+                                ListItem(
+                                    onClick = { insertKeyword(choice) },
+                                    supportingContent = { Text(stringResource(keywordDescription(choice))) },
+                                ) { Text(choice.label, fontFamily = FontFamily.Monospace) }
                             }
                         }
                     }
@@ -1594,3 +1619,15 @@ private fun positionLabel(screen: Screen.NewNote): String {
 
 /** How soon after a table field stops being edited a tap still counts as ending its editing. */
 private const val CELL_TAP_MS = 500L
+
+/** What a keyword of the completion does, in a few words. */
+private fun keywordDescription(choice: KeywordCompletion.Choice): Int = when (choice) {
+    KeywordCompletion.Choice.Transclude -> R.string.keyword_transclude
+    KeywordCompletion.Choice.Name -> R.string.keyword_name
+    KeywordCompletion.Choice.Formulas -> R.string.keyword_formulas
+    KeywordCompletion.Choice.Source -> R.string.keyword_source
+    KeywordCompletion.Choice.Quote -> R.string.keyword_quote
+    KeywordCompletion.Choice.Example -> R.string.keyword_example
+    KeywordCompletion.Choice.Verse -> R.string.keyword_verse
+    KeywordCompletion.Choice.Center -> R.string.keyword_center
+}
