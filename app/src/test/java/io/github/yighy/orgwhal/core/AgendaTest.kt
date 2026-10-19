@@ -32,6 +32,25 @@ class AgendaTest {
     )
 
     @Test
+    fun onlyTheTagsOfNotesWithDatesAreOffered() {
+        val tagged = OrgNote.fromDocument(
+            OrgDocument.parse(
+                """
+                * TODO Run                                     :sport:
+                SCHEDULED: <2026-10-06 Tue>
+                * Idea                                          :someday:
+                * DONE Swim                                     :pool:
+                SCHEDULED: <2026-10-05 Mon>
+                * Lunch                                          :Food:
+                Meet at <2026-10-07 Wed 12:00>.
+                """.trimIndent() + "\n",
+            ),
+            "uri", "f.org",
+        )
+        assertEquals(listOf("Food", "sport"), Agenda.tags(tagged))
+    }
+
+    @Test
     fun agendaDays() {
         val agenda = Agenda.build(notes, today, 7)
 

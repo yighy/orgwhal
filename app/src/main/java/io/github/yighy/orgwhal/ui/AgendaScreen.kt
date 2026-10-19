@@ -86,6 +86,12 @@ fun AgendaScreen(
         }
         Agenda.build(notes, today, 7)
     }
+    // Tags that give something: those of the notes with dates the agenda shows (in the notebook
+    // chosen; templates left out as set), and the one chosen
+    val tags = remember(library, notebook, skipTemplates, tag) {
+        val shown = library.notes.filter { n -> (notebook == null || n.fileUri == notebook) && !(skipTemplates && Templates.isTemplate(n)) }
+        (Agenda.tags(shown) + listOfNotNull(tag)).distinctBy { it.lowercase() }.sortedBy { it.lowercase() }
+    }
     val todayCount = agenda.overdue.size + agenda.days.first().entries.size
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val listState = rememberLazyListState()
@@ -130,12 +136,12 @@ fun AgendaScreen(
                                 options = library.files.map { it.uri to it.title },
                                 onSelect = { viewModel.agendaNotebook = it },
                             )
-                            if (library.tags.isNotEmpty()) {
+                            if (tags.isNotEmpty()) {
                                 FilterMenu(
                                     label = tag?.let { "#$it" } ?: stringResource(R.string.all_tags),
                                     allLabel = stringResource(R.string.all_tags),
                                     selected = tag != null,
-                                    options = library.tags.map { it to "#$it" },
+                                    options = tags.map { it to "#$it" },
                                     onSelect = { viewModel.agendaTag = it },
                                 )
                             }

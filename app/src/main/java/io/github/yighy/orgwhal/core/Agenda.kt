@@ -62,6 +62,14 @@ object Agenda {
         )
     }
 
+    /** Whether [note] has something for the agenda: not done, with a planning time or an event. */
+    fun hasDates(note: OrgNote): Boolean =
+        !note.isDone && (planning(note).map { it.second } + OrgTime.events(note)).any { Planned.parse(it) != null }
+
+    /** The tags of the notes with something for the agenda, as the tag filter offers them. */
+    fun tags(notes: List<OrgNote>): List<String> =
+        notes.filter(::hasDates).flatMap { it.tags }.distinctBy { it.lowercase() }.sortedBy { it.lowercase() }
+
     private fun priorityRank(priority: String?): Int =
         priority?.uppercase()?.let { "ABC".indexOf(it) }?.takeIf { it >= 0 } ?: 1
 
