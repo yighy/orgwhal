@@ -1,5 +1,9 @@
 package io.github.yighy.orgwhal.ui
 
+import io.github.yighy.orgwhal.core.Transclusion
+import io.github.yighy.orgwhal.core.OrgNote
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -185,6 +189,7 @@ fun OrgContent(
                     }
                 }
                 is Blocks.Text -> FoldableText(block.text, block.range.first, style, onOpenLink, ::tapFrom, ::toggleFrom)
+                is Blocks.Transclude -> TranscludeBlock(block, style, onOpenLink, onTextTap, tableNamed, scrollTables)
                 is Blocks.Table -> Column {
                     block.name?.let { ElementName(it) }
                     // Recalculated, the table shows its new values; the button then saves them
@@ -541,6 +546,62 @@ private fun DrawerBlock(
 }
 
 /** The name given to a table or block with #+NAME, which links and remote() refer to. */
+/** The notes #+transclude: lines show from, and the notebook of the note shown (its titles first). */
+class Transclusions(val notes: List<OrgNote>, val from: String? = null)
+
+val LocalTransclusions = compositionLocalOf<Transclusions?> { null }
+
+/** How many transclusions this content is inside: one in another shows, not further (no loop). */
+private val LocalTransclusionDepth = compositionLocalOf { 0 }
+
+/**
+ * Another note's content (or a part of it) in a frame, read only, under the title of its note,
+ * which a tap opens; a tap elsewhere edits the #+transclude: line. Not found, the line shows.
+ */
+@Composable
+private fun TranscludeBlock(
+    block: Blocks.Transclude,
+    style: TextStyle,
+    onOpenLink: (String) -> Unit,
+    onTextTap: ((Int) -> Unit)?,
+    tableNamed: (String) -> List<String>?,
+    scrollTables: Boolean,
+) {
+    val source = LocalTransclusions.current
+    val depth = LocalTransclusionDepth.current
+    val shown = remember(source, block) { source?.let { Transclusion.resolve(it.notes, block.link, block.options, it.from) } }
+    if (shown == null || depth >= 2) {
+        LinkedText(block.text, style, onOpenLink, onTextTap = onTextTap?.let { tap -> { at: Int -> tap(block.range.first + at) } })
+        return
+    }
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .tapToEdit(onTextTap, block.range.first)
+            .padding(start = 12.dp, end = 12.dp, bottom = 10.dp),
+    ) {
+        Text(
+            "↪ " + displayTitle(shown.note.title),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onOpenLink(block.link) }
+                .padding(top = 8.dp, bottom = 6.dp, end = 8.dp),
+        )
+        if (shown.text.isNotBlank()) {
+            CompositionLocalProvider(LocalTransclusionDepth provides depth + 1) {
+                OrgContent(shown.text, style, onOpenLink, tableNamed = tableNamed, scrollTables = scrollTables)
+            }
+        }
+    }
+}
+
 @Composable
 private fun ElementName(name: String) {
     Text(

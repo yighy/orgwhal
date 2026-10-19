@@ -857,7 +857,11 @@ fun NoteScreen(
                     }
                     // A logbook alone shows folded, above the placeholder
                     val empty = remember(content) { Blocks.showsNothing(content) }
-                    if (content.isNotBlank()) CompositionLocalProvider(LocalStickyTables provides stickyTables) {
+                    if (content.isNotBlank()) CompositionLocalProvider(
+                        LocalStickyTables provides stickyTables,
+                        // Links by title in #+transclude: lines look in this notebook first
+                        LocalTransclusions provides remember(library, note.fileUri) { Transclusions(library.notes, note.fileUri) },
+                    ) {
                         OrgContent(
                             content,
                             contentStyle,

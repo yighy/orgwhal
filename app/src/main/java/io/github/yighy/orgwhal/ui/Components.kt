@@ -151,6 +151,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import io.github.yighy.orgwhal.core.IdLinks
+import io.github.yighy.orgwhal.core.InternalLinks
 import io.github.yighy.orgwhal.core.NoteTree
 import io.github.yighy.orgwhal.core.SearchQuery
 import java.time.LocalDateTime
@@ -740,8 +741,9 @@ fun LinkedText(
     val toggle by rememberUpdatedState(onToggleCheckbox)
     val showBoxes = onToggleCheckbox != null
     val codeBackground = MaterialTheme.colorScheme.surfaceContainerHighest
+    val targetColor = MaterialTheme.colorScheme.onSurfaceVariant
     // The text as shown, and how its parts map to the raw text (links, checkboxes, emphasis, cookies)
-    val (annotated, ranges, boxes) = remember(text, linkStyle, showBoxes, codeBackground, struck) {
+    val (annotated, ranges, boxes) = remember(text, linkStyle, showBoxes, codeBackground, struck, targetColor) {
         val ranges = mutableListOf<ShownPart>()
         fun overlap(a: IntRange, b: IntRange) = a.first <= b.last && b.first <= a.last
         val markup = Markup.find(text)
@@ -759,7 +761,16 @@ fun LinkedText(
                 .filter { m -> m.groupValues[1].isNotEmpty() && links.none { m.range.first in it.range } }
                 .toList()
         }
-        val segments = (links.map { it.range to it } + boxes.map { it.range to it } + emphasis.map { it.range to it } + cookies.map { it.range to it })
+        // Targets (<<name>>, where links lead) small and grey, as the names of tables
+        val targets = if ("<<" !in text) {
+            emptyList()
+        } else {
+            InternalLinks.TARGET.findAll(text)
+                .filter { m -> links.none { overlap(it.range, m.range) } && literal.none { overlap(it.range, m.range) } }
+                .map { m -> m.range to TargetMark(m.value) }
+                .toList()
+        }
+        val segments = (links.map { it.range to it } + boxes.map { it.range to it } + emphasis.map { it.range to it } + cookies.map { it.range to it } + targets)
             .sortedBy { it.first.first }
         val shown = buildAnnotatedString {
             var last = 0
@@ -774,6 +785,7 @@ fun LinkedText(
                     is Checkboxes.Box -> appendInlineContent("box${boxes.indexOf(segment)}", if (segment.checked) "[X]" else "[ ]")
                     is Markup.Emphasis -> withStyle(emphasisStyle(segment.style, codeBackground, struck)) { append(segment.content) }
                     is MatchResult -> appendInlineContent("cookie:" + segment.value, segment.value)
+                    is TargetMark -> withStyle(SpanStyle(color = targetColor, fontSize = 0.75.em, fontFamily = FontFamily.Monospace)) { append(segment.text) }
                 }
                 ranges += ShownPart(start until length, range, editable = segment is Markup.Emphasis)
                 last = range.last + 1
@@ -894,6 +906,9 @@ val TableLinesMonospace = VisualTransformation { text ->
 }
 
 /** A part of the text shown otherwise than written: a link, a checkbox, emphasis. */
+/** A target as written, <<name>>. */
+private data class TargetMark(val text: String)
+
 private data class ShownPart(val shown: IntRange, val raw: IntRange, val editable: Boolean)
 
 /** How Org emphasis shows ([struck]: within a text struck through). */

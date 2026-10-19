@@ -341,6 +341,8 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
         SharedTransitionLayout(Modifier.background(MaterialTheme.colorScheme.surface)) {
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this,
+                // What #+transclude: lines show, in every screen
+                LocalTransclusions provides remember(library) { Transclusions(library.notes) },
                 // A new state for each screen change: a cut transition does not carry over
                 LocalSharedCut provides remember(top) { mutableStateOf(false) },
             ) {

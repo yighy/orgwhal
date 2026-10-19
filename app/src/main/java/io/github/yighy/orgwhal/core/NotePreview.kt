@@ -20,6 +20,7 @@ object NotePreview {
                     .filter { it.isNotEmpty() }
                 is Blocks.Begin -> block.inner.trimIndent().split('\n').map { IdLinks.plainText(it.trimEnd()) }.filter { it.isNotBlank() }
                 is Blocks.Drawer -> emptyList()
+                is Blocks.Transclude -> emptyList()
             }
         }
         return if (lines.size > max) lines.take(max - 1) + "…" else lines

@@ -2,7 +2,8 @@ package io.github.yighy.orgwhal.core
 
 /**
  * A note's content split into what shows differently: plain text, tables, blocks
- * (#+BEGIN_SRC, #+BEGIN_QUOTE…) and drawers (:LOGBOOK:…:END:, folded).
+ * (#+BEGIN_SRC, #+BEGIN_QUOTE…), drawers (:LOGBOOK:…:END:, folded) and content shown from
+ * another note (#+transclude:).
  * Each part has its [Block.range] of lines in the content.
  */
 object Blocks {
@@ -56,6 +57,10 @@ object Blocks {
     /** :[name]: … :END:; [inner] starts at [innerStart] in the content. */
     data class Drawer(override val range: IntRange, val name: String, val inner: String, val innerStart: Int) : Block
 
+    /** `#+transclude: [[link]] options` ([text] as written): another note's content shows there. */
+    data class Transclude(override val range: IntRange, val text: String, val link: String, val options: String) : Block
+
+    private val TRANSCLUDE = Regex("""^[ 	]*#\+transclude:[ 	]*\[\[([^\]]+)](?:\[[^\]]*])?][ 	]*(.*)$""", RegexOption.IGNORE_CASE)
     private val BEGIN = Regex("""^[ \t]*#\+BEGIN_(\S+)(.*)$""", RegexOption.IGNORE_CASE)
     private val DRAWER_START = Regex("""^[ \t]*:([A-Za-z][\w-]*):[ \t]*$""")
     private val DRAWER_END = Regex("""^[ \t]*:END:[ \t]*$""", RegexOption.IGNORE_CASE)
@@ -98,6 +103,14 @@ object Blocks {
                 flushText(i)
                 name = named.groupValues[1]
                 nameStart = starts[i]
+                i++
+                continue
+            }
+            val transclude = TRANSCLUDE.matchEntire(line)
+            if (transclude != null) {
+                flushText(i)
+                blocks += Transclude(starts[i]..end(i), line.trim(), transclude.groupValues[1], transclude.groupValues[2].trim())
+                name = null
                 i++
                 continue
             }

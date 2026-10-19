@@ -123,7 +123,8 @@ object InternalLinks {
             .toList()
     }
 
-    private val TARGET = Regex("""(?<!<)<<([^<>\n]+)>>(?!>)""")
+    /** A dedicated target, <<name>> (not a radio one, <<<name>>>). */
+    val TARGET = Regex("""(?<!<)<<([^<>\n]+)>>(?!>)""")
 
     /** [text] with its bracket links that [change] gives a new text (else null) replaced by it. */
     private fun replaceLinks(text: String, change: (Links.Link) -> String?): String {

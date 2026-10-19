@@ -136,6 +136,12 @@ Type =[[= then a few letters: Orgwhal suggests the notes, the targets and the na
 
 A link to a note not there yet, such as [[*Ideas for the weekend]], offers to make it, as Emacs does, at the end of the notebook; *⋮ → Move to…* puts it elsewhere. The links to it in that notebook become =id:= links, their text kept, so that they follow the note when it is renamed.
 
+** Content from another note
+A line =#+transclude:= followed by a link shows, in its place, what the link leads to, as Emacs' org-transclusion does: a note's content, a table or block named with =#+NAME=, or the paragraph (or list item) of a target such as [[meeting-point]]. =:lines 2-5= keeps those lines only. It is read only: a tap on its title opens the note it comes from, where it is changed; the file keeps the line alone. Targets (<<name>>, shown small and grey in the text) are left out of what shows, as when exported.
+
+#+transclude: [[expenses]]
+#+transclude: [[meeting-point]]
+
 ** A target
 The link "meeting-point" leads here: <<meeting-point>> in front of the station.
 
