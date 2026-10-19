@@ -1,5 +1,9 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.runtime.collectAsState
 import io.github.yighy.orgwhal.core.Templates
 import io.github.yighy.orgwhal.data.TemplatesHidden
@@ -964,10 +968,30 @@ fun InPlaceField(
     /** The key that calls [onDone]: Done, or Next to go on to another field. */
     imeAction: ImeAction = ImeAction.Done,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    /**
+     * The cursor kept in view above the keyboard as it comes up (a long text opened low on the
+     * screen), with a line of margin.
+     */
+    keepCursorInView: Boolean = false,
 ) {
     val focus = remember { FocusRequester() }
     var focused by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { focus.requestFocus() }
+    val bring = remember { BringIntoViewRequester() }
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val cursor by rememberUpdatedState(value.selection.end)
+    if (keepCursorInView) {
+        val density = LocalDensity.current
+        val ime = WindowInsets.ime
+        LaunchedEffect(Unit) {
+            val margin = with(density) { 32.dp.toPx() }
+            snapshotFlow { ime.getBottom(density) }.collect {
+                val shown = layout ?: return@collect
+                val rect = shown.getCursorRect(cursor.coerceIn(0, shown.layoutInput.text.length))
+                bring.bringIntoView(Rect(rect.left, rect.top - margin, rect.right, rect.bottom + margin))
+            }
+        }
+    }
     val textStyle = style.copy(color = style.color.takeOrElse { LocalContentColor.current })
     BasicTextField(
         value = value,
@@ -978,7 +1002,9 @@ fun InPlaceField(
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = if (onDone != null) imeAction else ImeAction.Default),
         keyboardActions = KeyboardActions(onDone = { onDone?.invoke() }, onNext = { onDone?.invoke() }),
+        onTextLayout = { layout = it },
         modifier = modifier
+            .bringIntoViewRequester(bring)
             .focusRequester(focus)
             .onFocusChanged {
                 // Only after the field had the focus, not on the first composition

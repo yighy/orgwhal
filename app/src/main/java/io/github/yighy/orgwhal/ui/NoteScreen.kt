@@ -825,6 +825,7 @@ fun NoteScreen(
                     placeholder = contentPlaceholder,
                     onFocusLost = { if (editing == Editing.Content) commit() },
                     visualTransformation = TableLinesMonospace,
+                    keepCursorInView = true,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 )
             } else {
