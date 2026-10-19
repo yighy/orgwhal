@@ -4,6 +4,15 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-10-19
+
+### Added
+- Typing [[ suggests the notes, as id: does, and the targets (<<name>>) and #+NAME names: a note
+  is linked by its title ([[Title]], or [[*Title]] if a target of that name comes first), by its
+  id when its title leads elsewhere (another note has it) or has brackets
+- The bar over the keyboard also shows while a table's field is edited, as for a title (emphasis,
+  id: link, inactive date, undo and redo); "[" closes itself there too
+
 ## [0.30.0] - 2026-10-19
 
 ### Added
@@ -434,7 +443,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/yighy/orgwhal/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/yighy/orgwhal/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/yighy/orgwhal/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/yighy/orgwhal/compare/v0.27.0...v0.28.0
