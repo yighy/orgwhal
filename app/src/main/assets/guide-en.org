@@ -132,7 +132,7 @@ Without a scheme, a link leads within the notes, as in Org:
 - to a table or block named with =#+NAME=: [[expenses]];
 - to a note by its title: [[*Tables and formulas]].
 
-Type =[[= then a few letters: Orgwhal suggests the notes, the targets and the names, and writes the link by the title ([[Title]]); only a note whose title leads elsewhere (another note has it) or has brackets is linked by its id.
+Type =[[= then a few letters: Orgwhal suggests the notes, the targets and the names, and writes the link by the title ([[Title]]). A note in another notebook is linked by its id, as Emacs looks for a title in the link's file only; so is one whose title leads elsewhere (another note has it) or has brackets.
 
 A link to a note not there yet, such as [[*Ideas for the weekend]], offers to make it, as Emacs does, at the end of the notebook; *⋮ → Move to…* puts it elsewhere. The links to it in that notebook become =id:= links, their text kept, so that they follow the note when it is renamed.
 

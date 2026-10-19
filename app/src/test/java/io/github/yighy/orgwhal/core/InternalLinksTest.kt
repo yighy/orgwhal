@@ -36,6 +36,8 @@ class InternalLinksTest {
         assertEquals("[[Journal]]", InternalLinks.linkTo(notes, a, "a"))
         assertEquals("[[*Courses]]", InternalLinks.linkTo(notes, b, "a"))
         assertNull(InternalLinks.linkTo(notes, twin, "b"))
+        // In another notebook: Emacs would not find it by its title
+        assertNull(InternalLinks.linkTo(notes, target, "a"))
         assertNull(InternalLinks.linkTo(notes, dated, "a"))
     }
 

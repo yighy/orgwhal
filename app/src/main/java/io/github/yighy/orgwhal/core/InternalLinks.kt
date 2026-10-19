@@ -86,9 +86,11 @@ object InternalLinks {
     /**
      * A link to [note] by its title, as written in the notebook [from]: [[Title]], or [[*Title]]
      * if a target of that name comes first; null if neither leads to it (another note has its
-     * title) or the title cannot be a link's (brackets in it): an id: link is then the way.
+     * title), the title cannot be a link's (brackets in it), or the note is in another notebook
+     * (Emacs looks for a title in the link's file only): an id: link is then the way.
      */
     fun linkTo(notes: List<OrgNote>, note: OrgNote, from: String): String? {
+        if (note.fileUri != from) return null
         val title = clean(IdLinks.plainText(note.title))
         if (title.isEmpty() || title.any { it == '[' || it == ']' } || title[0] == '*' || title[0] == '#' || !isInternal(title)) return null
         val order = notes.sortedBy { it.fileUri != from }
