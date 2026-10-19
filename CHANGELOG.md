@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.31.1] - 2026-10-19
+
+### Changed
+- A note of another notebook picked after [[ is linked by its id ([[id:…][Title]]): Emacs looks
+  for a title in the link's file only
+
 ## [0.31.0] - 2026-10-19
 
 ### Added
@@ -443,7 +449,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.31.1...HEAD
+[0.31.1]: https://github.com/yighy/orgwhal/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/yighy/orgwhal/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/yighy/orgwhal/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/yighy/orgwhal/compare/v0.28.0...v0.29.0
