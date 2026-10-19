@@ -4,6 +4,13 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.33.2] - 2026-10-19
+
+### Fixed
+- The agenda's tag filter offers only the tags of notes with something in the agenda (a planning
+  time or an event, not done), in the notebook chosen: no more :template: (nor tags only
+  templates have) when templates are left out of the agenda
+
 ## [0.33.1] - 2026-10-19
 
 ### Fixed
@@ -488,7 +495,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.33.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.33.2...HEAD
+[0.33.2]: https://github.com/yighy/orgwhal/compare/v0.33.1...v0.33.2
 [0.33.1]: https://github.com/yighy/orgwhal/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/yighy/orgwhal/compare/v0.32.1...v0.33.0
 [0.32.1]: https://github.com/yighy/orgwhal/compare/v0.32.0...v0.32.1
