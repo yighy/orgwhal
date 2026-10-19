@@ -1,5 +1,7 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarDuration
 import android.content.Context
@@ -220,6 +222,11 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
     val snackbar = remember { SnackbarHostState() }
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // A short, fixed-length slide: while the drawer still moves, a tap on it is taken as the start
+    // of a drag (and lost), and the default spring takes about a second to settle
+    fun moveDrawer(to: DrawerValue) {
+        scope.launch { drawer.animateTo(to, tween(DRAWER_MS, easing = FastOutSlowInEasing)) }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.messages.collect { m ->
@@ -287,7 +294,7 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
                     modifier = Modifier.padding(start = 28.dp, top = 24.dp, bottom = 16.dp),
                 )
                 fun close(action: () -> Unit) {
-                    scope.launch { drawer.close() }
+                    moveDrawer(DrawerValue.Closed)
                     action()
                 }
                 NavigationDrawerItem(
@@ -366,7 +373,7 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
                         screenStates.SaveableStateProvider(screen.toString()) {
                             ScreenContent(
                                 screen, viewModel, library, snackbar, notificationsAllowed, onAllowNotifications,
-                                onOpenDrawer = { scope.launch { drawer.open() } },
+                                onOpenDrawer = { moveDrawer(DrawerValue.Open) },
                                 onPickFolder = { pickFolder.launch(null) },
                             )
                         }
@@ -474,3 +481,6 @@ private fun isContainerTransform(a: Screen, b: Screen): Boolean {
 
 /** How often files are checked for changes made by other apps while the app is shown. */
 private const val CHANGES_CHECK_MS = 4000L
+
+/** How long the navigation drawer takes to open or close. */
+private const val DRAWER_MS = 250
