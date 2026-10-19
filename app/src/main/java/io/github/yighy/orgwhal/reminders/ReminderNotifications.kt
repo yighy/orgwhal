@@ -16,6 +16,8 @@ import io.github.yighy.orgwhal.R
 import io.github.yighy.orgwhal.data.AppSettings
 import io.github.yighy.orgwhal.core.Agenda
 import io.github.yighy.orgwhal.core.NotePreview
+import io.github.yighy.orgwhal.core.Transclusion
+import io.github.yighy.orgwhal.core.OrgNote
 import io.github.yighy.orgwhal.ui.MainActivity
 import io.github.yighy.orgwhal.ui.displayTitle
 import java.time.format.DateTimeFormatter
@@ -47,7 +49,14 @@ object ReminderNotifications {
      * Shows [reminder]: under the title, its time and the note's parent ([ancestors]' last, the
      * notebook for a top note); opened, the whole path and the start of the note's content.
      */
-    fun show(context: Context, reminder: Agenda.Reminder, notebook: String, ancestors: List<String> = emptyList()) {
+    fun show(
+        context: Context,
+        reminder: Agenda.Reminder,
+        notebook: String,
+        ancestors: List<String> = emptyList(),
+        /** All the notes, for what the note's #+transclude: lines show. */
+        notes: List<OrgNote> = emptyList(),
+    ) {
         if (!canPost(context)) return
         val note = reminder.note
         val id = notificationId(note.fileUri, note.index, reminder.kind)
@@ -99,7 +108,7 @@ object ReminderNotifications {
         val time = reminder.at.toLocalTime().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
         val expanded = buildString {
             append(context.getString(R.string.notification_text, kind, time, (listOf(notebook) + ancestors).joinToString(" › ")))
-            val preview = NotePreview.lines(note.content)
+            val preview = NotePreview.lines(note.content) { Transclusion.resolve(notes, it.link, it.options, note.fileUri)?.text }
             if (preview.isNotEmpty()) append("\n\n").append(preview.joinToString("\n"))
         }
 

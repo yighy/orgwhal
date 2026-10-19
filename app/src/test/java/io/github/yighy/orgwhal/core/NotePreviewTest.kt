@@ -41,4 +41,13 @@ class NotePreviewTest {
         assertEquals(listOf("Line 1", "Line 2", "…"), NotePreview.lines(content, max = 3))
         assertEquals(emptyList<String>(), NotePreview.lines(":LOGBOOK:\nCLOCK: [2026-10-11 Sun 10:00]\n:END:"))
     }
+
+    @Test
+    fun transcludedContentShowsAsWrittenThereAndTargetsGo() {
+        val content = "<<cap>>Le cap.\n#+transclude: [[reps]]\n#+transclude: [[id:X][Absente]]"
+        assertEquals(
+            listOf("Le cap.", "Lun  ·  20", "↪ Absente"),
+            NotePreview.lines(content) { if (it.link == "reps") "| Lun | 20 |" else null },
+        )
+    }
 }

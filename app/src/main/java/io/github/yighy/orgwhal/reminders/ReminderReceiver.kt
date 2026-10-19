@@ -106,7 +106,7 @@ class ReminderReceiver : BroadcastReceiver() {
                     val file = library.file(reminder.note.fileUri)
                     val notebook = file?.title ?: reminder.note.fileName
                     val ancestors = file?.notes?.let { NoteTree.ancestors(it, reminder.note.index) }.orEmpty().map { displayTitle(it.title) }
-                    ReminderNotifications.show(app, reminder, notebook, ancestors)
+                    ReminderNotifications.show(app, reminder, notebook, ancestors, library.notes)
                 }
             }
         }
