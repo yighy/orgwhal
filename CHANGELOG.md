@@ -4,6 +4,22 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-10-19
+
+### Added
+- Typing # at the start of a content line offers the keywords: #+transclude: (then the link's
+  suggestions), #+NAME:, #+TBLFM:, and source, quote, example, verse and center blocks written
+  whole, the cursor inside
+- A new line after a drawer's first line (:NOTES:) adds its :END: under it (not for
+  :PROPERTIES:, nor when already closed)
+- Typing << closes the target (>>) and offers the names links wait for (written in a link,
+  with nothing there yet); a name already used elsewhere is pointed out
+- Renaming a target (<<name>>) or a #+NAME updates the links, transclusions and remote()
+  formulas leading to it, as set in Settings, Links to a renamed note
+
+### Fixed
+- The cursor of a note's content stays in view above the keyboard as it comes up
+
 ## [0.32.1] - 2026-10-19
 
 ### Fixed
@@ -466,7 +482,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.32.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.33.0...HEAD
+[0.33.0]: https://github.com/yighy/orgwhal/compare/v0.32.1...v0.33.0
 [0.32.1]: https://github.com/yighy/orgwhal/compare/v0.32.0...v0.32.1
 [0.32.0]: https://github.com/yighy/orgwhal/compare/v0.31.1...v0.32.0
 [0.31.1]: https://github.com/yighy/orgwhal/compare/v0.31.0...v0.31.1
