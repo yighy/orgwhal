@@ -20,12 +20,14 @@ An Android app for [Org mode](https://orgmode.org) notes, inspired by
 - **Outline and tree.** Notebooks fold as in Org (`#+STARTUP`, `VISIBILITY`) and stay as you
   leave them; a tree view draws them as boxes to move around. Select notes to move, copy, archive
   or refile them.
-- **Links.** `id:` links picked by title, internal links (`[[*Title]]`, `<<target>>`), and the
-  notes linking back to each one.
+- **Links.** Type `id:` or `[[` to pick a note, a target or a named table; links follow a renamed
+  note, a link to a missing note offers to make it, and each note lists those linking back. A
+  `#+transclude:` line shows another note's content, a table or a paragraph in place, as
+  org-transclusion does.
 - **Agenda and reminders.** The week ahead with repeating tasks, and exact reminders you can mark
   done, snooze or start clocking from.
 - **Org at hand.** Tables with formulas, checkboxes and `[/]` cookies, blocks and drawers,
-  clocking (with a notification while the clock runs), archiving, search with Orgzly's syntax,
+  template notes (`%u`, `%U`… as in capture templates), clocking (with a notification while the clock runs), archiving, search with Orgzly's syntax,
   sharing from other apps.
 
 ## Download
