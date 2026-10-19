@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.32.1] - 2026-10-19
+
+### Fixed
+- A reminder's notification shows what the note's #+transclude: lines include, as if written
+  there (the link alone when what it leads to is missing), and leaves targets (<<name>>) out
+
 ## [0.32.0] - 2026-10-19
 
 ### Added
@@ -460,7 +466,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.32.1...HEAD
+[0.32.1]: https://github.com/yighy/orgwhal/compare/v0.32.0...v0.32.1
 [0.32.0]: https://github.com/yighy/orgwhal/compare/v0.31.1...v0.32.0
 [0.31.1]: https://github.com/yighy/orgwhal/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/yighy/orgwhal/compare/v0.30.0...v0.31.0
