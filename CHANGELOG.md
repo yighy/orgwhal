@@ -4,6 +4,19 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-10-22
+
+### Added
+- A note with sub-notes shows "↳ 3 sub-notes" under its title: a menu of them (their state,
+  title, and how many sub-notes each has), one opened with a tap; the breadcrumbs lead back up
+
+### Changed
+- An empty content just says "Add content"
+
+### Fixed
+- Tables in drawers are recalculated and saved too when set to (Recalculate and save), instead
+  of offering to save them
+
 ## [0.33.2] - 2026-10-19
 
 ### Fixed
@@ -495,7 +508,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.33.2...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.34.0...HEAD
+[0.34.0]: https://github.com/yighy/orgwhal/compare/v0.33.2...v0.34.0
 [0.33.2]: https://github.com/yighy/orgwhal/compare/v0.33.1...v0.33.2
 [0.33.1]: https://github.com/yighy/orgwhal/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/yighy/orgwhal/compare/v0.32.1...v0.33.0
