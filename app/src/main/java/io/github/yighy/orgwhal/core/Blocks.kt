@@ -218,14 +218,25 @@ object Blocks {
         return text.substring(table.tableStart, table.tableEnd).split('\n') to table.formulas
     }
 
-    /** [text] with each of its tables that has formulas recalculated; [remote] as for [TableFormulas.recalculate]. */
+    /**
+     * [text] with each of its tables that has formulas recalculated, those in drawers too (they
+     * show as the others); [remote] as for [TableFormulas.recalculate].
+     */
     fun recalculated(text: String, remote: (String) -> List<String>?): String {
         var out = text
-        // From the last table, so the ones above keep their places
-        parse(text).filterIsInstance<Table>().filter { it.formulas.isNotEmpty() }.asReversed().forEach { table ->
-            val lines = text.substring(table.tableStart, table.tableEnd).split('\n')
-            val result = TableFormulas.recalculate(lines, table.formulas, remote)
-            if (result.lines != lines) out = out.replaceRange(table.tableStart, table.tableEnd, result.lines.joinToString("\n"))
+        // From the last part, so the ones above keep their places
+        parse(text).asReversed().forEach { block ->
+            when {
+                block is Table && block.formulas.isNotEmpty() -> {
+                    val lines = text.substring(block.tableStart, block.tableEnd).split('\n')
+                    val result = TableFormulas.recalculate(lines, block.formulas, remote)
+                    if (result.lines != lines) out = out.replaceRange(block.tableStart, block.tableEnd, result.lines.joinToString("\n"))
+                }
+                block is Drawer -> {
+                    val inner = recalculated(block.inner, remote)
+                    if (inner != block.inner) out = out.replaceRange(block.innerStart, block.innerStart + block.inner.length, inner)
+                }
+            }
         }
         return out
     }

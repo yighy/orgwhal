@@ -66,6 +66,15 @@ class TableFormulasTest {
     }
 
     @Test
+    fun aTableInADrawerIsRecalculatedToo() {
+        val note = "Avant\n:DATA:\n| 2 | 3 | 0 |\n#+TBLFM: \$3=\$1+\$2\n:END:\n| 1 | 0 |\n#+TBLFM: \$2=\$1*2"
+        assertEquals(
+            "Avant\n:DATA:\n| 2 | 3 | 5 |\n#+TBLFM: \$3=\$1+\$2\n:END:\n| 1 | 2 |\n#+TBLFM: \$2=\$1*2",
+            Blocks.recalculated(note) { null },
+        )
+    }
+
+    @Test
     fun freshRemoteRecalculatesTheTablesReadFirst() {
         // The budget's sum is out of date in its file: read fresh, it counts its rows again
         val budget = "#+NAME: budget\n| A | 10 |\n| B | 15 |\n| Sum | 0 |\n#+TBLFM: @>\$2=vsum(@1..@-1)"
