@@ -39,7 +39,7 @@
     <string name="collapse">Replier</string>
     <string name="collapse_all">Tout replier</string>
     <string name="content">Contenu</string>
-    <string name="content_placeholder">Ajoutez du contenu (tapez id: ou file: pour faire un lien vers une note ou un carnet)</string>
+    <string name="content_placeholder">Ajoutez du contenu</string>
     <string name="copy">Copier</string>
     <string name="copy_link">Copier le lien vers cette note</string>
     <string name="create">Créer</string>
@@ -376,6 +376,11 @@
         <item quantity="one">Recherche supprimée</item>
         <item quantity="many">%1$d recherches supprimées</item>
         <item quantity="other">%1$d recherches supprimées</item>
+    </plurals>
+    <plurals name="n_sub_notes">
+        <item quantity="one">%1$d sous-note</item>
+        <item quantity="many">%1$d sous-notes</item>
+        <item quantity="other">%1$d sous-notes</item>
     </plurals>
     <plurals name="n_formulas">
         <item quantity="one">%1$d formule</item>

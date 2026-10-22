@@ -6,6 +6,22 @@ object NoteTree {
     fun hasChildren(notes: List<OrgNote>, index: Int): Boolean =
         (notes.getOrNull(index + 1)?.level ?: 0) > notes[index].level
 
+    /** The direct sub-notes of the note at [index], in order (not theirs). */
+    fun children(notes: List<OrgNote>, index: Int): List<OrgNote> {
+        val level = notes[index].level
+        val result = mutableListOf<OrgNote>()
+        // The levels open since the note: one is a child when nothing between is its parent
+        val open = ArrayDeque<Int>()
+        for (i in index + 1 until notes.size) {
+            val l = notes[i].level
+            if (l <= level) break
+            while (open.isNotEmpty() && open.last() >= l) open.removeLast()
+            if (open.isEmpty()) result += notes[i]
+            open.addLast(l)
+        }
+        return result
+    }
+
     /** Ancestors of the note at [index], outermost first. */
     fun ancestors(notes: List<OrgNote>, index: Int): List<OrgNote> {
         val result = mutableListOf<OrgNote>()

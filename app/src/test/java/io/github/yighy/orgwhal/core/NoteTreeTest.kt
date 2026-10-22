@@ -33,6 +33,16 @@ class NoteTreeTest {
     }
 
     @Test
+    fun directChildren() {
+        assertEquals(listOf("A1", "A2"), NoteTree.children(notes, 0).map { it.title })
+        assertEquals(listOf("A1a"), NoteTree.children(notes, 1).map { it.title })
+        assertEquals(emptyList<String>(), NoteTree.children(notes, 4).map { it.title })
+        // A level skipped (*** under *) is still a child
+        val skipped = OrgNote.fromDocument(OrgDocument.parse("* P\n*** Deep\n** Next\n"), "u", "f")
+        assertEquals(listOf("Deep", "Next"), NoteTree.children(skipped, 0).map { it.title })
+    }
+
+    @Test
     fun titlePaths() {
         val tasks = OrgNote.fromDocument(
             OrgDocument.parse("* Project [1/2]\n** DONE One\n** TODO Two\n*** Detail\n* Project\n* Notes\n"),

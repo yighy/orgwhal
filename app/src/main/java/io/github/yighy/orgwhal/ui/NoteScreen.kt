@@ -1,5 +1,7 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontFamily
 import io.github.yighy.orgwhal.core.KeywordCompletion
@@ -741,6 +743,12 @@ fun NoteScreen(
                     }
                 }
             }
+
+            // Its sub-notes, in a menu under the title: the way down, as the breadcrumbs are up
+            val children = remember(file, note.index) {
+                file?.notes?.takeIf { newNote == null && note.index in it.indices }?.let { NoteTree.children(it, note.index) }.orEmpty()
+            }
+            if (children.isNotEmpty()) SubNotesMenu(children, file?.notes.orEmpty(), onOpen = { commit(); viewModel.openNote(it) })
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -1688,4 +1696,51 @@ private fun keywordDescription(choice: KeywordCompletion.Choice): Int = when (ch
     KeywordCompletion.Choice.Example -> R.string.keyword_example
     KeywordCompletion.Choice.Verse -> R.string.keyword_verse
     KeywordCompletion.Choice.Center -> R.string.keyword_center
+}
+
+/**
+ * "↳ 3 sub-notes ▾" under a note's title: a menu of its direct sub-notes (their state and title,
+ * and how many sub-notes each has), one opened with a tap.
+ */
+@Composable
+private fun SubNotesMenu(children: List<OrgNote>, notes: List<OrgNote>, onOpen: (OrgNote) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { open = true }
+                .padding(end = 4.dp, top = 2.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "↳ " + pluralStringResource(R.plurals.n_sub_notes, children.size, children.size),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Icon(Icons.Default.ArrowDropDown, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, modifier = Modifier.heightIn(max = 420.dp)) {
+            children.forEach { child ->
+                val below = remember(notes, child.index) { NoteTree.children(notes, child.index).size }
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            child.state?.let { StateLabel(it, child.isDone) }
+                            Text(displayTitle(child.title).ifBlank { stringResource(R.string.untitled) }, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    },
+                    trailingIcon = if (below > 0) {
+                        { Text("$below ›", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        open = false
+                        onOpen(child)
+                    },
+                )
+            }
+        }
+    }
 }

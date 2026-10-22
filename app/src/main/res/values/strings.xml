@@ -41,7 +41,7 @@
     <string name="collapse">Collapse</string>
     <string name="collapse_all">Collapse all</string>
     <string name="content">Content</string>
-    <string name="content_placeholder">Add content (type id: or file: to link to a note or notebook)</string>
+    <string name="content_placeholder">Add content</string>
     <string name="copy">Copy</string>
     <string name="copy_link">Copy link to this note</string>
     <string name="create">Create</string>
@@ -366,6 +366,10 @@
     <plurals name="msg_searches_deleted">
         <item quantity="one">Search deleted</item>
         <item quantity="other">%1$d searches deleted</item>
+    </plurals>
+    <plurals name="n_sub_notes">
+        <item quantity="one">%1$d sub-note</item>
+        <item quantity="other">%1$d sub-notes</item>
     </plurals>
     <plurals name="n_formulas">
         <item quantity="one">%1$d formula</item>
