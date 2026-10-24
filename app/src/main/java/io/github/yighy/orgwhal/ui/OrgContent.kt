@@ -1,5 +1,7 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.draw.alpha
+
 import io.github.yighy.orgwhal.core.Transclusion
 import io.github.yighy.orgwhal.core.OrgNote
 import androidx.compose.ui.text.style.TextOverflow
@@ -319,6 +321,7 @@ fun OrgContent(
                         },
                         scrolls = scrollTables,
                         editing = editing,
+                        editingText = draft.text,
                         editor = { line, column, cellStyle ->
                             // Kept in view above the keyboard as it comes up, with the field's
                             // padding and border under it
@@ -326,7 +329,7 @@ fun OrgContent(
                             val density = LocalDensity.current
                             val ime = WindowInsets.ime
                             var size by remember { mutableStateOf(IntSize.Zero) }
-                            LaunchedEffect(Unit) {
+                            LaunchedEffect(line, column) {
                                 val margin = with(density) { 16.dp.toPx() }
                                 snapshotFlow { ime.getBottom(density) }.collect {
                                     bring.bringIntoView(Rect(0f, -margin, size.width.toFloat(), size.height + margin))
@@ -678,6 +681,8 @@ private fun OrgTable(
     scrolls: Boolean = true,
     /** The field shown by [editor] instead of its text, with the style it would have. */
     editing: Pair<Int, Int>? = null,
+    /** The text being typed in that field, which sizes it as its own text would. */
+    editingText: String = "",
     editor: @Composable (Int, Int, TextStyle) -> Unit = { _, _, _ -> },
 ) {
     val line = MaterialTheme.colorScheme.outlineVariant
@@ -708,8 +713,18 @@ private fun OrgTable(
         ),
     ) {
         val screen = constraints.maxWidth
+        val onHeader = MaterialTheme.colorScheme.onSecondaryContainer
+        fun cellStyle(i: Int, c: Int): TextStyle = when {
+            i < header -> style.copy(fontWeight = FontWeight.Bold, color = onHeader)
+            numeric[c] -> style.copy(textAlign = TextAlign.End)
+            else -> style
+        }
         Layout(
             content = {
+                // One field for all the cells, laid over the one edited: going from a cell to
+                // another, it keeps the focus and the keyboard stays up (a field per cell would
+                // take it down and bring it up again). First, to stay the same as rows come and go
+                editing?.let { (i, c) -> Box { editor(i, c, cellStyle(i, c)) } }
                 rows.forEachIndexed { r, (i, cells) ->
                     repeat(table.columns) { c ->
                         val isHeader = i < header
@@ -730,12 +745,13 @@ private fun OrgTable(
                                 .background(if (isHeader) headerColor else base)
                                 .then(if (striped) Modifier.background(stripe) else Modifier)
                                 .border(if (editing == i to c) 2.dp else 0.5.dp, if (editing == i to c) MaterialTheme.colorScheme.primary else line)
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                .padding(horizontal = CELL_PADDING_X, vertical = CELL_PADDING_Y),
                             contentAlignment = if (numeric[c] && !isHeader) Alignment.CenterEnd else Alignment.CenterStart,
                         ) {
                             val cellStyle = if (isHeader) style.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer) else style
                             if (editing == i to c) {
-                                editor(i, c, if (numeric[c] && !isHeader) cellStyle.copy(textAlign = TextAlign.End) else cellStyle)
+                                // Under the field: its text, unseen, gives the cell its size
+                                Text(editingText.ifEmpty { " " } + " ", style = cellStyle(i, c), modifier = Modifier.alpha(0f))
                             } else {
                                 LinkedText(cells.getOrElse(c) { "" }, cellStyle, onOpenLink, maxLines = if (wrap) Int.MAX_VALUE else 1)
                             }
@@ -758,7 +774,9 @@ private fun OrgTable(
                 .onSizeChanged { tableWidth = it.width }
                 .clip(shape)
                 .border(1.dp, line, shape),
-        ) { measurables, _ ->
+        ) { all, _ ->
+            val field = if (editing != null) all.first() else null
+            val measurables = if (field != null) all.drop(1) else all
             val grid = measurables.chunked(table.columns)
             val natural = IntArray(table.columns) { c -> grid.maxOfOrNull { it[c].maxIntrinsicWidth(Constraints.Infinity) } ?: 0 }
             // Not narrower than a column's longest word (within reason), rather than cut in it
@@ -783,17 +801,24 @@ private fun OrgTable(
                 } else {
                     0
                 }
+                val padX = CELL_PADDING_X.roundToPx()
+                val padY = CELL_PADDING_Y.roundToPx()
                 var y = 0
                 placeables.forEachIndexed { r, row ->
                     val inHeader = rows[r].first < header
                     var x = 0
                     row.forEachIndexed { c, cell ->
                         val frozen = freeze && c == 0
-                        cell.place(
-                            x + if (frozen) dx else 0,
-                            y + if (inHeader) dy else 0,
-                            zIndex = (if (inHeader) 2f else 0f) + if (frozen) 1f else 0f,
-                        )
+                        val cellX = x + if (frozen) dx else 0
+                        val cellY = y + if (inHeader) dy else 0
+                        val z = (if (inHeader) 2f else 0f) + if (frozen) 1f else 0f
+                        cell.place(cellX, cellY, zIndex = z)
+                        // The field over its cell, within the cell's padding
+                        if (field != null && editing == rows[r].first to c) {
+                            field.measure(
+                                Constraints.fixed((widths[c] - 2 * padX).coerceAtLeast(0), (heights[r] - 2 * padY).coerceAtLeast(0)),
+                            ).place(cellX + padX, cellY + padY, zIndex = z + 0.5f)
+                        }
                         x += widths[c]
                     }
                     y += heights[r]
@@ -802,6 +827,9 @@ private fun OrgTable(
         }
     }
 }
+
+private val CELL_PADDING_X = 10.dp
+private val CELL_PADDING_Y = 6.dp
 
 /** Fades the right edge of what is cut there ([cut]), to show it goes on. */
 private fun Modifier.fadeRight(cut: Boolean): Modifier = if (!cut) this else this
