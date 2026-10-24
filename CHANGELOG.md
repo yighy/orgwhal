@@ -8,7 +8,7 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ### Added
 - Search by table fields: col.NAME.REL.VALUE finds notes whose table has, under a column so
-  headed (or right of a field so named), a value matching: col.stock.eq.0, col.quantité.le.1,
+  headed (or right of a field so named), a value matching: col.stock.eq.0, col.quantity.le.1,
   col."en stock".gt.2; numbers compare as numbers, names ignore case and accents
 - The search field completes as it is typed: the conditions from their first letter (all of
   them in an empty field), then tags, notebooks, state keywords, table columns, comparisons and
