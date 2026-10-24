@@ -1,5 +1,7 @@
 package io.github.yighy.orgwhal.ui
 
+import io.github.yighy.orgwhal.data.Indentation
+
 import androidx.compose.foundation.lazy.LazyListState
 import io.github.yighy.orgwhal.data.TableRecalc
 import io.github.yighy.orgwhal.core.Blocks
@@ -210,6 +212,7 @@ fun NotebookScreen(
                     selected = selection?.indices.orEmpty(),
                     showContent = settings.showContentInNotebook,
                     spacing = settings.noteSpacing.padding.dp,
+                    indentation = settings.indentation,
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onAddNear = { note, placement -> viewModel.startNewNote(file.uri, note, placement) },
                     onDelete = viewModel::deleteNote,
@@ -259,6 +262,7 @@ private fun NotebookOutline(
     selected: Set<Int>,
     showContent: Boolean,
     spacing: Dp,
+    indentation: Indentation,
     scrollConnection: androidx.compose.ui.input.nestedscroll.NestedScrollConnection,
     onAddNear: (OrgNote, Placement) -> Unit,
     onDelete: (OrgNote) -> Unit,
@@ -390,6 +394,7 @@ private fun NotebookOutline(
                         folded = viewModel.isFolded(note),
                         showContent = showContent,
                         spacing = spacing,
+                        indentation = indentation,
                         selected = note.index in marked,
                         selecting = selecting,
                         swipeOpen = viewModel.openSwipeRow,
@@ -460,6 +465,7 @@ private fun OutlineRow(
     folded: Boolean,
     showContent: Boolean,
     spacing: Dp,
+    indentation: Indentation,
     selected: Boolean,
     selecting: Boolean,
     swipeOpen: String?,
@@ -511,21 +517,21 @@ private fun OutlineRow(
                     // chevron when it is expanded, so they join into lines along the subtree
                     val stroke = 1.5.dp.toPx()
                     ancestorLevels.forEach { level ->
-                        val x = guideX(level).toPx()
+                        val x = guideX(level, indentation).toPx()
                         drawLine(guideColor, Offset(x, 0f), Offset(x, size.height), stroke)
                     }
                     if (hasChildren && !folded) {
-                        val x = guideX(note.level).toPx()
+                        val x = guideX(note.level, indentation).toPx()
                         drawLine(guideColor, Offset(x, (iconHeight / 2 + 16.dp).toPx()), Offset(x, size.height), stroke)
                     }
                 }
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                 .heightIn(min = spacing * 2 + 28.dp)
-                .padding(start = indent(note.level), end = 16.dp),
+                .padding(start = indent(note.level, indentation), end = 16.dp),
             verticalAlignment = Alignment.Top,
         ) {
             if (hasChildren) {
-                IconButton(onClick = onToggleFold, modifier = Modifier.size(48.dp, iconHeight)) {
+                IconButton(onClick = onToggleFold, modifier = Modifier.size(iconWidth(note.level, indentation), iconHeight)) {
                     Icon(
                         Icons.Default.KeyboardArrowDown,
                         stringResource(if (folded) R.string.expand else R.string.collapse),
@@ -533,7 +539,7 @@ private fun OutlineRow(
                     )
                 }
             } else {
-                Box(Modifier.size(48.dp, iconHeight), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(iconWidth(note.level, indentation), iconHeight), contentAlignment = Alignment.Center) {
                     Box(
                         Modifier
                             .size(6.dp)
@@ -660,8 +666,18 @@ private val MoveSpec = spring(FOLD_SPATIAL_DAMPING, FOLD_SPATIAL_STIFFNESS, IntO
 /** How long a moved note may take to reach its new place, after which rows no longer slide. */
 private const val MOVE_SETTLE_MS = 800L
 
+/** How far the notes at [depth] (0 for the top level) go in from their parent's. */
+private fun step(depth: Int, indentation: Indentation) = (if (depth < 2) indentation.first else indentation.deeper).dp
+
+/** Depth of a note at [level], as far as the outline goes in. */
+private fun depth(level: Int) = (level - 1).coerceIn(0, 6)
+
 /** Start padding of a note at [level] in the outline. */
-private fun indent(level: Int) = 4.dp + 24.dp * (level - 1).coerceIn(0, 6)
+private fun indent(level: Int, indentation: Indentation): Dp =
+    (0 until depth(level)).fold(4.dp) { x, d -> x + step(d, indentation) }
+
+/** Width of the chevron or bullet of a note at [level]: its sub-notes start under its middle. */
+private fun iconWidth(level: Int, indentation: Indentation) = step(depth(level), indentation) * 2
 
 /** Horizontal position of the guide line under the chevron of a note at [level]. */
-private fun guideX(level: Int) = indent(level) + 24.dp
+private fun guideX(level: Int, indentation: Indentation) = indent(level, indentation) + step(depth(level), indentation)

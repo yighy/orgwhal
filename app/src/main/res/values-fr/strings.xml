@@ -489,4 +489,8 @@
     <string name="search_hint_gt">Supérieur à</string>
     <string name="search_hint_ge">Au moins</string>
     <string name="scroll_to_section_end">Aller à la fin de ces sous-notes</string>
+    <string name="settings_indentation">Retrait des sous-notes</string>
+    <string name="indentation_wide">Large</string>
+    <string name="indentation_tapering">Dégressif</string>
+    <string name="indentation_compact">Compact</string>
 </resources>

@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.yighy.orgwhal.data.AppSettings
 import io.github.yighy.orgwhal.data.LinkRenaming
 import io.github.yighy.orgwhal.data.NoteSpacing
+import io.github.yighy.orgwhal.data.Indentation
 import io.github.yighy.orgwhal.data.NoteRepository
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -80,6 +81,7 @@ fun SettingsScreen(
     var pickSnooze by remember { mutableStateOf(false) }
     var pickReminderButton by remember { mutableStateOf(false) }
     var pickSpacing by remember { mutableStateOf(false) }
+    var pickIndentation by remember { mutableStateOf(false) }
     var editHiddenProperties by remember { mutableStateOf(false) }
 
     // System settings can change while the app is in the background
@@ -165,6 +167,10 @@ fun SettingsScreen(
                 onClick = { pickSpacing = true },
                 supportingContent = { Text(stringResource(settings.noteSpacing.label)) },
             ) { Text(stringResource(R.string.settings_spacing)) }
+            ListItem(
+                onClick = { pickIndentation = true },
+                supportingContent = { Text(stringResource(settings.indentation.label)) },
+            ) { Text(stringResource(R.string.settings_indentation)) }
 
             ListItem(
                 onClick = { editKeywords = true },
@@ -342,6 +348,18 @@ fun SettingsScreen(
             onSelect = { label ->
                 pickSpacing = false
                 NoteSpacing.entries.firstOrNull { resources.getString(it.label) == label }?.let(viewModel::setNoteSpacing)
+            },
+        )
+    }
+    if (pickIndentation) {
+        ChoiceDialog(
+            title = stringResource(R.string.settings_indentation),
+            options = Indentation.entries.map { stringResource(it.label) },
+            selected = stringResource(settings.indentation.label),
+            onDismiss = { pickIndentation = false },
+            onSelect = { label ->
+                pickIndentation = false
+                Indentation.entries.firstOrNull { resources.getString(it.label) == label }?.let(viewModel::setIndentation)
             },
         )
     }

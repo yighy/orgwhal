@@ -28,6 +28,17 @@ enum class NoteSpacing(@StringRes val label: Int, val padding: Int) {
     Dense(R.string.spacing_dense, 3),
 }
 
+/**
+ * How far sub-notes go in from their parent in a notebook's outline: [first] for the first two
+ * levels in, [deeper] after them (dp).
+ */
+enum class Indentation(@StringRes val label: Int, val first: Int, val deeper: Int) {
+    Wide(R.string.indentation_wide, 24, 24),
+    Tapering(R.string.indentation_tapering, 24, 16),
+    // About as Emacs' org-indent-mode, two characters a level
+    Compact(R.string.indentation_compact, 16, 16),
+}
+
 /** When a note is renamed, links to it that still show its old title can follow. */
 enum class LinkRenaming(@StringRes val label: Int) {
     Ask(R.string.link_renaming_ask),
@@ -76,6 +87,7 @@ class AppSettings(context: Context) {
         /** A table wider than the screen keeps its first column at the left as it scrolls sideways. */
         val freezeFirstColumn: Boolean = false,
         val noteSpacing: NoteSpacing = NoteSpacing.Comfortable,
+        val indentation: Indentation = Indentation.Tapering,
         val remindScheduled: Boolean = true,
         val remindDeadline: Boolean = true,
         /** Also remind for dates without a time of day, at [allDayTime]. */
@@ -121,6 +133,7 @@ class AppSettings(context: Context) {
             wrapTables = prefs.getBoolean(KEY_WRAP_TABLES, true),
             freezeFirstColumn = prefs.getBoolean(KEY_FREEZE_FIRST_COLUMN, false),
             noteSpacing = NoteSpacing.entries.firstOrNull { it.name == prefs.getString(KEY_NOTE_SPACING, null) } ?: NoteSpacing.Comfortable,
+            indentation = Indentation.entries.firstOrNull { it.name == prefs.getString(KEY_INDENTATION, null) } ?: Indentation.Tapering,
             remindScheduled = prefs.getBoolean(KEY_REMIND_SCHEDULED, true),
             remindDeadline = prefs.getBoolean(KEY_REMIND_DEADLINE, true),
             remindAllDay = prefs.getBoolean(KEY_REMIND_ALL_DAY, false),
@@ -241,6 +254,9 @@ class AppSettings(context: Context) {
 
     fun setNoteSpacing(spacing: NoteSpacing) = save({ putString(KEY_NOTE_SPACING, spacing.name) }) { it.copy(noteSpacing = spacing) }
 
+    fun setIndentation(indentation: Indentation) =
+        save({ putString(KEY_INDENTATION, indentation.name) }) { it.copy(indentation = indentation) }
+
     fun setRemindScheduled(on: Boolean) = save({ putBoolean(KEY_REMIND_SCHEDULED, on) }) { it.copy(remindScheduled = on) }
 
     fun setRemindDeadline(on: Boolean) = save({ putBoolean(KEY_REMIND_DEADLINE, on) }) { it.copy(remindDeadline = on) }
@@ -315,6 +331,7 @@ class AppSettings(context: Context) {
         private const val KEY_WRAP_TABLES = "wrap_tables"
         private const val KEY_FREEZE_FIRST_COLUMN = "freeze_first_column"
         private const val KEY_NOTE_SPACING = "note_spacing"
+        private const val KEY_INDENTATION = "indentation"
         private const val KEY_REMIND_SCHEDULED = "remind_scheduled"
         private const val KEY_REMIND_DEADLINE = "remind_deadline"
         private const val KEY_REMIND_ALL_DAY = "remind_all_day"

@@ -461,4 +461,8 @@
     <string name="search_hint_gt">More than</string>
     <string name="search_hint_ge">At least</string>
     <string name="scroll_to_section_end">Scroll to the end of these sub-notes</string>
+    <string name="settings_indentation">Sub-note indentation</string>
+    <string name="indentation_wide">Wide</string>
+    <string name="indentation_tapering">Tapering</string>
+    <string name="indentation_compact">Compact</string>
 </resources>
