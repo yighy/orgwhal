@@ -2,6 +2,7 @@ package io.github.yighy.orgwhal.ui
 
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import io.github.yighy.orgwhal.data.ReminderButton
+import io.github.yighy.orgwhal.core.TableLookup
 import io.github.yighy.orgwhal.core.TableFormulas
 import io.github.yighy.orgwhal.core.Blocks
 import io.github.yighy.orgwhal.data.TableRecalc
@@ -295,13 +296,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
      */
     fun tableLookup(content: String): (String) -> List<String>? {
         val notes = library.value
-        val find = { name: String ->
-            Blocks.tableWithFormulas(content, name)
-                ?: notes.notes.firstNotNullOfOrNull { Blocks.tableWithFormulas(it.content, name) }
-                ?: notes.noteById(name)?.let { Blocks.tableWithFormulas(it.content, null) }
-        }
-        return if (settings.value.tableRecalc == TableRecalc.Never) { name -> find(name)?.first } else TableFormulas.freshRemote(find)
+        val live = settings.value.tableRecalc != TableRecalc.Never
+        // One for all the notes until they change: what it works out stays (scrolling back)
+        val shared = tables?.takeIf { (forNotes, forLive) -> forNotes === notes && forLive == live }?.third
+            ?: TableLookup(notes.notes, live).also { tables = Triple(notes, live, it) }
+        return shared.from(content)
     }
+
+    private var tables: Triple<NoteRepository.Library, Boolean, TableLookup>? = null
 
     /** When tables are recalculated and saved as shown: writes [note]'s tables if their values changed. */
     fun saveShownTables(note: OrgNote) {

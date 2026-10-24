@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.runtime.snapshotFlow
 import io.github.yighy.orgwhal.data.Indentation
 
 import androidx.compose.foundation.lazy.LazyListState
@@ -270,6 +271,22 @@ private fun NotebookOutline(
     val shown = NoteTree.visible(file.notes, viewModel::isFolded).map { it.index }.toSet()
     val library by viewModel.library.collectAsState()
     val tableRecalc = viewModel.settings.collectAsState().value.tableRecalc
+    // Tables recalculated and saved as shown: those shown while the list scrolls are saved once
+    // it stops, all together (a note saved meanwhile would change the notes, and the rows in view
+    // work their tables out again, the list scrolling on)
+    val tablesToSave = remember { LinkedHashMap<String, OrgNote>() }
+    fun tablesShown(note: OrgNote) {
+        if (listState.isScrollInProgress) tablesToSave[note.fileUri + "#" + note.index] = note else viewModel.saveShownTables(note)
+    }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collect { scrolling ->
+            if (!scrolling && tablesToSave.isNotEmpty()) {
+                val notes = tablesToSave.values.toList()
+                tablesToSave.clear()
+                notes.forEach(viewModel::saveShownTables)
+            }
+        }
+    }
     val rowKeys = remember(file.notes) { outlineKeys(file.notes) }
     // The selection follows its notes by their keys: moved, the notes come a little before the
     // selection's new indices, which would mark the notes now in their old places meanwhile
@@ -421,7 +438,7 @@ private fun NotebookOutline(
                         onToggleCheckbox = { n -> viewModel.update(note) { it.copy(content = Checkboxes.toggle(it.content, n)) } },
                         tables = if (tableRecalc == TableRecalc.Never) { _ -> null } else remember(note.content, library, tableRecalc) { viewModel.tableLookup(note.content) },
                         liveFormulas = tableRecalc != TableRecalc.Never,
-                        onTablesShown = if (tableRecalc == TableRecalc.Save) { { viewModel.saveShownTables(note) } } else null,
+                        onTablesShown = if (tableRecalc == TableRecalc.Save) { { tablesShown(note) } } else null,
                     )
                 }
             }

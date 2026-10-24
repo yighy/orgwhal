@@ -198,7 +198,7 @@ fun OrgContent(
                     val fresh = if (liveFormulas && block.formulas.isNotEmpty()) {
                         remember(text, block, tableNamed) {
                             val lines = text.substring(block.tableStart, block.tableEnd).split('\n')
-                            val result = TableFormulas.recalculate(lines, block.formulas, tableNamed).lines
+                            val result = Blocks.recalculate(lines, block.formulas, tableNamed).lines
                             if (result == lines) null else Blocks.parse(result.joinToString("\n")).filterIsInstance<Blocks.Table>().firstOrNull()
                         }
                     } else {

@@ -219,6 +219,13 @@ object Blocks {
     }
 
     /**
+     * [tableLines] recalculated with [formulas] as [TableFormulas.recalculate] does, or as worked
+     * out already when [remote] is a [TableLookup]'s (which keeps the results).
+     */
+    fun recalculate(tableLines: List<String>, formulas: List<String>, remote: (String) -> List<String>?): TableFormulas.Result =
+        (remote as? TableLookup.Remote)?.recalculate(tableLines, formulas) ?: TableFormulas.recalculate(tableLines, formulas, remote)
+
+    /**
      * [text] with each of its tables that has formulas recalculated, those in drawers too (they
      * show as the others); [remote] as for [TableFormulas.recalculate].
      */
@@ -229,7 +236,7 @@ object Blocks {
             when {
                 block is Table && block.formulas.isNotEmpty() -> {
                     val lines = text.substring(block.tableStart, block.tableEnd).split('\n')
-                    val result = TableFormulas.recalculate(lines, block.formulas, remote)
+                    val result = recalculate(lines, block.formulas, remote)
                     if (result.lines != lines) out = out.replaceRange(block.tableStart, block.tableEnd, result.lines.joinToString("\n"))
                 }
                 block is Drawer -> {
