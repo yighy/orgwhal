@@ -6,6 +6,10 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.runtime.collectAsState
 import io.github.yighy.orgwhal.core.Templates
+import io.github.yighy.orgwhal.core.SearchCompletion
+import androidx.compose.ui.text.TextRange
+import androidx.compose.material3.ListItem
+import androidx.compose.foundation.layout.heightIn
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import androidx.compose.ui.composed
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -245,6 +249,8 @@ fun SearchableTopBar(
     sharedTitleKey: String? = null,
     /** Saves the search being made; the button shows only when there is something to save. */
     onSaveSearch: (() -> Unit)? = null,
+    /** What the search field proposes as it is typed (see [searchVocabulary]). */
+    vocabulary: SearchCompletion.Vocabulary? = null,
     menu: (@Composable (dismiss: () -> Unit) -> Unit)? = null,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -252,6 +258,12 @@ fun SearchableTopBar(
     if (searchActive) {
         val focus = remember { FocusRequester() }
         LaunchedEffect(Unit) { focus.requestFocus() }
+        // The cursor is kept here, the text comes from [query]
+        var field by remember { mutableStateOf(TextFieldValue(query, TextRange(query.length))) }
+        if (field.text != query) field = TextFieldValue(query, TextRange(query.length))
+        val completion = vocabulary?.takeIf { field.selection.collapsed }
+            ?.let { v -> SearchCompletion.queryAt(field.text, field.selection.start)?.let { it to SearchCompletion.choices(it, v) } }
+        Column {
         TopAppBar(
             colors = blendedTopBarColors(),
             navigationIcon = {
@@ -271,8 +283,8 @@ fun SearchableTopBar(
                         )
                     }
                     BasicTextField(
-                        value = query,
-                        onValueChange = onQueryChange,
+                        value = field,
+                        onValueChange = { field = it; if (it.text != query) onQueryChange(it.text) },
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -289,6 +301,23 @@ fun SearchableTopBar(
                 }
             },
         )
+        completion?.takeIf { it.second.isNotEmpty() }?.let { (at, choices) ->
+            Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
+                LazyColumn(Modifier.heightIn(max = 240.dp)) {
+                    items(choices, key = { it.text }) { choice ->
+                        ListItem(
+                            onClick = {
+                                val (text, cursor) = SearchCompletion.apply(field.text, at, choice)
+                                field = TextFieldValue(text, TextRange(cursor))
+                                onQueryChange(text)
+                            },
+                            supportingContent = choice.hint?.let { hint -> { Text(stringResource(searchHint(hint))) } },
+                        ) { Text(choice.label, fontFamily = FontFamily.Monospace) }
+                    }
+                }
+            }
+        }
+        }
     } else {
         // A large flexible app bar whose expanded title (not the collapsed one) moves
         // from the card or row that opened the screen
@@ -1097,6 +1126,40 @@ fun repeatText(resources: Resources, repeater: String): String {
     )
     val text = if (repeat.type == ".+") resources.getString(R.string.repeat_from_done, interval) else interval
     return "$text (${repeat.type})"
+}
+
+/** What the search field proposes: notebook names, tags, state keywords and table columns. */
+fun searchVocabulary(library: NoteRepository.Library): SearchCompletion.Vocabulary = SearchCompletion.Vocabulary(
+    notebooks = library.files.map { it.ref.name.removeSuffix(".org") }.sortedBy { it.lowercase() },
+    tags = library.tags,
+    keywords = library.files.flatMap { it.doc.keywords.all }.ifEmpty { io.github.yighy.orgwhal.core.Keywords.DEFAULT.all }
+        .distinctBy { it.lowercase() },
+    columns = library.notes.flatMap { SearchQuery.fieldNames(it.content) }.distinctBy { SearchQuery.fold(it) }
+        .sortedBy { SearchQuery.fold(it) },
+)
+
+private fun searchHint(hint: SearchCompletion.Hint): Int = when (hint) {
+    SearchCompletion.Hint.Tag -> R.string.search_hint_tag
+    SearchCompletion.Hint.OwnTag -> R.string.search_hint_own_tag
+    SearchCompletion.Hint.State -> R.string.search_hint_state
+    SearchCompletion.Hint.StateType -> R.string.search_hint_state_type
+    SearchCompletion.Hint.Scheduled -> R.string.search_hint_scheduled
+    SearchCompletion.Hint.Deadline -> R.string.search_hint_deadline
+    SearchCompletion.Hint.Closed -> R.string.search_hint_closed
+    SearchCompletion.Hint.Event -> R.string.search_hint_event
+    SearchCompletion.Hint.Created -> R.string.search_hint_created
+    SearchCompletion.Hint.Notebook -> R.string.search_hint_notebook
+    SearchCompletion.Hint.Priority -> R.string.search_hint_priority
+    SearchCompletion.Hint.SetPriority -> R.string.search_hint_set_priority
+    SearchCompletion.Hint.Column -> R.string.search_hint_column
+    SearchCompletion.Hint.Sort -> R.string.search_hint_sort
+    SearchCompletion.Hint.Agenda -> R.string.search_hint_agenda
+    SearchCompletion.Hint.Eq -> R.string.search_hint_eq
+    SearchCompletion.Hint.Ne -> R.string.search_hint_ne
+    SearchCompletion.Hint.Lt -> R.string.search_hint_lt
+    SearchCompletion.Hint.Le -> R.string.search_hint_le
+    SearchCompletion.Hint.Gt -> R.string.search_hint_gt
+    SearchCompletion.Hint.Ge -> R.string.search_hint_ge
 }
 
 /** Notebook names, keywords and inherited tags that search queries need. */

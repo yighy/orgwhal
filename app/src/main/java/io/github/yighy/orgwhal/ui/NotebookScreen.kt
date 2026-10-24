@@ -155,6 +155,7 @@ fun NotebookScreen(
                     onSearchActiveChange = viewModel::setSearch,
                     query = viewModel.query,
                     onQueryChange = { viewModel.query = it },
+                    vocabulary = if (viewModel.searchActive) remember(library) { searchVocabulary(library) } else null,
                     searchPlaceholder = stringResource(R.string.search_in, file.title),
                     scrollBehavior = scrollBehavior,
                     extraActions = { FoldAllButton(viewModel, file.notes) },

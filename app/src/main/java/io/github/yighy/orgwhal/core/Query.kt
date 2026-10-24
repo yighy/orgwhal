@@ -304,8 +304,26 @@ class SearchQuery private constructor(
             else -> Relation.GE
         }
 
-        private fun fold(text: String): String =
+        /** [text] as `col.` compares names: trimmed, lowercase, without accents. */
+        fun fold(text: String): String =
             java.text.Normalizer.normalize(text.trim().lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+        /** The names `col.` can find in [content]: header cells, and else first cells that are not numbers. */
+        fun fieldNames(content: String): List<String> = Blocks.parse(content).flatMap { block ->
+            when (block) {
+                is Blocks.Drawer -> fieldNames(block.inner)
+                is Blocks.Table -> {
+                    val rows = block.rows.filterNotNull()
+                    val names = if (block.headerRows > 0) {
+                        block.rows.take(block.headerRows).filterNotNull().flatten()
+                    } else {
+                        rows.filter { it.size > 1 }.mapNotNull { it.firstOrNull() }
+                    }
+                    names.map { it.trim() }.filter { it.isNotEmpty() && number(it) == null }
+                }
+                else -> emptyList()
+            }
+        }
 
         /** The fields of [content]'s tables named [name] (tables in drawers too), as described for `col.`. */
         fun fieldValues(content: String, name: String): List<String> {

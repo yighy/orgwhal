@@ -467,4 +467,25 @@
         <item quantity="many">%1$d notes pointent vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>
         <item quantity="other">%1$d notes pointent vers cette note sous le nom « %2$s ». Mettre à jour ces liens vers le nouveau titre « %3$s » ?</item>
     </plurals>
+    <string name="search_hint_tag">Étiquette, propre ou héritée</string>
+    <string name="search_hint_own_tag">Étiquette de la note elle-même</string>
+    <string name="search_hint_state">Mot-clé d’état</string>
+    <string name="search_hint_state_type">À faire, fait ou aucun</string>
+    <string name="search_hint_scheduled">Date planifiée</string>
+    <string name="search_hint_deadline">Échéance</string>
+    <string name="search_hint_closed">Date de clôture</string>
+    <string name="search_hint_event">Date dans le titre ou le contenu</string>
+    <string name="search_hint_created">Date de création</string>
+    <string name="search_hint_notebook">Carnet</string>
+    <string name="search_hint_priority">Priorité (sans priorité compte comme B)</string>
+    <string name="search_hint_set_priority">Priorité définie</string>
+    <string name="search_hint_column">Colonne de tableau</string>
+    <string name="search_hint_sort">Trier par</string>
+    <string name="search_hint_agenda">Afficher en agenda sur N jours</string>
+    <string name="search_hint_eq">Égal à</string>
+    <string name="search_hint_ne">Différent de</string>
+    <string name="search_hint_lt">Inférieur à</string>
+    <string name="search_hint_le">Jusqu’à</string>
+    <string name="search_hint_gt">Supérieur à</string>
+    <string name="search_hint_ge">Au moins</string>
 </resources>
