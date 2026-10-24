@@ -163,7 +163,7 @@ fun HomeScreen(
                     onSearchActiveChange = viewModel::setSearch,
                     query = viewModel.query,
                     onQueryChange = { viewModel.query = it },
-                    vocabulary = if (viewModel.searchActive) remember(library) { searchVocabulary(library) } else null,
+                    vocabulary = if (viewModel.searchActive) remember(library) { searchVocabulary(library.files) } else null,
                     searchPlaceholder = stringResource(R.string.search_all_notes),
                     scrollBehavior = scrollBehavior,
                     onSaveSearch = { viewModel.saveCurrentSearch(null) }

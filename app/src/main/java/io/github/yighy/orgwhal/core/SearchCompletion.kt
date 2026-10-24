@@ -69,7 +69,8 @@ object SearchCompletion {
         if (body.isEmpty() && !query.wholeQueryEmpty && negation.isEmpty()) return emptyList()
         val dot = body.indexOf('.')
         if (dot < 0) {
-            return PREFIXES.filter { it.first.startsWith(body, ignoreCase = true) }
+            // b. only where there are notebooks to choose from (not in a notebook)
+            return PREFIXES.filter { it.first.startsWith(body, ignoreCase = true) && (it.first != "b." || vocabulary.notebooks.isNotEmpty()) }
                 .map { (prefix, hint) -> Choice(negation + prefix, prefix, hint, continues = true) }
         }
         val prefix = body.substring(0, dot).lowercase()

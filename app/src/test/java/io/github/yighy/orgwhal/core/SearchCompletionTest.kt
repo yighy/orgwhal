@@ -26,6 +26,9 @@ class SearchCompletionTest {
         assertEquals(15, texts("").size)
         assertTrue(texts("i.todo ").isEmpty())
         assertTrue(texts("milk").isEmpty())
+        // In a notebook, no notebook to choose
+        val inNotebook = SearchCompletion.queryAt("", 0)!!
+        assertEquals(14, SearchCompletion.choices(inNotebook, vocabulary.copy(notebooks = emptyList())).size)
     }
 
     @Test

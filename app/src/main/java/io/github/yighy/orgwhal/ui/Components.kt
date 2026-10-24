@@ -1182,14 +1182,18 @@ fun repeatText(resources: Resources, repeater: String): String {
 }
 
 /** What the search field proposes: notebook names, tags, state keywords and table columns. */
-fun searchVocabulary(library: NoteRepository.Library): SearchCompletion.Vocabulary = SearchCompletion.Vocabulary(
-    notebooks = library.files.map { it.ref.name.removeSuffix(".org") }.sortedBy { it.lowercase() },
-    tags = library.tags,
-    keywords = library.files.flatMap { it.doc.keywords.all }.ifEmpty { io.github.yighy.orgwhal.core.Keywords.DEFAULT.all }
-        .distinctBy { it.lowercase() },
-    columns = library.notes.flatMap { SearchQuery.fieldNames(it.content) }.distinctBy { SearchQuery.fold(it) }
-        .sortedBy { SearchQuery.fold(it) },
-)
+fun searchVocabulary(files: List<NoteRepository.LoadedFile>, notebooks: Boolean = true): SearchCompletion.Vocabulary {
+    val notes = files.flatMap { it.notes }
+    return SearchCompletion.Vocabulary(
+        // Not in a notebook, whose search keeps to it
+        notebooks = if (notebooks) files.map { it.ref.name.removeSuffix(".org") }.sortedBy { it.lowercase() } else emptyList(),
+        tags = notes.flatMap { it.tags }.distinctBy { it.lowercase() }.sortedBy { it.lowercase() },
+        keywords = files.flatMap { it.doc.keywords.all }.ifEmpty { io.github.yighy.orgwhal.core.Keywords.DEFAULT.all }
+            .distinctBy { it.lowercase() },
+        columns = notes.flatMap { SearchQuery.fieldNames(it.content) }.distinctBy { SearchQuery.fold(it) }
+            .sortedBy { SearchQuery.fold(it) },
+    )
+}
 
 private fun searchHint(hint: SearchCompletion.Hint): Int = when (hint) {
     SearchCompletion.Hint.Tag -> R.string.search_hint_tag
