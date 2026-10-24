@@ -673,12 +673,14 @@ private class FoldStagger {
     }
 }
 
-// Folding and unfolding: the expressive default springs, four times as stiff to take half the time
-private const val FOLD_SPATIAL_DAMPING = 0.8f
+// Folding and unfolding: the expressive default springs, four times as stiff to take half the time,
+// without their bounce (the rows below would go past their place and come back, see UNFOLD_DAMPING)
+private const val FOLD_SPATIAL_DAMPING = UNFOLD_DAMPING
 private const val FOLD_SPATIAL_STIFFNESS = 380f * 4
 private val FoldSpatialSpec = spring(FOLD_SPATIAL_DAMPING, FOLD_SPATIAL_STIFFNESS, IntSize.VisibilityThreshold)
 private val FoldEffectsSpec = spring<Float>(1f, 1600f * 4)
-private val MoveSpec = spring(FOLD_SPATIAL_DAMPING, FOLD_SPATIAL_STIFFNESS, IntOffset.VisibilityThreshold)
+// A moved note keeps the expressive bounce as it lands in its new place
+private val MoveSpec = spring(0.8f, FOLD_SPATIAL_STIFFNESS, IntOffset.VisibilityThreshold)
 
 /** How long a moved note may take to reach its new place, after which rows no longer slide. */
 private const val MOVE_SETTLE_MS = 800L

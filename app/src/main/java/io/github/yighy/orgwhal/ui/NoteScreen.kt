@@ -1102,8 +1102,8 @@ private fun MetaSlot(visible: Boolean, content: @Composable () -> Unit) {
     val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
         visible = visible,
-        enter = expandVertically(motion.defaultSpatialSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
-        exit = shrinkVertically(motion.defaultSpatialSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
+        enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
+        exit = shrinkVertically(unfoldSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
     ) { content() }
 }
 
@@ -1203,7 +1203,7 @@ private fun Appear(animate: Boolean = true, content: @Composable () -> Unit) {
     val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
         visibleState = visible,
-        enter = expandVertically(motion.defaultSpatialSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
+        enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
     ) { content() }
 }
 
@@ -1410,8 +1410,8 @@ private fun ChoiceRow(
         val motion = MaterialTheme.motionScheme
         AnimatedVisibility(
             expanded,
-            enter = expandVertically(motion.defaultSpatialSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
-            exit = shrinkVertically(motion.defaultSpatialSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
+            enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
+            exit = shrinkVertically(unfoldSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
         ) {
             FlowRow(
                 Modifier.fillMaxWidth().padding(bottom = 8.dp),

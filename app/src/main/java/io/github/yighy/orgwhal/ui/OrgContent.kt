@@ -1,5 +1,8 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.Spring
 import androidx.compose.ui.draw.alpha
 
 import io.github.yighy.orgwhal.core.Transclusion
@@ -618,7 +621,7 @@ private fun ElementName(name: String) {
 /** Rotation of a fold chevron: pointing down when [open], right when folded. */
 @Composable
 private fun chevronRotation(open: Boolean): Float =
-    animateFloatAsState(if (open) 90f else 0f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "chevron").value
+    animateFloatAsState(if (open) 90f else 0f, spring(UNFOLD_DAMPING, CHEVRON_STIFFNESS), label = "chevron").value
 
 /** [content] unfolding and folding away as [open] changes. */
 @Composable
@@ -626,10 +629,25 @@ private fun Unfold(open: Boolean, content: @Composable () -> Unit) {
     val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
         open,
-        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
-        exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
+        enter = expandVertically(unfoldSpec()) + fadeIn(motion.defaultEffectsSpec()),
+        exit = shrinkVertically(unfoldSpec()) + fadeOut(motion.defaultEffectsSpec()),
     ) { content() }
 }
+
+/**
+ * Damping of what unfolds and folds away (drawers, lists, notes, a note's details): none of the
+ * expressive springs' bounce, which would take what is below past its place and back.
+ */
+internal const val UNFOLD_DAMPING = Spring.DampingRatioNoBouncy
+
+/** As stiff as the expressive default spatial spring, for the same pace. */
+private const val UNFOLD_STIFFNESS = 380f
+
+/** As stiff as the expressive fast spatial spring. */
+private const val CHEVRON_STIFFNESS = 800f
+
+/** A part unfolding or folding away, at the expressive pace without its bounce. */
+internal fun <T> unfoldSpec(): SpringSpec<T> = spring(UNFOLD_DAMPING, UNFOLD_STIFFNESS)
 
 /** A tap edits the text from [at] (no ripple, as on the text around). */
 private fun Modifier.tapToEdit(onTextTap: ((Int) -> Unit)?, at: Int) =
