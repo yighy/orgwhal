@@ -4,6 +4,26 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-10-24
+
+### Added
+- Search by table fields: col.NAME.REL.VALUE finds notes whose table has, under a column so
+  headed (or right of a field so named), a value matching: col.stock.eq.0, col.quantité.le.1,
+  col."en stock".gt.2; numbers compare as numbers, names ignore case and accents
+- The search field completes as it is typed: the conditions from their first letter (all of
+  them in an empty field), then tags, notebooks, state keywords, table columns, comparisons and
+  dates
+- Settings → Sub-note indentation: wide (as before), tapering (the default: narrower from the
+  third level) or compact (narrow throughout, about as Emacs' org-indent-mode)
+
+### Changed
+- In a notebook, the jump button's tap goes to the end of the sub-notes of the unfolded note
+  being read (again for the note around it), a long press to the bottom; a double arrow shows
+  when a tap goes to the bottom
+
+### Fixed
+- Going from a table field to another keeps the keyboard up, instead of taking it down and up
+
 ## [0.34.0] - 2026-10-22
 
 ### Added
@@ -508,7 +528,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/yighy/orgwhal/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/yighy/orgwhal/compare/v0.33.2...v0.34.0
 [0.33.2]: https://github.com/yighy/orgwhal/compare/v0.33.1...v0.33.2
 [0.33.1]: https://github.com/yighy/orgwhal/compare/v0.33.0...v0.33.1
