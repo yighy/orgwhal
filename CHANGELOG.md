@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.35.3] - 2026-10-24
+
+### Fixed
+- Searching in a notebook proposes the tags, state keywords and table columns of that notebook
+  only, not of the others, and no b. (its search keeps to it)
+
 ## [0.35.2] - 2026-10-24
 
 ### Changed
@@ -544,7 +550,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.2...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.3...HEAD
+[0.35.3]: https://github.com/yighy/orgwhal/compare/v0.35.2...v0.35.3
 [0.35.2]: https://github.com/yighy/orgwhal/compare/v0.35.1...v0.35.2
 [0.35.1]: https://github.com/yighy/orgwhal/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/yighy/orgwhal/compare/v0.34.0...v0.35.0
