@@ -259,10 +259,13 @@ The magnifier searches the notebook shown, or everywhere from the home screen. T
 | e.eq.today      | events of the day                       |
 | cr.eq.today     | created today (CREATED property)        |
 | b.orgwhal-guide | in this notebook (its file name)        |
+| col.stock.eq.0  | a table field Stock at 0                |
 | ad.7            | the results as a 7-day agenda           |
 | o.p             | sort by priority (o.s, o.d, o.e, o.cr…) |
 
 Conditions combine: =it.todo t.guide o.p=. A dot in front negates one: =.t.guide= (without the tag guide). =or= and parentheses work, and =.o.p= sorts the other way. Durations are written =3d=, =2w=, =1m=; comparisons =eq=, =lt=, =ge=…
+
+=col.= reads tables: the field under a column so headed (in a table with a header), or else the one right of a field so named (=| Stock | 0 |=); one row matching is enough. Numbers compare as numbers (=col.pages.gt.20=), the rest as text (=col.place.eq.cellar=), the name ignoring case and accents; quotes keep spaces: =col."in stock".eq.0=.
 
 ** Saved searches
 *Save search* keeps the search in *Searches* (menu ☰), to run it again with a tap. They can be renamed, reordered and deleted.

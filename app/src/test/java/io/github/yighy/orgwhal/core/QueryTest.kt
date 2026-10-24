@@ -35,6 +35,39 @@ class QueryTest {
     private fun titles(query: String) = SearchQuery.parse(query).apply(notes, ctx).map { it.title }
 
     @Test
+    fun tableFields() {
+        val doc = OrgDocument.parse(
+            """
+            * Riz
+            | Stock | 0 |
+            | Prix  | 3 |
+            * Pâtes
+            | Article  | Stock | Lieu     |
+            |----------+-------+----------|
+            | Penne    |     4 | placard  |
+            | Spaghett |   0,0 | cave     |
+            * Farine
+            :DATA:
+            | Stock | 12 |
+            :END:
+            * Sel
+            | Prix | 0 |
+            * Huile
+            | En stock | 2 |
+            """.trimIndent() + "\n",
+        )
+        val stock = OrgNote.fromDocument(doc, "uri", "stock.org")
+        fun found(query: String) = SearchQuery.parse(query).apply(stock, ctx).map { it.title }
+        assertEquals(listOf("Riz", "Pâtes"), found("col.stock.eq.0"))
+        assertEquals(listOf("Riz", "Pâtes"), found("col.STOCK.lt.1"))
+        // One row is enough: Pâtes has 4 too
+        assertEquals(listOf("Pâtes", "Farine"), found("col.stock.gt.3"))
+        assertEquals(listOf("Farine", "Sel", "Huile"), found(".col.stock.eq.0"))
+        assertEquals(listOf("Pâtes"), found("col.lieu.eq.Cave"))
+        assertEquals(listOf("Huile"), found("col.\"en stock\".ge.2"))
+    }
+
+    @Test
     fun eventsCreatedAndAgendaDays() {
         val doc = OrgDocument.parse(
             """

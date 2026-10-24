@@ -14,6 +14,10 @@ import java.time.temporal.ChronoUnit
  *   title or content), created (CREATED property): `s.today`, `d.le.3d`, `c.eq.yesterday`, `s.none`;
  *   relations eq ne lt le gt ge (default le, eq for closed); intervals now, today, tomorrow,
  *   yesterday, none, or Nh Nd Nw Nm Ny
+ * - `col.NAME.REL.VALUE` a table field: under a column headed NAME (in a table with a header), or
+ *   else right of a field NAME (`| Stock | 0 |`); one row matching is enough. Numbers compare as
+ *   numbers, other values as text; NAME ignores case and accents; quotes keep spaces
+ *   (`col."en stock".eq.0`)
  * - `ad.N` shows the results as an agenda of N days (it does not filter)
  * - `.` before a condition negates it; `and` (default), `or`, parentheses
  * - `o.FIELD` sort (notebook, title, scheduled, deadline, closed, event, created, priority, state,
@@ -105,6 +109,12 @@ class SearchQuery private constructor(
             val tags = if (ownOnly) note.tags else note.tags + ctx.inheritedTags(note)
             return tags.any { it.contains(tag, true) }
         }
+    }
+
+    /** A table field named [name] compared to [value] (see `col.` above). */
+    private data class Field(val name: String, val relation: Relation, val value: String) : Condition {
+        override fun matches(note: OrgNote, ctx: Context): Boolean =
+            fieldValues(note.content, name).any { compare(it, relation, value) }
     }
 
     enum class TimeField { Scheduled, Deadline, Closed, Event, Created }
@@ -219,7 +229,9 @@ class SearchQuery private constructor(
             TimeField.Created -> listOfNotNull(note.property(CREATED_PROPERTY))
         }
 
-        private val TOKEN = Regex(""""[^"\\]*(?:\\.[^"\\]*)*"|[^")(\s]*"[^"\\]*(?:\\.[^"\\]*)*"|\(|\)|[^")(\s]+""")
+        // A quoted part can be inside a token (col."en stock".eq.0)
+        private val TOKEN = Regex(""""[^"\\]*(?:\\.[^"\\]*)*"|[^")(\s]*"[^"\\]*(?:\\.[^"\\]*)*"[^")(\s]*|\(|\)|[^")(\s]+""")
+        private val FIELD = Regex("""^col\.(?:"((?:[^"\\]|\\.)*)"|([^."]+))\.(eq|ne|lt|le|gt|ge)\.(.*)$""")
         private val TIME = Regex("""^(e|s|d|c|cr)(?:\.(eq|ne|lt|le|gt|ge))?\.(.+)$""")
         private val ORDERS = listOf(
             Regex("""^o\.(?:notebook|book|b)$""") to OrderField.Notebook,
@@ -268,6 +280,10 @@ class SearchQuery private constructor(
                 body.startsWith("i.") -> HasState(unquote(body.substring(2)))
                 body.matches(Regex("^ps\\.[a-zA-Z]$")) -> HasPriority(body.substring(3), onlySet = true)
                 body.matches(Regex("^p\\.[a-zA-Z]$")) -> HasPriority(body.substring(2), onlySet = false)
+                body.startsWith("col.") -> FIELD.matchEntire(body)?.let { m ->
+                    val name = m.groupValues[1].replace("\\\"", "\"").ifEmpty { m.groupValues[2] }
+                    Field(name, relation(m.groupValues[3]), unquote(m.groupValues[4]))
+                }
                 body.startsWith("tn.") -> HasTag(unquote(body.substring(3)), ownOnly = true)
                 body.startsWith("t.") -> HasTag(unquote(body.substring(2)), ownOnly = false)
                 else -> TIME.find(body)?.let { m -> time(m) }
@@ -277,6 +293,58 @@ class SearchQuery private constructor(
             // Plain text (the dot is part of it if nothing matched)
             val text = unquote(token)
             return if (text.isNotEmpty()) Text(text) else null
+        }
+
+        private fun relation(name: String): Relation = when (name) {
+            "eq" -> Relation.EQ
+            "ne" -> Relation.NE
+            "lt" -> Relation.LT
+            "le" -> Relation.LE
+            "gt" -> Relation.GT
+            else -> Relation.GE
+        }
+
+        private fun fold(text: String): String =
+            java.text.Normalizer.normalize(text.trim().lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+        /** The fields of [content]'s tables named [name] (tables in drawers too), as described for `col.`. */
+        fun fieldValues(content: String, name: String): List<String> {
+            val key = fold(name)
+            return Blocks.parse(content).flatMap { block ->
+                when (block) {
+                    is Blocks.Drawer -> fieldValues(block.inner, name)
+                    is Blocks.Table -> tableValues(block, key)
+                    else -> emptyList()
+                }
+            }
+        }
+
+        private fun tableValues(table: Blocks.Table, key: String): List<String> {
+            val rows = table.rows.filterNotNull()
+            // Under a header: the column so headed
+            if (table.headerRows > 0) {
+                val header = table.rows.take(table.headerRows).filterNotNull()
+                val column = header.firstNotNullOfOrNull { row -> row.indexOfFirst { fold(it) == key }.takeIf { it >= 0 } }
+                if (column != null) return rows.drop(header.size).mapNotNull { it.getOrNull(column) }
+            }
+            // Else the field right of one so named
+            return rows.mapNotNull { row -> row.indexOfFirst { fold(it) == key }.takeIf { it >= 0 }?.let { row.getOrNull(it + 1) } }
+        }
+
+        private fun number(text: String): Double? = text.replace(" ", "").replace(',', '.').toDoubleOrNull()
+
+        private fun compare(field: String, relation: Relation, value: String): Boolean {
+            val a = number(field)
+            val b = number(value)
+            val order = if (a != null && b != null) a.compareTo(b) else fold(field).compareTo(fold(value))
+            return when (relation) {
+                Relation.EQ -> order == 0
+                Relation.NE -> order != 0
+                Relation.LT -> order < 0
+                Relation.LE -> order <= 0
+                Relation.GT -> order > 0
+                Relation.GE -> order >= 0
+            }
         }
 
         private fun time(m: MatchResult): Condition? {
