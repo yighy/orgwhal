@@ -222,6 +222,7 @@ fun NotebookScreen(
                     listState,
                     Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
                     enabled = prefaceDraft == null,
+                    section = { outlineJumpEnd(listState, file.notes, viewModel::isFolded) },
                 )
             }
         }
@@ -574,6 +575,19 @@ private fun OutlineRow(
  * Keys of the outline rows that follow a note when it moves: its text without the heading stars
  * (so a change of level keeps it), numbered among identical ones.
  */
+/**
+ * The list item a short jump goes to in a notebook's outline ([NoteTree.jumpEnd]): the header
+ * comes first, then one item per note, folded ones of no height.
+ */
+private fun outlineJumpEnd(state: LazyListState, notes: List<OrgNote>, isFolded: (OrgNote) -> Boolean): Int? {
+    val info = state.layoutInfo
+    val shown = NoteTree.visible(notes, isFolded).map { it.index }.toSet()
+    val rows = info.visibleItemsInfo.filter { it.index - 1 in shown && it.size > 0 }
+    val top = rows.firstOrNull { it.offset + it.size > info.viewportStartOffset } ?: return null
+    val bottom = rows.lastOrNull { it.offset + it.size <= info.viewportEndOffset } ?: top
+    return NoteTree.jumpEnd(notes, shown, top.index - 1, bottom.index - 1)?.let { it + 1 }
+}
+
 internal fun outlineKeys(notes: List<OrgNote>): List<String> {
     val seen = HashMap<String, Int>()
     return notes.map { note ->

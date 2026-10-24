@@ -220,6 +220,13 @@ object OrgwhalIcons {
 
     val Stop: ImageVector by lazy { icon("Stop", "M6,6h12v12H6z") }
 
+    val DoubleArrowDown: ImageVector by lazy {
+        icon(
+            "DoubleArrowDown",
+            "M18,6.41L16.59,5L12,9.58L7.41,5L6,6.41l6,6L18,6.41zM18,13l-1.41,-1.41L12,16.17l-4.59,-4.58L6,13l6,6L18,13z",
+        )
+    }
+
     val Archive: ImageVector by lazy {
         icon(
             "Archive",

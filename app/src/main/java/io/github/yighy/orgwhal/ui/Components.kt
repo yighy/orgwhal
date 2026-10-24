@@ -1,5 +1,13 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.foundation.gestures.animateScrollBy
+
+import androidx.compose.foundation.combinedClickable
+
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+
+import androidx.compose.ui.platform.LocalHapticFeedback
+
 import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -531,18 +539,45 @@ fun SearchResults(
 /**
  * A small, faint button over the bottom of a long list, to jump to its end: it shows while the
  * list is scrolled down by hand and goes a moment after it stops. The top is a tap on the top bar.
+ *
+ * Given [section], a tap goes only to the end of the part being read (the sub-notes of an unfolded
+ * note), the item it gives, and a long press to the end; when it gives none, a tap goes to the end.
  */
 @Composable
-fun JumpButton(state: LazyListState, modifier: Modifier = Modifier, enabled: Boolean = true) = JumpButton(
-    interactions = state.interactionSource,
-    inProgress = { state.isScrollInProgress },
-    position = { state.firstVisibleItemIndex * 1_000_000L + state.firstVisibleItemScrollOffset },
-    canDown = { state.canScrollForward },
-    long = { state.layoutInfo.let { it.totalItemsCount > it.visibleItemsInfo.size * JUMP_SCREENS } },
-    onBottom = { state.animateScrollToItem((state.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)) },
-    modifier = modifier,
-    enabled = enabled,
-)
+fun JumpButton(
+    state: LazyListState,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    section: (() -> Int?)? = null,
+) {
+    val margin = with(LocalDensity.current) { JUMP_SECTION_MARGIN.roundToPx() }
+    JumpButton(
+        interactions = state.interactionSource,
+        inProgress = { state.isScrollInProgress },
+        position = { state.firstVisibleItemIndex * 1_000_000L + state.firstVisibleItemScrollOffset },
+        canDown = { state.canScrollForward },
+        long = { state.layoutInfo.let { it.totalItemsCount > it.visibleItemsInfo.size * JUMP_SCREENS } },
+        onBottom = { state.animateScrollToItem((state.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)) },
+        modifier = modifier,
+        enabled = enabled,
+        toSection = section?.let { find -> { find()?.let { item -> { state.scrollToEnd(item, margin) } } } },
+    )
+}
+
+/**
+ * Brings [item] to the bottom of the list, [margin] above it: there at once if its size is
+ * guessed right (from the items in view), else set right once it is in view.
+ */
+private suspend fun LazyListState.scrollToEnd(item: Int, margin: Int) {
+    val info = layoutInfo
+    val sizes = info.visibleItemsInfo.map { it.size }.filter { it > 0 }
+    val guess = if (sizes.isEmpty()) 0 else sizes.sum() / sizes.size
+    val room = info.viewportEndOffset - info.viewportStartOffset - margin
+    animateScrollToItem(item, -(room - guess).coerceAtLeast(0))
+    val shown = layoutInfo.visibleItemsInfo.firstOrNull { it.index == item } ?: return
+    val off = shown.offset + shown.size - (layoutInfo.viewportEndOffset - margin)
+    if (off != 0) animateScrollBy(off.toFloat())
+}
 
 /** [JumpButton] for a page scrolled as a whole (a note). */
 @Composable
@@ -567,6 +602,8 @@ private fun JumpButton(
     onBottom: suspend () -> Unit,
     modifier: Modifier,
     enabled: Boolean,
+    /** What a tap does when it stops before the end, or null when it goes to the end. */
+    toSection: (() -> (suspend () -> Unit)?)? = null,
 ) {
     var down by remember { mutableStateOf(false) }
     var byHand by remember { mutableStateOf(false) }
@@ -594,17 +631,30 @@ private fun JumpButton(
     }
     val visible = enabled && shown && down && long() && canDown()
     val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
     AnimatedVisibility(visible, modifier, enter = fadeIn(), exit = fadeOut()) {
+        // One arrow when a tap stops at the end of the part being read, two when it goes to the end
+        val section = if (visible) toSection?.invoke() else null
         Surface(
-            onClick = { scope.launch { onBottom() } },
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f),
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ) {
             Icon(
-                Icons.Default.KeyboardArrowDown,
-                stringResource(R.string.scroll_to_bottom),
-                modifier = Modifier.padding(6.dp).size(24.dp),
+                if (section != null) Icons.Default.KeyboardArrowDown else OrgwhalIcons.DoubleArrowDown,
+                stringResource(if (section != null) R.string.scroll_to_section_end else R.string.scroll_to_bottom),
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = { scope.launch { section?.invoke() ?: onBottom() } },
+                        onLongClick = toSection?.let {
+                            {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                scope.launch { onBottom() }
+                            }
+                        },
+                    )
+                    .padding(6.dp)
+                    .size(24.dp),
             )
         }
     }
@@ -624,6 +674,9 @@ suspend fun TopAppBarState.expand() {
 
 /** How many screens long a list must be for [JumpButton] to show. */
 private const val JUMP_SCREENS = 3
+
+/** Room left under the end of a part [JumpButton] goes to, for what follows to show. */
+private val JUMP_SECTION_MARGIN = 72.dp
 
 /** How long [JumpButton] stays once the scrolling stops. */
 private const val JUMP_HIDE_MS = 1500L

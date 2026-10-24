@@ -488,4 +488,5 @@
     <string name="search_hint_le">Jusqu’à</string>
     <string name="search_hint_gt">Supérieur à</string>
     <string name="search_hint_ge">Au moins</string>
+    <string name="scroll_to_section_end">Aller à la fin de ces sous-notes</string>
 </resources>

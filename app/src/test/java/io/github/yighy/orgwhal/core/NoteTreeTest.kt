@@ -109,4 +109,20 @@ class NoteTreeTest {
         assertEquals("every 3 months (++)", OrgTime.Repeat.parse("++3m")!!.describe())
         assertEquals("every 2 days from done (.+)", OrgTime.Repeat.parse(".+2d/4d")!!.describe())
     }
+
+    @Test
+    fun jumpEnd() {
+        // A, A1, A1a, A2, B
+        val all = notes.indices.toSet()
+        // In A1's sub-notes: to their end, then A's, then the notebook's
+        assertEquals(2, NoteTree.jumpEnd(notes, all, top = 1, bottom = 1))
+        assertEquals(3, NoteTree.jumpEnd(notes, all, top = 1, bottom = 2))
+        assertNull(NoteTree.jumpEnd(notes, all, top = 2, bottom = 3))
+        assertEquals(3, NoteTree.jumpEnd(notes, all, top = 0, bottom = 0))
+        assertNull(NoteTree.jumpEnd(notes, all, top = 4, bottom = 4))
+        // A1 folded: A's end
+        assertEquals(3, NoteTree.jumpEnd(notes, setOf(0, 1, 3, 4), top = 1, bottom = 1))
+        // A folded: nothing open
+        assertNull(NoteTree.jumpEnd(notes, setOf(0, 4), top = 0, bottom = 0))
+    }
 }

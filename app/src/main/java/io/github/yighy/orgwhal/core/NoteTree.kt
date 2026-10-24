@@ -81,6 +81,29 @@ object NoteTree {
         }
     }
 
+    /**
+     * Where a short jump down goes in an outline showing the notes [shown], scrolled from [top] to
+     * [bottom] (the last note seen whole): the last shown sub-note of the innermost unfolded note
+     * around [top] whose sub-notes go on below [bottom], going out a level when they end on the
+     * screen already. Null for the end of the notebook, there being no such note or it ending there.
+     */
+    fun jumpEnd(notes: List<OrgNote>, shown: Set<Int>, top: Int, bottom: Int): Int? {
+        if (top !in notes.indices) return null
+        val last = shown.maxOrNull() ?: return null
+        val around = buildList {
+            if (hasChildren(notes, top) && top + 1 in shown) add(top)
+            addAll(ancestors(notes, top).map { it.index }.asReversed())
+        }
+        for (note in around) {
+            var end = note
+            while (end + 1 < notes.size && notes[end + 1].level > notes[note].level) end++
+            val shownEnd = (end downTo note).first { it in shown }
+            if (shownEnd >= last) return null
+            if (shownEnd > bottom) return shownEnd
+        }
+        return null
+    }
+
     /** Notes not hidden under a folded ancestor. */
     fun visible(notes: List<OrgNote>, isFolded: (OrgNote) -> Boolean): List<OrgNote> {
         val result = mutableListOf<OrgNote>()

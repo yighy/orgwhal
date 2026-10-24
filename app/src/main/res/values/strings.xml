@@ -460,4 +460,5 @@
     <string name="search_hint_le">Up to</string>
     <string name="search_hint_gt">More than</string>
     <string name="search_hint_ge">At least</string>
+    <string name="scroll_to_section_end">Scroll to the end of these sub-notes</string>
 </resources>

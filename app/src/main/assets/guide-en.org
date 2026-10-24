@@ -10,7 +10,7 @@ Orgwhal reads and writes the =.org= files of a folder on the phone (synced with 
 - Choose the folder in *Settings → Notes → Folder*.
 - Files changed by another app are read again within seconds.
 - Pull the list down to reload the folder.
-- In a long list or note, scrolling down brings up a small arrow: tap it to go straight to the bottom. A tap on the top bar goes back to the top.
+- In a long list or note, scrolling down brings up a small double arrow: tap it to go straight to the bottom. In a notebook, among the sub-notes of an unfolded note, it is a single arrow: a tap goes to the end of those sub-notes (tap again for the end of the note around them), a long press to the bottom. A tap on the top bar goes back to the top.
 
 ** Notebooks
 - *New notebook*: the =+= button on the home screen.
