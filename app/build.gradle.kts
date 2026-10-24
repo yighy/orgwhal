@@ -13,8 +13,8 @@ android {
         applicationId = "io.github.yighy.orgwhal"
         minSdk = 26
         targetSdk = 36
-        versionCode = 48
-        versionName = "0.35.1"
+        versionCode = 49
+        versionName = "0.35.2"
     }
 
     // Release signing key, kept out of the repository (keystore.properties at the project root)

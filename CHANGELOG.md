@@ -4,6 +4,13 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.35.2] - 2026-10-24
+
+### Changed
+- Unfolding and folding away no longer bounce: drawers, folded lists, a table's formulas, notes
+  and their sub-notes in a notebook, a note's details, and the chevrons turning (a moved note
+  still lands with a bounce)
+
 ## [0.35.1] - 2026-10-24
 
 ### Fixed
@@ -537,7 +544,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.2...HEAD
+[0.35.2]: https://github.com/yighy/orgwhal/compare/v0.35.1...v0.35.2
 [0.35.1]: https://github.com/yighy/orgwhal/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/yighy/orgwhal/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/yighy/orgwhal/compare/v0.33.2...v0.34.0
