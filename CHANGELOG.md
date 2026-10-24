@@ -4,6 +4,15 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.35.1] - 2026-10-24
+
+### Fixed
+- A notebook scrolls smoothly with table formulas shown recalculated (Show the results, or
+  Recalculate and save): each table is worked out once while the notes stay the same, not again
+  every time it comes into view, and remote() no longer reads every note at each call
+- With Recalculate and save, the notes shown while the list scrolls are saved once it stops, all
+  together, instead of one by one during the scrolling
+
 ## [0.35.0] - 2026-10-24
 
 ### Added
@@ -528,7 +537,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.35.1...HEAD
+[0.35.1]: https://github.com/yighy/orgwhal/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/yighy/orgwhal/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/yighy/orgwhal/compare/v0.33.2...v0.34.0
 [0.33.2]: https://github.com/yighy/orgwhal/compare/v0.33.1...v0.33.2
