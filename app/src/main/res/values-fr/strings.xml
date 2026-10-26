@@ -493,4 +493,7 @@
     <string name="indentation_wide">Large</string>
     <string name="indentation_tapering">Dégressif</string>
     <string name="indentation_compact">Compact</string>
+    <string name="settings_add_modified">Ajouter une date de modification aux notes modifiées</string>
+    <string name="settings_add_modified_summary">Remplir la propriété LAST_MODIFIED quand une note est modifiée (recherche avec mod., tri avec o.mod)</string>
+    <string name="search_hint_modified">Date de dernière modification</string>
 </resources>

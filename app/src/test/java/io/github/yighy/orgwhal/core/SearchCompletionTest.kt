@@ -23,12 +23,12 @@ class SearchCompletionTest {
         assertEquals(listOf("c.", "cr.", "col."), texts("i.todo c"))
         assertEquals(listOf(".t.", ".tn."), texts(".t"))
         // All of them in an empty field, none after a space
-        assertEquals(15, texts("").size)
+        assertEquals(16, texts("").size)
         assertTrue(texts("i.todo ").isEmpty())
         assertTrue(texts("milk").isEmpty())
         // In a notebook, no notebook to choose
         val inNotebook = SearchCompletion.queryAt("", 0)!!
-        assertEquals(14, SearchCompletion.choices(inNotebook, vocabulary.copy(notebooks = emptyList())).size)
+        assertEquals(15, SearchCompletion.choices(inNotebook, vocabulary.copy(notebooks = emptyList())).size)
     }
 
     @Test

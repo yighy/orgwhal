@@ -274,6 +274,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setAddIdToNewNotes(on: Boolean) = appSettings.setAddIdToNewNotes(on)
 
     fun setAddCreatedToNewNotes(on: Boolean) = appSettings.setAddCreatedToNewNotes(on)
+    fun setAddModified(on: Boolean) = appSettings.setAddModified(on)
 
     fun setUseAlarmClock(on: Boolean) = appSettings.setUseAlarmClock(on)
 
@@ -309,7 +310,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun saveShownTables(note: OrgNote) {
         if (settings.value.tableRecalc != TableRecalc.Save) return
         val fresh = Blocks.recalculated(note.content, tableLookup(note.content))
-        if (fresh != note.content) update(note) { it.copy(content = fresh) }
+        if (fresh != note.content) update(note, stamp = false) { it.copy(content = fresh) }
     }
 
     fun setThemeMode(mode: ThemeMode) = appSettings.setThemeMode(mode)
@@ -604,15 +605,28 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
      * Saves [change] applied to the note as it is now (not as it was when the edit started).
      * A note being created (not yet in its file) only updates the draft.
      */
-    private suspend fun saveLatest(note: OrgNote, change: (OrgNote) -> NoteEdit): OrgNote? {
+    /**
+     * Saves [note] as [change] makes it, from its latest version. [stamp]: a change the user made,
+     * which sets LAST_MODIFIED when so set (not one the app makes: a cookie, recalculated tables).
+     */
+    private suspend fun saveLatest(note: OrgNote, stamp: Boolean = true, change: (OrgNote) -> NoteEdit): OrgNote? {
         if (note.index == DRAFT_INDEX) {
             val screen = newNoteScreen ?: return null
             return saveDraft(change(draftNote(screen)))
         }
         return saveLock.withLock {
             val latest = library.value.note(note.fileUri, note.index) ?: note
-            attempt { repository.saveNote(latest, withCookies(latest, change(latest))) }
+            val edit = withCookies(latest, change(latest))
+            attempt { repository.saveNote(latest, if (stamp) stamped(latest, edit) else edit) }
         }
+    }
+
+    /** [edit] of [note] with LAST_MODIFIED set to now, when so set and it changes something. */
+    private fun stamped(note: OrgNote, edit: NoteEdit): NoteEdit {
+        if (!settings.value.addModified || edit == note.toEdit()) return edit
+        val now = SearchQuery.MODIFIED_PROPERTY to OrgTime.inactive(LocalDateTime.now())
+        val at = edit.properties.indexOfFirst { it.first.equals(SearchQuery.MODIFIED_PROPERTY, true) }
+        return edit.copy(properties = if (at < 0) edit.properties + now else edit.properties.toMutableList().also { it[at] = now })
     }
 
     /** [edit] with its [/] and [%] cookies counting as they now should (as Org keeps them). */
@@ -634,14 +648,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (note.index !in notes.indices) return
         val parent = NoteTree.ancestors(notes, note.index).lastOrNull() ?: return
         if (!Cookies.countsSubNotes(parent)) return
-        if (Cookies.updateTitle(parent.title, parent.content, subNotes(parent)) != parent.title) saveLatest(parent) { it.toEdit() }
+        if (Cookies.updateTitle(parent.title, parent.content, subNotes(parent)) != parent.title) saveLatest(parent, stamp = false) { it.toEdit() }
     }
 
     /** Returns the saved note, or null if it could not be saved. */
     suspend fun save(note: OrgNote, edit: NoteEdit): OrgNote? = saveLatest(note) { edit }
 
-    fun update(note: OrgNote, change: (NoteEdit) -> NoteEdit) {
-        viewModelScope.launch { saveLatest(note) { change(it.toEdit()) } }
+    /** Saves [note] as [change] makes it; [stamp] as for [saveLatest]. */
+    fun update(note: OrgNote, stamp: Boolean = true, change: (NoteEdit) -> NoteEdit) {
+        viewModelScope.launch { saveLatest(note, stamp) { change(it.toEdit()) } }
     }
 
     /**
@@ -827,13 +842,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         return resumed
     }
 
-    /** With the settings on, a new note gets an ID and a CREATED property right away. */
+    /** With the settings on, a new note gets an ID, a CREATED and a LAST_MODIFIED property right away. */
     private fun newNoteProperties(edit: NoteEdit) = buildList {
         if (settings.value.addIdToNewNotes && edit.properties.none { it.first.equals("ID", true) }) {
             add("ID" to UUID.randomUUID().toString().uppercase())
         }
         if (settings.value.addCreatedToNewNotes && edit.properties.none { it.first.equals(SearchQuery.CREATED_PROPERTY, true) }) {
             add(SearchQuery.CREATED_PROPERTY to OrgTime.inactive(LocalDateTime.now()))
+        }
+        if (settings.value.addModified && edit.properties.none { it.first.equals(SearchQuery.MODIFIED_PROPERTY, true) }) {
+            add(SearchQuery.MODIFIED_PROPERTY to OrgTime.inactive(LocalDateTime.now()))
         }
     }
 

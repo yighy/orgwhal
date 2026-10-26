@@ -465,4 +465,7 @@
     <string name="indentation_wide">Wide</string>
     <string name="indentation_tapering">Tapering</string>
     <string name="indentation_compact">Compact</string>
+    <string name="settings_add_modified">Add a modification date to changed notes</string>
+    <string name="settings_add_modified_summary">Set the LAST_MODIFIED property when a note is changed (searched with mod., sorted with o.mod)</string>
+    <string name="search_hint_modified">Date last changed</string>
 </resources>

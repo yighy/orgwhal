@@ -195,6 +195,12 @@ fun SettingsScreen(
                 checked = settings.addCreatedToNewNotes,
                 onCheckedChange = viewModel::setAddCreatedToNewNotes,
             )
+            SwitchItem(
+                title = stringResource(R.string.settings_add_modified),
+                summary = stringResource(R.string.settings_add_modified_summary),
+                checked = settings.addModified,
+                onCheckedChange = viewModel::setAddModified,
+            )
 
             ListItem(
                 onClick = { pickLinkRenaming = true },

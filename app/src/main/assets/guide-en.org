@@ -58,7 +58,7 @@ The deadline shows in the agenda on its date, in red, then under "Overdue" once 
 
 - A link in a value shows as a link, as =SEE= above: tap it to open it, tap beside it to edit the value.
 - *Settings → Hidden properties*: the ones not to show (ID, CREATED…); they stay in the file.
-- *Settings → Add an ID / a creation date to new notes*.
+- *Settings → Add an ID / a creation date to new notes*, and *a modification date to changed notes*: the LAST_MODIFIED property, set as you change a note (not when Orgwhal updates it by itself, as a cookie or recalculated tables), as Emacs users often keep it.
 
 ** The ⋮ menu of a note
 - *Copy link to this note*: an =[[id:…][Title]]= link to paste elsewhere.
@@ -258,10 +258,11 @@ The magnifier searches the notebook shown, or everywhere from the home screen. T
 | s.none          | not scheduled                           |
 | e.eq.today      | events of the day                       |
 | cr.eq.today     | created today (CREATED property)        |
+| mod.ge.-1w      | changed this past week (LAST_MODIFIED)  |
 | b.orgwhal-guide | in this notebook (its file name)        |
 | col.stock.eq.0  | a table field Stock at 0                |
 | ad.7            | the results as a 7-day agenda           |
-| o.p             | sort by priority (o.s, o.d, o.e, o.cr…) |
+| o.p             | sort by priority (o.s, o.d, o.cr, o.mod…) |
 
 Conditions combine: =it.todo t.guide o.p=. A dot in front negates one: =.t.guide= (without the tag guide). =or= and parentheses work, and =.o.p= sorts the other way. Durations are written =3d=, =2w=, =1m=; comparisons =eq=, =lt=, =ge=…
 

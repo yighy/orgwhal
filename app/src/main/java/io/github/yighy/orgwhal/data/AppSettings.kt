@@ -101,6 +101,8 @@ class AppSettings(context: Context) {
         val hiddenProperties: Set<String> = emptySet(),
         /** Give every new note a CREATED property with when it was created. */
         val addCreatedToNewNotes: Boolean = false,
+        /** A note changed gets its LAST_MODIFIED property set to the time. */
+        val addModified: Boolean = false,
         /** Set reminders as alarm clock alarms (the most reliable; an alarm icon shows). */
         val useAlarmClock: Boolean = false,
         /** How long the notification's snooze button puts a reminder off. */
@@ -142,6 +144,7 @@ class AppSettings(context: Context) {
             addIdToNewNotes = prefs.getBoolean(KEY_ADD_ID, false),
             hiddenProperties = parseProperties(prefs.getString(KEY_HIDDEN_PROPERTIES, null).orEmpty()),
             addCreatedToNewNotes = prefs.getBoolean(KEY_ADD_CREATED, false),
+            addModified = prefs.getBoolean(KEY_ADD_MODIFIED, false),
             useAlarmClock = prefs.getBoolean(KEY_ALARM_CLOCK, false),
             snoozeMinutes = prefs.getInt(KEY_SNOOZE_MINUTES, 60),
             reminderButton = ReminderButton.entries.firstOrNull { it.name == prefs.getString(KEY_REMINDER_BUTTON, null) } ?: ReminderButton.ClockIn,
@@ -273,6 +276,8 @@ class AppSettings(context: Context) {
 
     fun setAddCreatedToNewNotes(on: Boolean) = save({ putBoolean(KEY_ADD_CREATED, on) }) { it.copy(addCreatedToNewNotes = on) }
 
+    fun setAddModified(on: Boolean) = save({ putBoolean(KEY_ADD_MODIFIED, on) }) { it.copy(addModified = on) }
+
     fun setUseAlarmClock(on: Boolean) = save({ putBoolean(KEY_ALARM_CLOCK, on) }) { it.copy(useAlarmClock = on) }
 
     fun setSnoozeMinutes(minutes: Int) = save({ putInt(KEY_SNOOZE_MINUTES, minutes) }) { it.copy(snoozeMinutes = minutes) }
@@ -316,6 +321,7 @@ class AppSettings(context: Context) {
         private const val KEY_ADD_ID = "add_id_to_new_notes"
         private const val KEY_HIDDEN_PROPERTIES = "hidden_properties"
         private const val KEY_ADD_CREATED = "add_created_to_new_notes"
+        private const val KEY_ADD_MODIFIED = "add_modified"
         private const val KEY_ALARM_CLOCK = "use_alarm_clock"
         private const val KEY_SNOOZE_MINUTES = "snooze_minutes"
         private const val KEY_REMINDER_BUTTON = "reminder_button"

@@ -68,6 +68,34 @@ class QueryTest {
     }
 
     @Test
+    fun lastModified() {
+        val doc = OrgDocument.parse(
+            """
+            * Old
+              :PROPERTIES:
+              :LAST_MODIFIED: [2026-09-01 Tue 10:00]
+              :END:
+            * Recent
+              :PROPERTIES:
+              :LAST_MODIFIED: [2026-10-04 Sun 18:00]
+              :END:
+            * Never
+            """.trimIndent() + "\n",
+        )
+        val notes = OrgNote.fromDocument(doc, "u", "n.org")
+        val ctx = ctx.copy(keywords = { doc.keywords }, inheritedTags = { emptyList() })
+        fun titles(query: String) = SearchQuery.parse(query).apply(notes, ctx).map { it.title }
+
+        // Changed within the last week; more than a month ago; never stamped
+        assertEquals(listOf("Recent"), titles("mod.ge.-1w"))
+        assertEquals(listOf("Old"), titles("mod.le.-1m"))
+        assertEquals(listOf("Never"), titles("mod.none"))
+        // As o.cr: the unstamped last, and first the other way
+        assertEquals(listOf("Never", "Recent", "Old"), titles(".o.mod"))
+        assertEquals(listOf("Old", "Recent", "Never"), titles("o.modified"))
+    }
+
+    @Test
     fun eventsCreatedAndAgendaDays() {
         val doc = OrgDocument.parse(
             """

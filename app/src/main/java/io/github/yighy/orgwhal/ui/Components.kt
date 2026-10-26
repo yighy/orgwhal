@@ -1205,6 +1205,7 @@ private fun searchHint(hint: SearchCompletion.Hint): Int = when (hint) {
     SearchCompletion.Hint.Closed -> R.string.search_hint_closed
     SearchCompletion.Hint.Event -> R.string.search_hint_event
     SearchCompletion.Hint.Created -> R.string.search_hint_created
+    SearchCompletion.Hint.Modified -> R.string.search_hint_modified
     SearchCompletion.Hint.Notebook -> R.string.search_hint_notebook
     SearchCompletion.Hint.Priority -> R.string.search_hint_priority
     SearchCompletion.Hint.SetPriority -> R.string.search_hint_set_priority

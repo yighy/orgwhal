@@ -943,7 +943,7 @@ fun NoteScreen(
                             val fresh = Blocks.recalculated(content, tables)
                             if (fresh != content) {
                                 saved = Editing.Content to fresh
-                                viewModel.update(note) { it.copy(content = fresh) }
+                                viewModel.update(note, stamp = false) { it.copy(content = fresh) }
                             }
                         }
                     }

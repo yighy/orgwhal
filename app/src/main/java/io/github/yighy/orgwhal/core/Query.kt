@@ -117,7 +117,7 @@ class SearchQuery private constructor(
             fieldValues(note.content, name).any { compare(it, relation, value) }
     }
 
-    enum class TimeField { Scheduled, Deadline, Closed, Event, Created }
+    enum class TimeField { Scheduled, Deadline, Closed, Event, Created, Modified }
     enum class Relation { EQ, NE, LT, LE, GT, GE }
 
     /** A planning time compared to a moment relative to now, as Orgzly does. */
@@ -185,7 +185,7 @@ class SearchQuery private constructor(
 
     // ---- Sort orders ----
 
-    enum class OrderField { Notebook, Title, Scheduled, Deadline, Closed, Event, Created, Priority, State, Position }
+    enum class OrderField { Notebook, Title, Scheduled, Deadline, Closed, Event, Created, Modified, Priority, State, Position }
 
     private data class Order(val field: OrderField, val descending: Boolean) {
         fun comparator(ctx: Context): Comparator<OrgNote> {
@@ -200,6 +200,7 @@ class SearchQuery private constructor(
                 // The earliest event
                 OrderField.Event -> compareBy(nullsLast()) { note -> timestamps(note, TimeField.Event).mapNotNull(::time).minOrNull() }
                 OrderField.Created -> compareBy(nullsLast()) { time(it.property(CREATED_PROPERTY)) }
+                OrderField.Modified -> compareBy(nullsLast()) { time(it.property(MODIFIED_PROPERTY)) }
                 OrderField.Priority -> compareBy { (it.priority ?: DEFAULT_PRIORITY).uppercase() }
                 OrderField.State -> compareBy { note ->
                     val keywords = ctx.keywords(note).all
@@ -218,6 +219,9 @@ class SearchQuery private constructor(
         /** Property holding when a note was created (Orgzly's default). */
         const val CREATED_PROPERTY = "CREATED"
 
+        /** When a note was last changed, as Emacs users keep it (set by Orgwhal when so set). */
+        const val MODIFIED_PROPERTY = "LAST_MODIFIED"
+
         private val AGENDA_DAYS = Regex("""^ad\.(\d{1,3})$""")
 
         /** The note's times for [field]: one planning time, its events, or its CREATED property. */
@@ -227,12 +231,13 @@ class SearchQuery private constructor(
             TimeField.Closed -> listOfNotNull(note.closed)
             TimeField.Event -> OrgTime.events(note)
             TimeField.Created -> listOfNotNull(note.property(CREATED_PROPERTY))
+            TimeField.Modified -> listOfNotNull(note.property(MODIFIED_PROPERTY))
         }
 
         // A quoted part can be inside a token (col."en stock".eq.0)
         private val TOKEN = Regex(""""[^"\\]*(?:\\.[^"\\]*)*"|[^")(\s]*"[^"\\]*(?:\\.[^"\\]*)*"[^")(\s]*|\(|\)|[^")(\s]+""")
         private val FIELD = Regex("""^col\.(?:"((?:[^"\\]|\\.)*)"|([^."]+))\.(eq|ne|lt|le|gt|ge)\.(.*)$""")
-        private val TIME = Regex("""^(e|s|d|c|cr)(?:\.(eq|ne|lt|le|gt|ge))?\.(.+)$""")
+        private val TIME = Regex("""^(e|s|d|c|cr|mod)(?:\.(eq|ne|lt|le|gt|ge))?\.(.+)$""")
         private val ORDERS = listOf(
             Regex("""^o\.(?:notebook|book|b)$""") to OrderField.Notebook,
             Regex("""^o\.(?:title|t)$""") to OrderField.Title,
@@ -241,6 +246,7 @@ class SearchQuery private constructor(
             Regex("""^o\.(?:closed|close|c)$""") to OrderField.Closed,
             Regex("""^o\.(?:event|e)$""") to OrderField.Event,
             Regex("""^o\.(?:created|cr)$""") to OrderField.Created,
+            Regex("""^o\.(?:modified|mod)$""") to OrderField.Modified,
             Regex("""^o\.(?:priority|prio|pri|p)$""") to OrderField.Priority,
             Regex("""^o\.(?:state|st)$""") to OrderField.State,
             Regex("""^o\.(?:position|pos)$""") to OrderField.Position,
@@ -371,6 +377,7 @@ class SearchQuery private constructor(
                 "d" -> TimeField.Deadline
                 "c" -> TimeField.Closed
                 "e" -> TimeField.Event
+                "mod" -> TimeField.Modified
                 else -> TimeField.Created
             }
             val relation = when (m.groupValues[2]) {

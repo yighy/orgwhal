@@ -16,7 +16,7 @@ object SearchCompletion {
 
     /** What a choice is, for its description. */
     enum class Hint {
-        Tag, OwnTag, State, StateType, Scheduled, Deadline, Closed, Event, Created, Notebook,
+        Tag, OwnTag, State, StateType, Scheduled, Deadline, Closed, Event, Created, Modified, Notebook,
         Priority, SetPriority, Column, Sort, Agenda, Eq, Ne, Lt, Le, Gt, Ge
     }
 
@@ -32,15 +32,15 @@ object SearchCompletion {
     private val PREFIXES = listOf(
         "t." to Hint.Tag, "tn." to Hint.OwnTag, "i." to Hint.State, "it." to Hint.StateType,
         "s." to Hint.Scheduled, "d." to Hint.Deadline, "c." to Hint.Closed, "e." to Hint.Event,
-        "cr." to Hint.Created, "b." to Hint.Notebook, "p." to Hint.Priority, "ps." to Hint.SetPriority,
+        "cr." to Hint.Created, "mod." to Hint.Modified, "b." to Hint.Notebook, "p." to Hint.Priority, "ps." to Hint.SetPriority,
         "col." to Hint.Column, "o." to Hint.Sort, "ad." to Hint.Agenda,
     )
     private val RELATIONS = listOf(
         "eq" to Hint.Eq, "ne" to Hint.Ne, "lt" to Hint.Lt, "le" to Hint.Le, "gt" to Hint.Gt, "ge" to Hint.Ge,
     )
     private val INTERVALS = listOf("today", "tomorrow", "yesterday", "now", "none", "3d", "1w", "1m")
-    private val SORTS = listOf("scheduled", "deadline", "priority", "title", "state", "notebook", "created", "closed", "event", "position")
-    private val TIMES = setOf("s", "d", "c", "e", "cr")
+    private val SORTS = listOf("scheduled", "deadline", "priority", "title", "state", "notebook", "created", "modified", "closed", "event", "position")
+    private val TIMES = setOf("s", "d", "c", "e", "cr", "mod")
 
     private fun separates(c: Char) = c.isWhitespace() || c == '(' || c == ')'
 
