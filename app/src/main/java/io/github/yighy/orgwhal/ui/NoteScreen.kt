@@ -1099,11 +1099,10 @@ private fun MetaRow(label: String, onClick: (() -> Unit)?, value: @Composable ()
 /** A metadata row that unfolds when shown and folds away when hidden. */
 @Composable
 private fun MetaSlot(visible: Boolean, content: @Composable () -> Unit) {
-    val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
         visible = visible,
-        enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
-        exit = shrinkVertically(unfoldSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
+        enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top),
+        exit = shrinkVertically(unfoldSpec(), shrinkTowards = Alignment.Top),
     ) { content() }
 }
 
@@ -1200,10 +1199,9 @@ private fun foldAccents(text: String): String =
 @Composable
 private fun Appear(animate: Boolean = true, content: @Composable () -> Unit) {
     val visible = remember { MutableTransitionState(!animate).apply { targetState = true } }
-    val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
         visibleState = visible,
-        enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
+        enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top),
     ) { content() }
 }
 
@@ -1407,11 +1405,10 @@ private fun ChoiceRow(
                 Text(stringResource(R.string.none), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        val motion = MaterialTheme.motionScheme
         AnimatedVisibility(
             expanded,
-            enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
-            exit = shrinkVertically(unfoldSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.defaultEffectsSpec()),
+            enter = expandVertically(unfoldSpec(), expandFrom = Alignment.Top),
+            exit = shrinkVertically(unfoldSpec(), shrinkTowards = Alignment.Top),
         ) {
             FlowRow(
                 Modifier.fillMaxWidth().padding(bottom = 8.dp),

@@ -68,8 +68,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.layout.size
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.AnimatedVisibility
@@ -623,15 +621,13 @@ private fun ElementName(name: String) {
 private fun chevronRotation(open: Boolean): Float =
     animateFloatAsState(if (open) 90f else 0f, spring(UNFOLD_DAMPING, CHEVRON_STIFFNESS), label = "chevron").value
 
-/** [content] unfolding and folding away as [open] changes. */
+/**
+ * [content] unfolding and folding away as [open] changes. Without a fade: over before much of it
+ * shows when unfolding, it would pale the whole of it right away when folding.
+ */
 @Composable
 private fun Unfold(open: Boolean, content: @Composable () -> Unit) {
-    val motion = MaterialTheme.motionScheme
-    AnimatedVisibility(
-        open,
-        enter = expandVertically(unfoldSpec()) + fadeIn(motion.defaultEffectsSpec()),
-        exit = shrinkVertically(unfoldSpec()) + fadeOut(motion.defaultEffectsSpec()),
-    ) { content() }
+    AnimatedVisibility(open, enter = expandVertically(unfoldSpec()), exit = shrinkVertically(unfoldSpec())) { content() }
 }
 
 /**
@@ -640,13 +636,13 @@ private fun Unfold(open: Boolean, content: @Composable () -> Unit) {
  */
 internal const val UNFOLD_DAMPING = Spring.DampingRatioNoBouncy
 
-/** As stiff as the expressive default spatial spring, for the same pace. */
-private const val UNFOLD_STIFFNESS = 380f
+/** The expressive default spatial spring, four times as stiff to take half the time. */
+internal const val UNFOLD_STIFFNESS = 380f * 4
 
-/** As stiff as the expressive fast spatial spring. */
-private const val CHEVRON_STIFFNESS = 800f
+/** The expressive fast spatial spring, four times as stiff to keep up. */
+private const val CHEVRON_STIFFNESS = 800f * 4
 
-/** A part unfolding or folding away, at the expressive pace without its bounce. */
+/** A part unfolding or folding away, at twice the expressive pace, without its bounce. */
 internal fun <T> unfoldSpec(): SpringSpec<T> = spring(UNFOLD_DAMPING, UNFOLD_STIFFNESS)
 
 /** A tap edits the text from [at] (no ripple, as on the text around). */
