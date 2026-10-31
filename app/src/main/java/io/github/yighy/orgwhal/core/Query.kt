@@ -190,23 +190,30 @@ class SearchQuery private constructor(
     private data class Order(val field: OrderField, val descending: Boolean) {
         fun comparator(ctx: Context): Comparator<OrgNote> {
             fun time(t: String?) = OrgTime.parts(t)?.let { it.date.atTime(it.time ?: LocalTime.MIDNIGHT) }
+            // Notes without the time go last, whichever way
+            fun byTime(key: (OrgNote) -> LocalDateTime?): Comparator<OrgNote> =
+                compareBy(nullsLast(if (descending) reverseOrder() else naturalOrder()), key)
+            val timed = when (field) {
+                OrderField.Scheduled -> byTime { time(it.scheduled) }
+                OrderField.Deadline -> byTime { time(it.deadline) }
+                OrderField.Closed -> byTime { time(it.closed) }
+                // The earliest event
+                OrderField.Event -> byTime { note -> timestamps(note, TimeField.Event).mapNotNull(::time).minOrNull() }
+                OrderField.Created -> byTime { time(it.property(CREATED_PROPERTY)) }
+                OrderField.Modified -> byTime { time(it.property(MODIFIED_PROPERTY)) }
+                else -> null
+            }
+            if (timed != null) return timed
             val base: Comparator<OrgNote> = when (field) {
                 OrderField.Notebook -> compareBy { ctx.notebookName(it).lowercase() }
                 OrderField.Title -> compareBy { it.title.lowercase() }
-                // Notes without the time go last
-                OrderField.Scheduled -> compareBy(nullsLast()) { time(it.scheduled) }
-                OrderField.Deadline -> compareBy(nullsLast()) { time(it.deadline) }
-                OrderField.Closed -> compareBy(nullsLast()) { time(it.closed) }
-                // The earliest event
-                OrderField.Event -> compareBy(nullsLast()) { note -> timestamps(note, TimeField.Event).mapNotNull(::time).minOrNull() }
-                OrderField.Created -> compareBy(nullsLast()) { time(it.property(CREATED_PROPERTY)) }
-                OrderField.Modified -> compareBy(nullsLast()) { time(it.property(MODIFIED_PROPERTY)) }
                 OrderField.Priority -> compareBy { (it.priority ?: DEFAULT_PRIORITY).uppercase() }
                 OrderField.State -> compareBy { note ->
                     val keywords = ctx.keywords(note).all
                     note.state?.let { keywords.indexOf(it).takeIf { i -> i >= 0 } } ?: Int.MAX_VALUE
                 }
                 OrderField.Position -> compareBy<OrgNote>({ it.fileUri }, { it.index })
+                else -> error("Sorted by time: $field")
             }
             return if (descending) base.reversed() else base
         }

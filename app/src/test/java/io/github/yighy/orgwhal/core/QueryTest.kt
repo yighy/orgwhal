@@ -90,8 +90,8 @@ class QueryTest {
         assertEquals(listOf("Recent"), titles("mod.ge.-1w"))
         assertEquals(listOf("Old"), titles("mod.le.-1m"))
         assertEquals(listOf("Never"), titles("mod.none"))
-        // As o.cr: the unstamped last, and first the other way
-        assertEquals(listOf("Never", "Recent", "Old"), titles(".o.mod"))
+        // Most recently changed first, the unstamped last either way
+        assertEquals(listOf("Recent", "Old", "Never"), titles(".o.mod"))
         assertEquals(listOf("Old", "Recent", "Never"), titles("o.modified"))
     }
 
