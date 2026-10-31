@@ -4,6 +4,16 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.36.1] - 2026-10-31
+
+### Changed
+- Drawers, folded lists, a table's formulas and a note's details unfold and fold away in half the
+  time, and without a fade: folding is now unfolding played backwards, what folds staying sharp
+
+### Fixed
+- Sorting by a date the other way (.o.mod, .o.cr, .o.s…) keeps the notes without that date last,
+  so that .o.mod starts with the notes changed most recently
+
 ## [0.36.0] - 2026-10-26
 
 ### Added
@@ -558,7 +568,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.36.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.36.1...HEAD
+[0.36.1]: https://github.com/yighy/orgwhal/compare/v0.36.0...v0.36.1
 [0.36.0]: https://github.com/yighy/orgwhal/compare/v0.35.3...v0.36.0
 [0.35.3]: https://github.com/yighy/orgwhal/compare/v0.35.2...v0.35.3
 [0.35.2]: https://github.com/yighy/orgwhal/compare/v0.35.1...v0.35.2
