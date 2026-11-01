@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.37.4] - 2026-11-01
+
+### Fixed
+- On a new note, a tap on a chip right after typing the title no longer loses what it opens: the
+  calendar, tags, state, priority or property stay open while the note gets created
+
 ## [0.37.3] - 2026-11-01
 
 ### Changed
@@ -595,7 +601,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.3...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.4...HEAD
+[0.37.4]: https://github.com/yighy/orgwhal/compare/v0.37.3...v0.37.4
 [0.37.3]: https://github.com/yighy/orgwhal/compare/v0.37.2...v0.37.3
 [0.37.2]: https://github.com/yighy/orgwhal/compare/v0.37.1...v0.37.2
 [0.37.1]: https://github.com/yighy/orgwhal/compare/v0.37.0...v0.37.1
