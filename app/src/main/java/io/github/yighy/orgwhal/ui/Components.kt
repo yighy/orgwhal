@@ -71,6 +71,9 @@ import java.time.LocalDate
 import io.github.yighy.orgwhal.core.Agenda
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.BlendMode
@@ -421,10 +424,11 @@ val LocalAnimatedVisibilityScope = staticCompositionLocalOf<AnimatedVisibilitySc
 /**
  * Container transform: an element with the same [key] on the next screen grows out of this one
  * (notebook card into notebook screen, note row into note screen, tree box into note screen).
+ * On its way it goes over the whole screen, or only over [within], in the root's coordinates.
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun Modifier.sharedContainer(key: String, shape: Shape): Modifier {
+fun Modifier.sharedContainer(key: String, shape: Shape, within: (() -> Rect)? = null): Modifier {
     if (LocalSharedCut.current.value) return this
     val shared = LocalSharedTransitionScope.current ?: return this
     val visibility = LocalAnimatedVisibilityScope.current ?: return this
@@ -434,9 +438,33 @@ fun Modifier.sharedContainer(key: String, shape: Shape): Modifier {
             animatedVisibilityScope = visibility,
             // Not too long: a card scrolled while coming back follows its place until it settles
             boundsTransform = { _, _ -> SharedBoundsSpec },
-            clipInOverlayDuringTransition = OverlayClip(shape),
+            clipInOverlayDuringTransition = within?.let(::ClipWithin) ?: OverlayClip(shape),
         )
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+private class ClipWithin(private val area: () -> Rect) : SharedTransitionScope.OverlayClip {
+    override fun getClipPath(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        bounds: Rect,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Path {
+        val area = area()
+        return Path().apply { addRect(if (bounds.overlaps(area)) bounds.intersect(area) else Rect.Zero) }
+    }
+}
+
+/** As a shared element is by default. */
+@OptIn(ExperimentalSharedTransitionApi::class)
+private object ClipOfParent : SharedTransitionScope.OverlayClip {
+    override fun getClipPath(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        bounds: Rect,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Path? = sharedContentState.parentSharedContentState?.clipPathInOverlay
 }
 
 /**
@@ -448,11 +476,12 @@ private val SharedBoundsSpec = tween<Rect>(200, easing = CubicBezierEasing(0.05f
 
 /**
  * Text that moves and scales from the element with the same [key] on the previous screen
- * (notebook name into the app bar, note title and content into the note screen).
+ * (notebook name into the app bar, note title and content into the note screen). On its way it
+ * keeps to [within], as a [sharedContainer].
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun Modifier.sharedText(key: String): Modifier {
+fun Modifier.sharedText(key: String, within: (() -> Rect)? = null): Modifier {
     if (LocalSharedCut.current.value) return this
     val shared = LocalSharedTransitionScope.current ?: return this
     val visibility = LocalAnimatedVisibilityScope.current ?: return this
@@ -463,6 +492,7 @@ fun Modifier.sharedText(key: String): Modifier {
             boundsTransform = { _, _ -> SharedBoundsSpec },
             // Laid out once at its own size, then scaled: text keeps its lines while it grows
             resizeMode = scaleToBounds(ContentScale.FillWidth, Alignment.TopStart),
+            clipInOverlayDuringTransition = within?.let(::ClipWithin) ?: ClipOfParent,
         )
     }
 }

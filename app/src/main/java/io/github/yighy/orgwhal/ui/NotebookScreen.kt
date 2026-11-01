@@ -99,6 +99,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -108,9 +109,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
@@ -159,6 +164,11 @@ fun NotebookScreen(
     val selecting = selection != null
     val scrollBehavior = largeBarScrollBehavior(selecting)
     val listState = rememberLazyListState()
+    // The list, under the titles staying at the top: all a note's row goes over on its way to or
+    // from the note's screen, else a long one covers the titles and the app bar until it lands
+    var listBounds by remember { mutableStateOf(Rect.Zero) }
+    var titlesTaken by remember { mutableIntStateOf(0) }
+    val rowsArea = remember { { listBounds.copy(top = listBounds.top + titlesTaken) } }
 
     BackHandler(enabled = viewModel.searchActive) { viewModel.setSearch(false) }
     BackHandler(enabled = selecting) { viewModel.clearSelection() }
@@ -224,7 +234,7 @@ fun NotebookScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding).onGloballyPositioned { listBounds = it.boundsInRoot() }) {
             if (viewModel.searchActive) {
                 SearchResults(viewModel, library, file.notes)
             } else {
@@ -243,21 +253,24 @@ fun NotebookScreen(
                     showContent = settings.showContentInNotebook,
                     spacing = settings.noteSpacing.padding.dp,
                     indentation = settings.indentation,
+                    rowsArea = rowsArea,
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onAddNear = { note, placement -> viewModel.startNewNote(file.uri, note, placement) },
                     onDelete = viewModel::deleteNote,
                 )
             }
-            if (!viewModel.searchActive && prefaceDraft == null && settings.noteAncestors != NoteAncestors.Hidden) {
-                OutlineAncestors(
-                    listState,
-                    file.notes,
-                    viewModel::isFolded,
-                    settings.noteAncestors,
-                    settings.indentation,
-                    settings.noteSpacing.padding.dp,
-                    Modifier.align(Alignment.TopStart),
-                )
+            Box(Modifier.align(Alignment.TopStart).fillMaxWidth().onSizeChanged { titlesTaken = it.height }) {
+                if (!viewModel.searchActive && prefaceDraft == null && settings.noteAncestors != NoteAncestors.Hidden) {
+                    OutlineAncestors(
+                        listState,
+                        file.notes,
+                        viewModel::isFolded,
+                        settings.noteAncestors,
+                        settings.indentation,
+                        settings.noteSpacing.padding.dp,
+                        Modifier,
+                    )
+                }
             }
             if (selecting) {
                 SelectionToolbar(viewModel, file, Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
@@ -304,6 +317,7 @@ private fun NotebookOutline(
     showContent: Boolean,
     spacing: Dp,
     indentation: Indentation,
+    rowsArea: () -> Rect,
     scrollConnection: androidx.compose.ui.input.nestedscroll.NestedScrollConnection,
     onAddNear: (OrgNote, Placement) -> Unit,
     onDelete: (OrgNote) -> Unit,
@@ -452,6 +466,7 @@ private fun NotebookOutline(
                         showContent = showContent,
                         spacing = spacing,
                         indentation = indentation,
+                        area = rowsArea,
                         selected = note.index in marked,
                         selecting = selecting,
                         swipeOpen = viewModel.openSwipeRow,
@@ -525,6 +540,7 @@ private fun OutlineRow(
     showContent: Boolean,
     spacing: Dp,
     indentation: Indentation,
+    area: () -> Rect,
     selected: Boolean,
     selecting: Boolean,
     swipeOpen: String?,
@@ -564,7 +580,7 @@ private fun OutlineRow(
             Placement.entries.map { placement ->
                 SwipeAction(placementIcon(placement), stringResource(newNoteTitle(placement))) { onAddNear(placement) }
             },
-        modifier = Modifier.sharedContainer("note-$key", RectangleShape),
+        modifier = Modifier.sharedContainer("note-$key", RectangleShape, within = area),
         enabled = !selecting,
     ) {
         Row(
@@ -614,7 +630,7 @@ private fun OutlineRow(
                     subtitle = null,
                     onClick = null,
                     onOpenLink = onOpenLink,
-                    titleModifier = Modifier.sharedText(noteTitleKey(note)),
+                    titleModifier = Modifier.sharedText(noteTitleKey(note), within = area),
                 )
                 val hasContent = remember(note.content) { !Blocks.showsNothing(note.content) }
                 if (showContent && hasContent) {
@@ -623,7 +639,7 @@ private fun OutlineRow(
                         note.content.trimIndent(),
                         contentStyle(MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)),
                         onOpenLink,
-                        Modifier.padding(top = 4.dp).sharedText(noteContentKey(note)),
+                        Modifier.padding(top = 4.dp).sharedText(noteContentKey(note), within = area),
                         onToggleCheckbox = onToggleCheckbox,
                         tableNamed = tables,
                         liveFormulas = liveFormulas,
