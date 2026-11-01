@@ -724,7 +724,8 @@ private fun OutlineAncestors(
                                 Box(Modifier.size(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.outline))
                             }
                         }
-                        NoteTitle(note, onOpenLink = null, maxLines = 1)
+                        // As in the outline (cookies, links); a link here only leads to the note
+                        NoteTitle(note, onOpenLink = { open(note) }, maxLines = 1)
                     }
                 }
             }
