@@ -468,4 +468,8 @@
     <string name="settings_add_modified">Add a modification date to changed notes</string>
     <string name="settings_add_modified_summary">Set the LAST_MODIFIED property when a note is changed (searched with mod., sorted with o.mod)</string>
     <string name="search_hint_modified">Date last changed</string>
+    <string name="settings_ancestors">Parent notes while scrolling</string>
+    <string name="ancestors_line">On one line</string>
+    <string name="ancestors_stacked">Stacked titles</string>
+    <string name="ancestors_hidden">Hidden</string>
 </resources>

@@ -692,33 +692,7 @@ fun NoteLine(
     titleModifier: Modifier = Modifier,
 ) {
     Column((if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).then(modifier)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            note.state?.let {
-                StateLabel(it, note.isDone)
-                Spacer(Modifier.width(8.dp))
-            }
-            note.priority?.let {
-                Text("#$it", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
-                Spacer(Modifier.width(8.dp))
-            }
-            val titleStyle = MaterialTheme.typography.bodyLarge.copy(
-                textDecoration = if (note.isDone && LocalStrikeDone.current) TextDecoration.LineThrough else null,
-                color = if (note.isDone) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
-            )
-            if (onOpenLink != null) {
-                // A done note's links are grayed out with the rest of its title
-                LinkedText(
-                    note.title,
-                    titleStyle,
-                    onOpenLink,
-                    titleModifier,
-                    maxLines = 2,
-                    linkColor = if (note.isDone) titleStyle.color else Color.Unspecified,
-                )
-            } else {
-                Text(displayTitle(note.title), style = titleStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = titleModifier)
-            }
-        }
+        NoteTitle(note, onOpenLink, titleModifier)
         // Timestamps are parsed once per note, not on every redraw of the list
         val resources = LocalResources.current
         val details = remember(note.tags, note.scheduled, note.deadline, note.content, subtitle, resources) {
@@ -738,6 +712,38 @@ fun NoteLine(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+/** A note's state, priority and title. */
+@Composable
+fun NoteTitle(note: OrgNote, onOpenLink: ((String) -> Unit)?, titleModifier: Modifier = Modifier, maxLines: Int = 2) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        note.state?.let {
+            StateLabel(it, note.isDone)
+            Spacer(Modifier.width(8.dp))
+        }
+        note.priority?.let {
+            Text("#$it", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+            Spacer(Modifier.width(8.dp))
+        }
+        val titleStyle = MaterialTheme.typography.bodyLarge.copy(
+            textDecoration = if (note.isDone && LocalStrikeDone.current) TextDecoration.LineThrough else null,
+            color = if (note.isDone) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+        )
+        if (onOpenLink != null) {
+            // A done note's links are grayed out with the rest of its title
+            LinkedText(
+                note.title,
+                titleStyle,
+                onOpenLink,
+                titleModifier,
+                maxLines = maxLines,
+                linkColor = if (note.isDone) titleStyle.color else Color.Unspecified,
+            )
+        } else {
+            Text(displayTitle(note.title), style = titleStyle, maxLines = maxLines, overflow = TextOverflow.Ellipsis, modifier = titleModifier)
         }
     }
 }

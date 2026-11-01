@@ -39,6 +39,13 @@ enum class Indentation(@StringRes val label: Int, val first: Int, val deeper: In
     Compact(R.string.indentation_compact, 16, 16),
 }
 
+/** How the notes around what is shown stay at the top of a notebook as they go by. */
+enum class NoteAncestors(@StringRes val label: Int) {
+    Line(R.string.ancestors_line),
+    Stacked(R.string.ancestors_stacked),
+    Hidden(R.string.ancestors_hidden),
+}
+
 /** When a note is renamed, links to it that still show its old title can follow. */
 enum class LinkRenaming(@StringRes val label: Int) {
     Ask(R.string.link_renaming_ask),
@@ -88,6 +95,7 @@ class AppSettings(context: Context) {
         val freezeFirstColumn: Boolean = false,
         val noteSpacing: NoteSpacing = NoteSpacing.Comfortable,
         val indentation: Indentation = Indentation.Tapering,
+        val noteAncestors: NoteAncestors = NoteAncestors.Line,
         val remindScheduled: Boolean = true,
         val remindDeadline: Boolean = true,
         /** Also remind for dates without a time of day, at [allDayTime]. */
@@ -136,6 +144,7 @@ class AppSettings(context: Context) {
             freezeFirstColumn = prefs.getBoolean(KEY_FREEZE_FIRST_COLUMN, false),
             noteSpacing = NoteSpacing.entries.firstOrNull { it.name == prefs.getString(KEY_NOTE_SPACING, null) } ?: NoteSpacing.Comfortable,
             indentation = Indentation.entries.firstOrNull { it.name == prefs.getString(KEY_INDENTATION, null) } ?: Indentation.Tapering,
+            noteAncestors = NoteAncestors.entries.firstOrNull { it.name == prefs.getString(KEY_NOTE_ANCESTORS, null) } ?: NoteAncestors.Line,
             remindScheduled = prefs.getBoolean(KEY_REMIND_SCHEDULED, true),
             remindDeadline = prefs.getBoolean(KEY_REMIND_DEADLINE, true),
             remindAllDay = prefs.getBoolean(KEY_REMIND_ALL_DAY, false),
@@ -260,6 +269,9 @@ class AppSettings(context: Context) {
     fun setIndentation(indentation: Indentation) =
         save({ putString(KEY_INDENTATION, indentation.name) }) { it.copy(indentation = indentation) }
 
+    fun setNoteAncestors(style: NoteAncestors) =
+        save({ putString(KEY_NOTE_ANCESTORS, style.name) }) { it.copy(noteAncestors = style) }
+
     fun setRemindScheduled(on: Boolean) = save({ putBoolean(KEY_REMIND_SCHEDULED, on) }) { it.copy(remindScheduled = on) }
 
     fun setRemindDeadline(on: Boolean) = save({ putBoolean(KEY_REMIND_DEADLINE, on) }) { it.copy(remindDeadline = on) }
@@ -338,6 +350,7 @@ class AppSettings(context: Context) {
         private const val KEY_FREEZE_FIRST_COLUMN = "freeze_first_column"
         private const val KEY_NOTE_SPACING = "note_spacing"
         private const val KEY_INDENTATION = "indentation"
+        private const val KEY_NOTE_ANCESTORS = "note_ancestors"
         private const val KEY_REMIND_SCHEDULED = "remind_scheduled"
         private const val KEY_REMIND_DEADLINE = "remind_deadline"
         private const val KEY_REMIND_ALL_DAY = "remind_all_day"

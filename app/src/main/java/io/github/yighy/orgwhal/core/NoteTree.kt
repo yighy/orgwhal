@@ -104,6 +104,49 @@ object NoteTree {
         return null
     }
 
+    /** A note's row in view in an outline: where its title's line is ([top]) and where it ends. */
+    data class ShownRow(val note: Int, val top: Int, val bottom: Int)
+
+    /** A title staying at the top of an outline, drawn at [y]. */
+    data class Stuck(val note: Int, val y: Int)
+
+    /**
+     * The titles that stay at the top of an outline showing [rows] (in order, from the top, all
+     * positions from the top of the list), as if each note came up, stopped at its [place] and
+     * stayed there while its sub-notes go by; the next one of its level then pushes it away. Only
+     * unfolded notes with sub-notes stay, and notes of at least [longNote], whose content goes on
+     * under their title; the [max] nearest. Each takes [height].
+     */
+    fun stuck(
+        notes: List<OrgNote>,
+        rows: List<ShownRow>,
+        isFolded: (OrgNote) -> Boolean,
+        place: (Int) -> Int,
+        height: Int,
+        max: Int,
+        longNote: Int = Int.MAX_VALUE,
+    ): List<Stuck> {
+        val first = rows.indexOfFirst { it.bottom > place(0) }
+        if (first < 0) return emptyList()
+        // Those above what shows are gone by; then each row as it comes to its place
+        var stack = ancestors(notes, rows[first].note).map { it.index }
+        for (row in rows.drop(first)) {
+            val note = notes[row.note]
+            val kept = stack.filter { notes[it].level < note.level }
+            if (row.top >= place(minOf(kept.size, max - 1))) break
+            val stays = hasChildren(notes, row.note) && !isFolded(note) || row.bottom - row.top >= longNote
+            stack = if (stays) kept + row.note else kept
+        }
+        var pushed = 0
+        return stack.takeLast(max).mapIndexed { i, index ->
+            // By the first row past its sub-notes, or the end of the list; those under it go with it
+            val next = rows.firstOrNull { it.note > index && notes[it.note].level <= notes[index].level }?.top
+                ?: rows.lastOrNull()?.bottom?.takeIf { rows.last().note == notes.lastIndex }
+            next?.let { pushed = minOf(pushed, it - height - place(i)) }
+            Stuck(index, place(i) + pushed)
+        }
+    }
+
     /** Notes not hidden under a folded ancestor. */
     fun visible(notes: List<OrgNote>, isFolded: (OrgNote) -> Boolean): List<OrgNote> {
         val result = mutableListOf<OrgNote>()

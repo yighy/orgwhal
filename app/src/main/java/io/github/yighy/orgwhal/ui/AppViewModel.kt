@@ -26,6 +26,7 @@ import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import io.github.yighy.orgwhal.data.NoteSpacing
 import io.github.yighy.orgwhal.data.Indentation
+import io.github.yighy.orgwhal.data.NoteAncestors
 import io.github.yighy.orgwhal.data.ThemeMode
 import java.time.LocalDateTime
 import io.github.yighy.orgwhal.core.SearchQuery
@@ -265,6 +266,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setNoteSpacing(spacing: NoteSpacing) = appSettings.setNoteSpacing(spacing)
     fun setIndentation(indentation: Indentation) = appSettings.setIndentation(indentation)
+    fun setNoteAncestors(style: NoteAncestors) = appSettings.setNoteAncestors(style)
 
     fun setHiddenProperties(names: Set<String>) = appSettings.setHiddenProperties(names)
     fun setRemindScheduled(on: Boolean) = appSettings.setRemindScheduled(on)

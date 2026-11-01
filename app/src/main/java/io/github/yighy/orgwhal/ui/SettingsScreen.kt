@@ -52,6 +52,7 @@ import io.github.yighy.orgwhal.data.AppSettings
 import io.github.yighy.orgwhal.data.LinkRenaming
 import io.github.yighy.orgwhal.data.NoteSpacing
 import io.github.yighy.orgwhal.data.Indentation
+import io.github.yighy.orgwhal.data.NoteAncestors
 import io.github.yighy.orgwhal.data.NoteRepository
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -82,6 +83,7 @@ fun SettingsScreen(
     var pickReminderButton by remember { mutableStateOf(false) }
     var pickSpacing by remember { mutableStateOf(false) }
     var pickIndentation by remember { mutableStateOf(false) }
+    var pickAncestors by remember { mutableStateOf(false) }
     var editHiddenProperties by remember { mutableStateOf(false) }
 
     // System settings can change while the app is in the background
@@ -171,6 +173,10 @@ fun SettingsScreen(
                 onClick = { pickIndentation = true },
                 supportingContent = { Text(stringResource(settings.indentation.label)) },
             ) { Text(stringResource(R.string.settings_indentation)) }
+            ListItem(
+                onClick = { pickAncestors = true },
+                supportingContent = { Text(stringResource(settings.noteAncestors.label)) },
+            ) { Text(stringResource(R.string.settings_ancestors)) }
 
             ListItem(
                 onClick = { editKeywords = true },
@@ -354,6 +360,18 @@ fun SettingsScreen(
             onSelect = { label ->
                 pickSpacing = false
                 NoteSpacing.entries.firstOrNull { resources.getString(it.label) == label }?.let(viewModel::setNoteSpacing)
+            },
+        )
+    }
+    if (pickAncestors) {
+        ChoiceDialog(
+            title = stringResource(R.string.settings_ancestors),
+            options = NoteAncestors.entries.map { stringResource(it.label) },
+            selected = stringResource(settings.noteAncestors.label),
+            onDismiss = { pickAncestors = false },
+            onSelect = { label ->
+                pickAncestors = false
+                NoteAncestors.entries.firstOrNull { resources.getString(it.label) == label }?.let(viewModel::setNoteAncestors)
             },
         )
     }

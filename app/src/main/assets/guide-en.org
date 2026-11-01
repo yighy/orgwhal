@@ -11,6 +11,7 @@ Orgwhal reads and writes the =.org= files of a folder on the phone (synced with 
 - Files changed by another app are read again within seconds.
 - Pull the list down to reload the folder.
 - In a long list or note, scrolling down brings up a small double arrow: tap it to go straight to the bottom. In a notebook, among the sub-notes of an unfolded note, it is a single arrow: a tap goes to the end of those sub-notes (tap again for the end of the note around them), a long press to the bottom. A tap on the top bar goes back to the top.
+- In a notebook, scrolling past a note with sub-notes or a long content leaves its title at the top, with the notes around it: tap one to come back up to it. *Settings → Parent notes while scrolling* shows them on one line, stacked as in the outline (the three nearest), or not at all.
 
 ** Notebooks
 - *New notebook*: the =+= button on the home screen.
@@ -305,5 +306,5 @@ On that new note, tap *Inbox ▾* at the top to put it in another notebook, unde
 
 * Useful settings
 - *Appearance*: light, dark or system theme; wallpaper colors; *Use English language*.
-- *Notes*: show note content in notebooks, strike through done notes, space between notes, sub-note indentation (wide, tapering or compact), state keywords, hidden properties.
+- *Notes*: show note content in notebooks, strike through done notes, space between notes, sub-note indentation (wide, tapering or compact), parent notes while scrolling, state keywords, hidden properties.
 - *About*: version, source code, license, and *Add the guide notebook* to get this notebook back, or to replace it with a newer version's after an update.

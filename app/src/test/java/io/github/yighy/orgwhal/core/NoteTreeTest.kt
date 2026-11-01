@@ -111,6 +111,40 @@ class NoteTreeTest {
     }
 
     @Test
+    fun stuckTitles() {
+        // A, A1, A1a, A2, B; rows of 100 with titles at their top, titles staying 40 high
+        fun rows(scrolled: Int, vararg shown: Int) =
+            shown.mapIndexed { i, note -> NoteTree.ShownRow(note, i * 100 - scrolled, (i + 1) * 100 - scrolled) }
+        fun stuck(rows: List<NoteTree.ShownRow>, folded: Set<Int> = emptySet(), max: Int = 3, longNote: Int = Int.MAX_VALUE) =
+            NoteTree.stuck(notes, rows, { it.index in folded }, { it * 40 }, 40, max, longNote).map { it.note to it.y }
+
+        val all = intArrayOf(0, 1, 2, 3, 4)
+        // At the very top of the list, nothing has gone by yet
+        assertEquals(emptyList<Pair<Int, Int>>(), stuck(rows(0, *all)))
+        // A comes up to the top and stays there, A1 coming to its place under it
+        assertEquals(listOf(0 to 0), stuck(rows(50, *all)))
+        assertEquals(listOf(0 to 0, 1 to 40), stuck(rows(61, *all)))
+        assertEquals(listOf(0 to 0, 1 to 40), stuck(rows(130, *all)))
+        // A1a has no sub-notes: it goes under. A2 pushes A1, then takes its place, staying no more
+        assertEquals(listOf(0 to 0, 1 to 40), stuck(rows(220, *all)))
+        assertEquals(listOf(0 to 0, 1 to 30), stuck(rows(230, *all)))
+        assertEquals(listOf(0 to 0), stuck(rows(261, *all)))
+        // B pushes A, and then nothing stays
+        assertEquals(listOf(0 to -20), stuck(rows(380, *all)))
+        assertEquals(emptyList<Pair<Int, Int>>(), stuck(rows(401, *all)))
+        // Those above what shows have gone by
+        assertEquals(listOf(0 to 0, 1 to 40), stuck(rows(20, 2, 3, 4)))
+        // A folded note does not stay
+        assertEquals(emptyList<Pair<Int, Int>>(), stuck(rows(50, 0, 4), folded = setOf(0)))
+        // The nearest only
+        assertEquals(listOf(1 to 0), stuck(rows(130, *all), max = 1))
+        // Long enough, a note without sub-notes stays too; the last one goes with the end of the list
+        assertEquals(listOf(0 to 0, 1 to 40, 2 to 80), stuck(rows(161, *all), longNote = 100))
+        assertEquals(listOf(4 to -20), stuck(rows(480, *all), longNote = 100))
+        assertEquals(listOf(0 to 0, 1 to 40), stuck(rows(161, *all), longNote = 101))
+    }
+
+    @Test
     fun jumpEnd() {
         // A, A1, A1a, A2, B
         val all = notes.indices.toSet()

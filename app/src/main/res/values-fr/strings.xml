@@ -496,4 +496,8 @@
     <string name="settings_add_modified">Ajouter une date de modification aux notes modifiées</string>
     <string name="settings_add_modified_summary">Remplir la propriété LAST_MODIFIED quand une note est modifiée (recherche avec mod., tri avec o.mod)</string>
     <string name="search_hint_modified">Date de dernière modification</string>
+    <string name="settings_ancestors">Notes parentes au défilement</string>
+    <string name="ancestors_line">Sur une ligne</string>
+    <string name="ancestors_stacked">Titres empilés</string>
+    <string name="ancestors_hidden">Masquées</string>
 </resources>

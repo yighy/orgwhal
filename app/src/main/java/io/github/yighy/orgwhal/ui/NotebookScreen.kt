@@ -1,5 +1,33 @@
 package io.github.yighy.orgwhal.ui
 
+import androidx.compose.ui.zIndex
+
+import androidx.compose.foundation.layout.offset
+
+import androidx.compose.ui.text.style.TextOverflow
+
+import androidx.compose.foundation.layout.width
+
+import io.github.yighy.orgwhal.data.NoteAncestors
+
+import kotlinx.coroutines.launch
+
+import androidx.compose.runtime.rememberCoroutineScope
+
+import androidx.compose.runtime.structuralEqualityPolicy
+
+import androidx.compose.runtime.derivedStateOf
+
+import androidx.compose.material3.Surface
+
+import androidx.compose.foundation.layout.height
+
+import androidx.compose.foundation.layout.Arrangement
+
+import androidx.compose.foundation.rememberScrollState
+
+import androidx.compose.foundation.horizontalScroll
+
 import androidx.compose.runtime.snapshotFlow
 import io.github.yighy.orgwhal.data.Indentation
 
@@ -218,6 +246,17 @@ fun NotebookScreen(
                     scrollConnection = scrollBehavior.nestedScrollConnection,
                     onAddNear = { note, placement -> viewModel.startNewNote(file.uri, note, placement) },
                     onDelete = viewModel::deleteNote,
+                )
+            }
+            if (!viewModel.searchActive && prefaceDraft == null && settings.noteAncestors != NoteAncestors.Hidden) {
+                OutlineAncestors(
+                    listState,
+                    file.notes,
+                    viewModel::isFolded,
+                    settings.noteAncestors,
+                    settings.indentation,
+                    settings.noteSpacing.padding.dp,
+                    Modifier.align(Alignment.TopStart),
                 )
             }
             if (selecting) {
@@ -447,19 +486,21 @@ private fun NotebookOutline(
 
         // The selected notes stay in view when they move, clear of the selection toolbar
         val toolbarRoom = with(LocalDensity.current) { 96.dp.toPx() }
+        // Nor under the titles staying at the top
+        val titlesRoom = with(LocalDensity.current) { titlesHeight(viewModel.settings.collectAsState().value.noteAncestors).roundToPx() }
         LaunchedEffect(marked, rowKeys) {
             val first = marked.minOrNull() ?: return@LaunchedEffect
             val last = marked.max()
             // Once the list is laid out with the notes in their new places
             withFrameNanos { }
             val layout = listState.layoutInfo
-            val top = layout.viewportStartOffset
+            val top = layout.viewportStartOffset + titlesRoom
             val bottom = layout.viewportEndOffset - toolbarRoom
             val firstRow = layout.visibleItemsInfo.firstOrNull { it.key == rowKeys.getOrNull(first) }
             val lastRow = layout.visibleItemsInfo.firstOrNull { it.key == rowKeys.getOrNull(last) }
             when {
                 // The header comes first, then one item per note
-                firstRow == null -> listState.animateScrollToItem(first + 1)
+                firstRow == null -> listState.animateScrollToItem(first + 1, -titlesRoom)
                 firstRow.offset < top -> listState.animateScrollBy((firstRow.offset - top).toFloat())
                 lastRow == null -> listState.animateScrollBy((firstRow.offset - top).toFloat())
                 lastRow.offset + lastRow.size > bottom ->
@@ -599,6 +640,143 @@ private fun OutlineRow(
  * Keys of the outline rows that follow a note when it moves: its text without the heading stars
  * (so a change of level keeps it), numbered among identical ones.
  */
+/**
+ * Over a notebook's outline, the notes around what is shown once they have gone by at the top
+ * ([NoteTree.stuck]). [NoteAncestors.Stacked]: each title as it is in the outline, taking over from
+ * it as it comes up to its place, so that it seems to stop there; the next of its level pushes it
+ * away. [NoteAncestors.Line]: on a line, as the breadcrumbs of a note, the nearest in view when
+ * they do not all fit. A tap on one comes back up to it.
+ */
+@Composable
+private fun OutlineAncestors(
+    state: LazyListState,
+    notes: List<OrgNote>,
+    isFolded: (OrgNote) -> Boolean,
+    style: NoteAncestors,
+    indentation: Indentation,
+    /** Room around a note's title in the outline, to have its title just over the note's. */
+    spacing: Dp,
+    modifier: Modifier,
+) {
+    val density = LocalDensity.current
+    val stacked = style == NoteAncestors.Stacked
+    val height = with(density) { (if (stacked) STACKED_ROW_HEIGHT else OUTLINE_PATH_HEIGHT).roundToPx() }
+    // From the top of a note's row to where its title would be here
+    val titleAt = if (stacked) with(density) { (spacing + 12.dp - STACKED_ROW_HEIGHT / 2).roundToPx() } else 0
+    val longNote = with(density) { LONG_NOTE_HEIGHT.roundToPx() }
+    val currentNotes by rememberUpdatedState(notes)
+    val currentIsFolded by rememberUpdatedState(isFolded)
+    val currentStacked by rememberUpdatedState(stacked)
+    val currentHeight by rememberUpdatedState(height)
+    val currentTitleAt by rememberUpdatedState(titleAt)
+    fun place(i: Int) = if (currentStacked) i * currentHeight else minOf(i, 1) * currentHeight
+    val titles by remember {
+        derivedStateOf(structuralEqualityPolicy()) {
+            val info = state.layoutInfo
+            val rows = info.visibleItemsInfo.filter { it.index > 0 && it.size > 0 }.map {
+                val top = it.offset - info.viewportStartOffset
+                NoteTree.ShownRow(it.index - 1, top + currentTitleAt, top + it.size)
+            }
+            val max = if (currentStacked) STACKED_MAX else Int.MAX_VALUE
+            NoteTree.stuck(currentNotes, rows, currentIsFolded, ::place, currentHeight, max, longNote)
+        }
+    }
+    val scope = rememberCoroutineScope()
+    fun open(note: OrgNote) {
+        // The header comes first; to where its title stays, if it has notes around it
+        val around = NoteTree.ancestors(currentNotes, note.index).size
+        val at = if (around == 0) 0 else place(if (currentStacked) minOf(around, STACKED_MAX - 1) else around) - currentTitleAt
+        scope.launch { state.animateScrollToItem(note.index + 1, -at) }
+    }
+    if (stacked) {
+        if (titles.isEmpty()) return
+        val background = MaterialTheme.colorScheme.background
+        val guideColor = MaterialTheme.colorScheme.outlineVariant
+        val shownHeight = with(density) { (titles.maxOf { it.y } + height).toDp() }
+        Surface(color = background, shadowElevation = 2.dp, modifier = modifier.fillMaxWidth().height(shownHeight)) {
+            Box {
+                titles.forEachIndexed { i, title ->
+                    val note = currentNotes[title.note]
+                    val guides = remember(currentNotes, title.note) { NoteTree.ancestors(currentNotes, title.note).map { it.level } }
+                    Row(
+                        Modifier
+                            .offset { IntOffset(0, title.y) }
+                            // The one above stays over one pushed under it
+                            .zIndex(-i.toFloat())
+                            .fillMaxWidth()
+                            .height(STACKED_ROW_HEIGHT)
+                            .background(background)
+                            .drawBehind {
+                                val stroke = 1.5.dp.toPx()
+                                guides.forEach { level ->
+                                    val x = guideX(level, indentation).toPx()
+                                    drawLine(guideColor, Offset(x, 0f), Offset(x, size.height), stroke)
+                                }
+                            }
+                            .clickable { open(note) }
+                            .padding(start = indent(note.level, indentation), end = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.width(iconWidth(note.level, indentation)), contentAlignment = Alignment.Center) {
+                            if (NoteTree.hasChildren(currentNotes, note.index)) {
+                                Icon(Icons.Default.KeyboardArrowDown, null, Modifier.rotate(if (isFolded(note)) -90f else 0f))
+                            } else {
+                                Box(Modifier.size(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.outline))
+                            }
+                        }
+                        NoteTitle(note, onOpenLink = null, maxLines = 1)
+                    }
+                }
+            }
+        }
+        return
+    }
+    val path = titles.map { it.note }
+    AnimatedVisibility(path.isNotEmpty(), modifier.fillMaxWidth(), enter = fadeIn(), exit = fadeOut()) {
+        // Kept as it fades away, the path then being empty
+        var shown by remember { mutableStateOf(path) }
+        if (path.isNotEmpty()) shown = path
+        Surface(color = MaterialTheme.colorScheme.background, shadowElevation = 2.dp) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(OUTLINE_PATH_HEIGHT)
+                    .horizontalScroll(rememberScrollState(), reverseScrolling = true)
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                shown.mapNotNull(currentNotes::getOrNull).forEachIndexed { i, note ->
+                    if (i > 0) Text("  ·  ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.outline)
+                    Text(
+                        displayTitle(note.title),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        modifier = Modifier.clickable { open(note) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** The most the titles staying at the top of an outline can take. */
+private fun titlesHeight(style: NoteAncestors): Dp = when (style) {
+    NoteAncestors.Line -> OUTLINE_PATH_HEIGHT
+    NoteAncestors.Stacked -> STACKED_ROW_HEIGHT * STACKED_MAX
+    NoteAncestors.Hidden -> 0.dp
+}
+
+private val OUTLINE_PATH_HEIGHT = 32.dp
+private val STACKED_ROW_HEIGHT = 36.dp
+
+/** From this height, a note's content goes on long enough under its title for its title to stay. */
+private val LONG_NOTE_HEIGHT = 150.dp
+
+/** How many notes around what is shown stay one under the other, the nearest. */
+private const val STACKED_MAX = 3
+
 /**
  * The list item a short jump goes to in a notebook's outline ([NoteTree.jumpEnd]): the header
  * comes first, then one item per note, folded ones of no height.
