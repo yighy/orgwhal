@@ -242,7 +242,7 @@ fun NotebookScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).onGloballyPositioned { listBounds = it.boundsInRoot() }) {
             if (viewModel.searchActive) {
-                SearchResults(viewModel, library, file.notes)
+                SearchResults(viewModel, library, file.notes, notebook = false)
             } else {
                 NotebookOutline(
                     viewModel = viewModel,

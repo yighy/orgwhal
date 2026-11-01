@@ -552,13 +552,14 @@ fun screenTransitionRunning(): Boolean {
         LocalSharedTransitionScope.current?.isTransitionActive == true
 }
 
-/** Search results over [notes]. */
+/** Search results over [notes], each with where it is: its parents, after its [notebook]'s title. */
 @Composable
 fun SearchResults(
     viewModel: AppViewModel,
     library: NoteRepository.Library,
     notes: List<OrgNote>,
     modifier: Modifier = Modifier,
+    notebook: Boolean = true,
 ) {
     val idle = viewModel.query.isBlank() && viewModel.tag == null
     // Orgzly-style query; the selected tag chip adds a t. condition
@@ -593,9 +594,14 @@ fun SearchResults(
                 }
             }
             items(results, key = { it.fileUri + "#" + it.index }) { note ->
+                val file = library.file(note.fileUri)
+                val path = remember(note, file, notebook) {
+                    val parents = file?.notes?.let { NoteTree.ancestors(it, note.index) }.orEmpty().map { displayTitle(it.title) }
+                    (listOfNotNull(file?.title.takeIf { notebook }) + parents).joinToString("  ·  ").ifEmpty { null }
+                }
                 NoteLine(
                     note = note,
-                    subtitle = library.file(note.fileUri)?.title,
+                    subtitle = path,
                     onClick = { viewModel.openNote(note) },
                     modifier = Modifier
                         .fillMaxWidth()
