@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.37.1] - 2026-11-01
+
+### Fixed
+- Opening a long note scrolled past, or coming back from it, no longer covers the titles at the top
+  and the app bar until the animation ends
+
 ## [0.37.0] - 2026-11-01
 
 ### Added
@@ -576,7 +582,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.1...HEAD
+[0.37.1]: https://github.com/yighy/orgwhal/compare/v0.37.0...v0.37.1
 [0.37.0]: https://github.com/yighy/orgwhal/compare/v0.36.1...v0.37.0
 [0.36.1]: https://github.com/yighy/orgwhal/compare/v0.36.0...v0.36.1
 [0.36.0]: https://github.com/yighy/orgwhal/compare/v0.35.3...v0.36.0
