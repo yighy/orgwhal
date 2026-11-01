@@ -4,6 +4,14 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-11-01
+
+### Added
+- In a notebook, the titles of what you scroll past stay at the top, a tap coming back up to one.
+  Settings → Parent notes while scrolling: on one line, as a note's breadcrumbs (the default);
+  stacked titles, which come up, stop at their place and are pushed away by the next one of their
+  level (the three nearest); or hidden. Notes with sub-notes stay, and those with a long content
+
 ## [0.36.1] - 2026-10-31
 
 ### Changed
@@ -568,7 +576,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.36.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.0...HEAD
+[0.37.0]: https://github.com/yighy/orgwhal/compare/v0.36.1...v0.37.0
 [0.36.1]: https://github.com/yighy/orgwhal/compare/v0.36.0...v0.36.1
 [0.36.0]: https://github.com/yighy/orgwhal/compare/v0.35.3...v0.36.0
 [0.35.3]: https://github.com/yighy/orgwhal/compare/v0.35.2...v0.35.3
