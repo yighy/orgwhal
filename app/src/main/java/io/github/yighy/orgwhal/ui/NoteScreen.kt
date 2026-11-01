@@ -163,10 +163,13 @@ import io.github.yighy.orgwhal.core.NoteEdit
 private enum class Editing { None, Title, Content }
 
 /** Dates are still picked in dialogs; the rest is edited in place. */
-private enum class DateDialog { Scheduled, Deadline }
+/** What a tap on a chip shows on a note's screen. */
+sealed interface NoteOpening
+
+private enum class DateDialog : NoteOpening { Scheduled, Deadline }
 
 /** Metadata being added or picked in place. */
-private enum class MetaEdit { Template, Tags, State, Priority, Property }
+private enum class MetaEdit : NoteOpening { Template, Tags, State, Priority, Property }
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -197,9 +200,11 @@ fun NoteScreen(
     val history = remember { EditHistory() }
     // Typing help in the title (brackets), without undo
     val titleTyping = remember { EditHistory() }
-    var dialog by remember { mutableStateOf<DateDialog?>(null) }
+    // What the new-note screen it replaces was asked to show
+    val opening = remember { if (newNote == null) viewModel.takeResumedOpening(note) else null }
+    var dialog by remember { mutableStateOf(opening as? DateDialog) }
     // Tags being added, choices shown for state or priority, property being added
-    var metaEdit by remember { mutableStateOf<MetaEdit?>(null) }
+    var metaEdit by remember { mutableStateOf(opening as? MetaEdit) }
     // Name of the property being added, once saved
     var addedProperty by remember { mutableStateOf<String?>(null) }
     var moreMenu by remember { mutableStateOf(false) }
@@ -242,9 +247,26 @@ fun NoteScreen(
         editing = what
     }
 
+    /**
+     * With a title typed, saving it creates the note, which takes a moment and may have begun with
+     * the tap, the title losing the focus: [what] is left to the note's own screen.
+     */
+    fun leftToNote(what: NoteOpening): Boolean {
+        val typed = if (editing == Editing.Title) draft.text else saved?.takeIf { it.first == Editing.Title }?.second ?: currentNote.title
+        if (newNote == null || typed.isBlank()) return false
+        viewModel.newNoteOpening = what
+        commit()
+        return true
+    }
+
     fun openDialog(d: DateDialog) {
+        if (leftToNote(d)) return
         commit()
         dialog = d
+    }
+
+    fun openMeta(what: MetaEdit) {
+        if (!leftToNote(what)) metaEdit = what
     }
 
     fun share(text: String) {
@@ -867,12 +889,12 @@ fun NoteScreen(
             val templateLabel = stringResource(R.string.from_template)
             val addChips = listOfNotNull(
                 (templateLabel to { showTemplates() }).takeIf { newNote != null && templates.isNotEmpty() && metaEdit != MetaEdit.Template },
-                (stringResource(R.string.tags) to { metaEdit = MetaEdit.Tags }).takeIf { note.tags.isEmpty() && metaEdit != MetaEdit.Tags },
-                (stringResource(R.string.state) to { metaEdit = MetaEdit.State }).takeIf { note.state == null && metaEdit != MetaEdit.State },
-                (stringResource(R.string.priority) to { metaEdit = MetaEdit.Priority }).takeIf { note.priority == null && metaEdit != MetaEdit.Priority },
+                (stringResource(R.string.tags) to { openMeta(MetaEdit.Tags) }).takeIf { note.tags.isEmpty() && metaEdit != MetaEdit.Tags },
+                (stringResource(R.string.state) to { openMeta(MetaEdit.State) }).takeIf { note.state == null && metaEdit != MetaEdit.State },
+                (stringResource(R.string.priority) to { openMeta(MetaEdit.Priority) }).takeIf { note.priority == null && metaEdit != MetaEdit.Priority },
                 (stringResource(R.string.scheduled) to { openDialog(DateDialog.Scheduled) }).takeIf { note.scheduled == null },
                 (stringResource(R.string.deadline) to { openDialog(DateDialog.Deadline) }).takeIf { note.deadline == null },
-                (stringResource(R.string.property) to { addedProperty = null; metaEdit = MetaEdit.Property }).takeIf { metaEdit != MetaEdit.Property },
+                (stringResource(R.string.property) to { addedProperty = null; openMeta(MetaEdit.Property) }).takeIf { metaEdit != MetaEdit.Property },
                 (stringResource(R.string.clock) to { viewModel.clockIn(note) }).takeIf { !clocked && newNote == null },
             )
             val addRow = rememberLazyListState()

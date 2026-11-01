@@ -796,6 +796,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         openSwipeRow = null
         newNoteDraft = EMPTY_DRAFT
         val screen = Screen.NewNote(fileUri, anchor, placement)
+        newNoteOpening = null
         newNoteScreen = screen
         push(screen)
     }
@@ -836,6 +837,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** The created note whose screen goes on editing its content. */
     private var resumedContentEditing: Screen.Note? = null
+
+    /** What a new note's screen asked to show as its title gets saved, which creates the note. */
+    var newNoteOpening: NoteOpening? = null
+
+    /** The created note whose screen shows it instead. */
+    private var resumedOpening: Pair<Screen.Note, NoteOpening>? = null
+
+    /** What [note]'s screen shows for its new-note screen (only once). */
+    fun takeResumedOpening(note: OrgNote): NoteOpening? {
+        val (screen, opening) = resumedOpening ?: return null
+        if (screen.fileUri != note.fileUri || screen.index != note.index) return null
+        resumedOpening = null
+        return opening
+    }
 
     /** Whether [note]'s screen takes over the content edit of its new-note screen (only once). */
     fun takeResumedContentEditing(note: OrgNote): Boolean {
@@ -941,7 +956,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
             // Fields set before the title (tags, state, dates, content…) and the ID
             if (full != created.toEdit().copy(title = full.title)) repository.saveNote(created, full) else created
-        } ?: return null
+        } ?: run {
+            newNoteOpening = null
+            return null
+        }
         newNoteScreen = null
         // If the screen is still shown, it becomes the note's screen
         val i = stack.indexOf(screen)
@@ -949,9 +967,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             navigatedForward = true
             val next = Screen.Note(note.fileUri, note.index)
             if (newNoteEditingContent == screen) resumedContentEditing = next
+            resumedOpening = newNoteOpening?.let { next to it }
             stack[i] = next
         }
         newNoteEditingContent = null
+        newNoteOpening = null
         return note
     }
 
