@@ -958,7 +958,7 @@ fun NoteScreen(
                             content,
                             contentStyle,
                             viewModel::openLink,
-                            Modifier.sharedText(noteContentKey(note)),
+                            Modifier.sharedText(noteContentKey(note), within = LocalOutlineRows.current.within),
                             onTextTap = { if (editingCell()) focusManager.clearFocus() else startEditing(Editing.Content, it) },
                             onCellEditing = { editing ->
                                 cellEditing = editing

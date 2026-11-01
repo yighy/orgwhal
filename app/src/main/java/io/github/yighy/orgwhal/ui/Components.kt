@@ -75,6 +75,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.geometry.Offset
@@ -415,6 +416,47 @@ private val LargeTitleBottomPadding = 22.dp
  * show where they are (see [cutTransitionOnScroll]).
  */
 val LocalSharedCut = staticCompositionLocalOf<MutableState<Boolean>> { mutableStateOf(false) }
+
+/**
+ * Where the rows of the notebook on screen are. A note's content rises toward its row, far above
+ * the screen for a long note scrolled past: it keeps to [within] on its way, not to go over the
+ * notebook's app bar. All of the screen without a notebook, or until it is laid out.
+ */
+class OutlineRows {
+    var area by mutableStateOf<(() -> Rect)?>(null)
+
+    /** Whether the screen transition is between a notebook and one of its notes. */
+    var toOrFromNote = false
+    val within: () -> Rect = { area?.invoke()?.takeUnless { it.isEmpty } ?: Everywhere }
+
+    private companion object {
+        val Everywhere = Rect(0f, 0f, 1e6f, 1e6f)
+    }
+}
+
+val LocalOutlineRows = staticCompositionLocalOf { OutlineRows() }
+
+/**
+ * What stays at the top of a notebook, in front of its note going to its row or coming from it,
+ * and there at once: the note's title and chips go under it. It fades away over the note opening.
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun Modifier.inFrontOfNote(zIndex: Float = 1f): Modifier {
+    val shared = LocalSharedTransitionScope.current ?: return this
+    val visibility = LocalAnimatedVisibilityScope.current ?: return this
+    val rows = LocalOutlineRows.current
+    return with(shared) {
+        with(visibility) {
+            this@inFrontOfNote
+                .renderInSharedTransitionScopeOverlay(
+                    renderInOverlay = { isTransitionActive && rows.toOrFromNote },
+                    zIndexInOverlay = zIndex,
+                )
+                .animateEnterExit(enter = EnterTransition.None, exit = fadeOut(tween(100)))
+        }
+    }
+}
 
 /** Shared transition scopes, provided by the screen host so screens can share elements. */
 @OptIn(ExperimentalSharedTransitionApi::class)

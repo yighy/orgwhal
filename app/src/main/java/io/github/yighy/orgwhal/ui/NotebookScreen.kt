@@ -169,6 +169,11 @@ fun NotebookScreen(
     var listBounds by remember { mutableStateOf(Rect.Zero) }
     var titlesTaken by remember { mutableIntStateOf(0) }
     val rowsArea = remember { { listBounds.copy(top = listBounds.top + titlesTaken) } }
+    val outlineRows = LocalOutlineRows.current
+    DisposableEffect(outlineRows) {
+        outlineRows.area = rowsArea
+        onDispose { if (outlineRows.area === rowsArea) outlineRows.area = null }
+    }
 
     BackHandler(enabled = viewModel.searchActive) { viewModel.setSearch(false) }
     BackHandler(enabled = selecting) { viewModel.clearSelection() }
@@ -182,7 +187,8 @@ fun NotebookScreen(
             .sharedContainer("notebook-${file.uri}", NotebookCardShape)
             .imePadding(),
         topBar = {
-            Box(Modifier.tapToTop { listState.animateScrollToItem(0); scrollBehavior.state.expand() }) {
+            // Over the titles too, as out of a transition: it hides the top of their shadow
+            Box(Modifier.inFrontOfNote(zIndex = 2f).tapToTop { listState.animateScrollToItem(0); scrollBehavior.state.expand() }) {
             TopBarWithSelection(selecting, selectionBar = { SelectionTopBar(viewModel, library, file) }, largeBar = scrollBehavior.state) {
                 SearchableTopBar(
                     title = file.title,
@@ -259,7 +265,7 @@ fun NotebookScreen(
                     onDelete = viewModel::deleteNote,
                 )
             }
-            Box(Modifier.align(Alignment.TopStart).fillMaxWidth().onSizeChanged { titlesTaken = it.height }) {
+            Box(Modifier.align(Alignment.TopStart).fillMaxWidth().onSizeChanged { titlesTaken = it.height }.inFrontOfNote()) {
                 if (!viewModel.searchActive && prefaceDraft == null && settings.noteAncestors != NoteAncestors.Hidden) {
                     OutlineAncestors(
                         listState,

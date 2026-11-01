@@ -344,10 +344,12 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
             kept.retainAll(inStack)
             kept += inStack
         }
+        val outlineRows = remember { OutlineRows() }
         // App background behind the screens while they cross-fade
         SharedTransitionLayout(Modifier.background(MaterialTheme.colorScheme.surface)) {
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this,
+                LocalOutlineRows provides outlineRows,
                 // What #+transclude: lines show, in every screen
                 LocalTransclusions provides remember(library) { Transclusions(library.notes) },
                 // A new state for each screen change: a cut transition does not carry over
@@ -356,6 +358,9 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
                 AnimatedContent(
                     targetState = top,
                     transitionSpec = {
+                        outlineRows.toOrFromNote = isContainerTransform(initialState, targetState) &&
+                            (initialState is Screen.Notebook && targetState is Screen.Note ||
+                                initialState is Screen.Note && targetState is Screen.Notebook)
                         val fade = motion.defaultEffectsSpec<Float>()
                         if (isContainerTransform(initialState, targetState)) {
                             // The card or row grows into the next screen (shared bounds); just cross-fade the rest
