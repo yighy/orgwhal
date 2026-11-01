@@ -4,6 +4,13 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.37.2] - 2026-11-01
+
+### Fixed
+- Between a notebook and a note, the app bar and the titles at the top stay in front: the note's
+  title, chips and content go under them, a long note's content no longer rising over the screen's
+  top
+
 ## [0.37.1] - 2026-11-01
 
 ### Fixed
@@ -582,7 +589,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.2...HEAD
+[0.37.2]: https://github.com/yighy/orgwhal/compare/v0.37.1...v0.37.2
 [0.37.1]: https://github.com/yighy/orgwhal/compare/v0.37.0...v0.37.1
 [0.37.0]: https://github.com/yighy/orgwhal/compare/v0.36.1...v0.37.0
 [0.36.1]: https://github.com/yighy/orgwhal/compare/v0.36.0...v0.36.1
