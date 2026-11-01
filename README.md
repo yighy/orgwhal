@@ -18,8 +18,8 @@ An Android app for [Org mode](https://orgmode.org) notes, inspired by
   show up within seconds, and what Orgwhal doesn't change stays as it was, so the same files open
   in Emacs.
 - **Outline and tree.** Notebooks fold as in Org (`#+STARTUP`, `VISIBILITY`) and stay as you
-  leave them; a tree view draws them as boxes to move around. Select notes to move, copy, archive
-  or refile them.
+  leave them, the titles of what you scroll past staying at the top; a tree view draws them as
+  boxes to move around. Select notes to move, copy, archive or refile them.
 - **Links.** Type `id:` or `[[` to pick a note, a target or a named table; links follow a renamed
   note, a link to a missing note offers to make it, and each note lists those linking back. A
   `#+transclude:` line shows another note's content, a table or a paragraph in place, as
