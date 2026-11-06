@@ -24,11 +24,12 @@ An Android app for [Org mode](https://orgmode.org) notes, inspired by
   note, a link to a missing note offers to make it, and each note lists those linking back. A
   `#+transclude:` line shows another note's content, a table or a paragraph in place, as
   org-transclusion does.
-- **Agenda and reminders.** The week ahead with repeating tasks, and exact reminders you can mark
-  done, snooze or start clocking from.
+- **Agenda and reminders.** The week ahead with repeating tasks, habits drawn as org-habit's
+  consistency graph, and exact reminders you can mark done, snooze or start clocking from.
 - **Org at hand.** Tables with formulas, checkboxes and `[/]` cookies, blocks and drawers,
-  template notes (`%u`, `%U`… as in capture templates), clocking (with a notification while the clock runs), archiving, search with Orgzly's syntax,
-  sharing from other apps.
+  template notes (`%u`, `%U`… as in capture templates), clocking (with a notification while the
+  clock runs, a time report as Org's clocktable sums it, and pomodoros), archiving, search with
+  Orgzly's syntax, sharing from other apps.
 
 ## Download
 
