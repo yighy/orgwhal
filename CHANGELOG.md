@@ -4,6 +4,24 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-11-07
+
+### Added
+- Habits: a repeating task with `:STYLE: habit` is drawn as org-habit's consistency graph, in the
+  agenda (today only, as in Org) and on the note. Marking a repeating task done logs it as Org does
+  (`- State "DONE" from "TODO" [time]` and LAST_REPEAT), in the :LOGBOOK: unless the file's
+  `#+STARTUP` says `nologdrawer` or `nologrepeat`
+- Time report (menu ☰ → Time, once something was clocked): the time clocked today, yesterday, this
+  week or last, this month or last, or all along, by notebook and note, as Org's clocktable sums
+  it. A note whose sub-notes were clocked shows their time with its own
+- Pomodoro, turned on in Settings → Pomodoro: from a note, its clock runs for a set time (25 min),
+  then stops by itself and a break starts, a long one every few pomodoros. A notification counts
+  down and rings as each ends, with the next pomodoro. The clocking is the note's own, as in Emacs
+
+### Fixed
+- A notebook whose last note was archived or deleted no longer crashes when opened
+- Smoother scrolling in a notebook: less work done on each frame
+
 ## [0.37.4] - 2026-11-01
 
 ### Fixed
@@ -601,7 +619,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.37.4...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.38.0...HEAD
+[0.38.0]: https://github.com/yighy/orgwhal/compare/v0.37.4...v0.38.0
 [0.37.4]: https://github.com/yighy/orgwhal/compare/v0.37.3...v0.37.4
 [0.37.3]: https://github.com/yighy/orgwhal/compare/v0.37.2...v0.37.3
 [0.37.2]: https://github.com/yighy/orgwhal/compare/v0.37.1...v0.37.2
