@@ -1,5 +1,6 @@
 package io.github.yighy.orgwhal.ui
 
+import io.github.yighy.orgwhal.core.Pomodoro
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import io.github.yighy.orgwhal.data.ReminderButton
 import io.github.yighy.orgwhal.data.TableRecalc
@@ -80,6 +81,8 @@ fun SettingsScreen(
     val english = remember { AppLanguage.isEnglish(context) }
     val activity = LocalActivity.current
     var pickSnooze by remember { mutableStateOf(false) }
+    // Which pomodoro length is being chosen: work, short break, long break, long break every
+    var pickPomodoro by remember { mutableStateOf<Int?>(null) }
     var pickReminderButton by remember { mutableStateOf(false) }
     var pickSpacing by remember { mutableStateOf(false) }
     var pickIndentation by remember { mutableStateOf(false) }
@@ -267,6 +270,22 @@ fun SettingsScreen(
                 ) { Text(stringResource(R.string.settings_all_day_time)) }
             }
 
+            SectionHeader(stringResource(R.string.pomodoro))
+            SwitchItem(
+                title = stringResource(R.string.settings_pomodoro_enabled),
+                summary = stringResource(R.string.settings_pomodoro_enabled_summary),
+                checked = settings.pomodoroEnabled,
+                onCheckedChange = viewModel::setPomodoroEnabled,
+            )
+            if (settings.pomodoroEnabled) {
+                pomodoroSettings(settings.pomodoro).forEachIndexed { i, (title, value) ->
+                    ListItem(
+                        onClick = { pickPomodoro = i },
+                        supportingContent = { Text(value) },
+                    ) { Text(title) }
+                }
+            }
+
             SectionHeader(stringResource(R.string.settings_reliability))
             StatusItem(
                 title = stringResource(R.string.settings_notifications),
@@ -399,6 +418,30 @@ fun SettingsScreen(
             },
         )
     }
+    pickPomodoro?.let { which ->
+        val lengths = settings.pomodoro
+        val choices = POMODORO_CHOICES[which]
+        val label = { n: Int -> pomodoroLabel(resources, which, n) }
+        ChoiceDialog(
+            title = pomodoroSettings(lengths)[which].first,
+            options = choices.map(label),
+            selected = label(listOf(lengths.work, lengths.shortBreak, lengths.longBreak, lengths.longEvery)[which]),
+            onDismiss = { pickPomodoro = null },
+            onSelect = { picked ->
+                pickPomodoro = null
+                choices.firstOrNull { label(it) == picked }?.let { n ->
+                    viewModel.setPomodoroLengths(
+                        when (which) {
+                            0 -> lengths.copy(work = n)
+                            1 -> lengths.copy(shortBreak = n)
+                            2 -> lengths.copy(longBreak = n)
+                            else -> lengths.copy(longEvery = n)
+                        },
+                    )
+                }
+            },
+        )
+    }
     if (pickSnooze) {
         ChoiceDialog(
             title = stringResource(R.string.settings_snooze),
@@ -524,3 +567,26 @@ private fun folderLabel(treeUri: Uri): String =
         .getOrNull()
         ?.ifEmpty { "/" }
         ?: treeUri.toString()
+
+/** The pomodoro settings, title and value: work, short break, long break, long break every. */
+@Composable
+private fun pomodoroSettings(lengths: Pomodoro.Lengths): List<Pair<String, String>> {
+    val resources = LocalResources.current
+    return listOf(
+        stringResource(R.string.settings_pomodoro_work) to pomodoroLabel(resources, 0, lengths.work),
+        stringResource(R.string.settings_pomodoro_short_break) to pomodoroLabel(resources, 1, lengths.shortBreak),
+        stringResource(R.string.settings_pomodoro_long_break) to pomodoroLabel(resources, 2, lengths.longBreak),
+        stringResource(R.string.settings_pomodoro_long_every) to pomodoroLabel(resources, 3, lengths.longEvery),
+    )
+}
+
+private fun pomodoroLabel(resources: android.content.res.Resources, which: Int, n: Int): String =
+    if (which == 3) resources.getQuantityString(R.plurals.pomodoro_every, n, n) else resources.getString(R.string.minutes_short, n)
+
+/** Lengths offered for work, the short break and the long one, in minutes; then pomodoros before a long break. */
+private val POMODORO_CHOICES = listOf(
+    listOf(15, 20, 25, 30, 40, 45, 50, 60),
+    listOf(3, 5, 10, 15),
+    listOf(10, 15, 20, 25, 30),
+    listOf(2, 3, 4, 5, 6),
+)

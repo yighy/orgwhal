@@ -9,6 +9,7 @@ import org.json.JSONArray
 import android.content.Context
 import io.github.yighy.orgwhal.core.Agenda
 import io.github.yighy.orgwhal.core.Keywords
+import io.github.yighy.orgwhal.core.Pomodoro
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -115,6 +116,10 @@ class AppSettings(context: Context) {
         val useAlarmClock: Boolean = false,
         /** How long the notification's snooze button puts a reminder off. */
         val snoozeMinutes: Int = 60,
+        /** Whether notes offer to start pomodoros. */
+        val pomodoroEnabled: Boolean = false,
+        /** Pomodoros' and breaks' lengths. */
+        val pomodoro: Pomodoro.Lengths = Pomodoro.Lengths(),
         /** The reminder notification's third button. */
         val reminderButton: ReminderButton = ReminderButton.ClockIn,
         /** What happens to links still showing a note's old title when it is renamed. */
@@ -156,6 +161,13 @@ class AppSettings(context: Context) {
             addModified = prefs.getBoolean(KEY_ADD_MODIFIED, false),
             useAlarmClock = prefs.getBoolean(KEY_ALARM_CLOCK, false),
             snoozeMinutes = prefs.getInt(KEY_SNOOZE_MINUTES, 60),
+            pomodoroEnabled = prefs.getBoolean(KEY_POMODORO_ENABLED, false),
+            pomodoro = Pomodoro.Lengths(
+                prefs.getInt(KEY_POMODORO_WORK, 25),
+                prefs.getInt(KEY_POMODORO_SHORT, 5),
+                prefs.getInt(KEY_POMODORO_LONG, 15),
+                prefs.getInt(KEY_POMODORO_EVERY, 4),
+            ),
             reminderButton = ReminderButton.entries.firstOrNull { it.name == prefs.getString(KEY_REMINDER_BUTTON, null) } ?: ReminderButton.ClockIn,
             linkRenaming = LinkRenaming.entries.firstOrNull { it.name == prefs.getString(KEY_LINK_RENAMING, null) }
                 ?: LinkRenaming.Ask,
@@ -294,6 +306,15 @@ class AppSettings(context: Context) {
 
     fun setSnoozeMinutes(minutes: Int) = save({ putInt(KEY_SNOOZE_MINUTES, minutes) }) { it.copy(snoozeMinutes = minutes) }
 
+    fun setPomodoroEnabled(on: Boolean) = save({ putBoolean(KEY_POMODORO_ENABLED, on) }) { it.copy(pomodoroEnabled = on) }
+
+    fun setPomodoro(lengths: Pomodoro.Lengths) = save({
+        putInt(KEY_POMODORO_WORK, lengths.work)
+        putInt(KEY_POMODORO_SHORT, lengths.shortBreak)
+        putInt(KEY_POMODORO_LONG, lengths.longBreak)
+        putInt(KEY_POMODORO_EVERY, lengths.longEvery)
+    }) { it.copy(pomodoro = lengths) }
+
     fun setReminderButton(button: ReminderButton) = save({ putString(KEY_REMINDER_BUTTON, button.name) }) { it.copy(reminderButton = button) }
 
     fun setLinkRenaming(mode: LinkRenaming) = save({ putString(KEY_LINK_RENAMING, mode.name) }) { it.copy(linkRenaming = mode) }
@@ -336,6 +357,11 @@ class AppSettings(context: Context) {
         private const val KEY_ADD_MODIFIED = "add_modified"
         private const val KEY_ALARM_CLOCK = "use_alarm_clock"
         private const val KEY_SNOOZE_MINUTES = "snooze_minutes"
+        private const val KEY_POMODORO_ENABLED = "pomodoro_enabled"
+        private const val KEY_POMODORO_WORK = "pomodoro_work"
+        private const val KEY_POMODORO_SHORT = "pomodoro_short_break"
+        private const val KEY_POMODORO_LONG = "pomodoro_long_break"
+        private const val KEY_POMODORO_EVERY = "pomodoro_long_every"
         private const val KEY_REMINDER_BUTTON = "reminder_button"
         private const val KEY_LINK_RENAMING = "link_renaming"
         private const val KEY_TABLE_RECALC = "table_recalc"

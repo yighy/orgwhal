@@ -2,6 +2,7 @@ package io.github.yighy.orgwhal.ui
 
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import io.github.yighy.orgwhal.data.ReminderButton
+import io.github.yighy.orgwhal.core.Pomodoro
 import io.github.yighy.orgwhal.core.TableLookup
 import io.github.yighy.orgwhal.core.TableFormulas
 import io.github.yighy.orgwhal.core.Blocks
@@ -927,9 +928,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     // ---- Clocking ----
 
     /** Starts the clock on [note], stopping the one running on another note. */
-    fun clockIn(note: OrgNote) {
+    fun clockIn(note: OrgNote, now: LocalDateTime = LocalDateTime.now()) {
         viewModelScope.launch {
-            val now = LocalDateTime.now()
             library.value.notes
                 .filter { (it.fileUri != note.fileUri || it.index != note.index) && Clock.running(it.content) != null }
                 .forEach { other -> attempt { saveLatest(other) { it.toEdit().copy(content = Clock.clockOut(it.content, now)) } } }
@@ -938,6 +938,33 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clockOut(note: OrgNote) = update(note) { it.copy(content = Clock.clockOut(it.content, LocalDateTime.now())) }
+
+    /** The pomodoro under way, if any. */
+    val pomodoro = orgwhal.pomodoro.state
+
+    /**
+     * Starts a pomodoro on [note]: its clock runs for the time set, then stops for a break
+     * (org-pomodoro); after another on the same note, it counts on towards the long break.
+     */
+    fun startPomodoro(note: OrgNote) {
+        val now = LocalDateTime.now()
+        val previous = pomodoro.value?.takeIf { it.fileUri == note.fileUri && it.title == note.title }
+        orgwhal.pomodoro.hideBreak()
+        // Set before the clock is written, whose change would otherwise end it
+        orgwhal.pomodoro.set(Pomodoro.start(note, settings.value.pomodoro, now, previous?.done ?: 0), settings.value.useAlarmClock)
+        clockIn(note, now)
+    }
+
+    /** Turns pomodoros on or off; off, the one under way ends and its clock runs on as any other. */
+    fun setPomodoroEnabled(on: Boolean) {
+        appSettings.setPomodoroEnabled(on)
+        if (!on) {
+            orgwhal.pomodoro.hideBreak()
+            orgwhal.pomodoro.set(null, settings.value.useAlarmClock)
+        }
+    }
+
+    fun setPomodoroLengths(lengths: Pomodoro.Lengths) = appSettings.setPomodoro(lengths)
 
     // ---- Agenda ----
 

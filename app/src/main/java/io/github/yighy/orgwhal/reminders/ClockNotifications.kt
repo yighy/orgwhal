@@ -10,6 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import io.github.yighy.orgwhal.R
 import io.github.yighy.orgwhal.core.Clock
 import io.github.yighy.orgwhal.core.NoteTree
+import io.github.yighy.orgwhal.core.Pomodoro
 import io.github.yighy.orgwhal.data.NoteRepository
 import io.github.yighy.orgwhal.ui.MainActivity
 import io.github.yighy.orgwhal.ui.displayTitle
@@ -58,16 +59,19 @@ object ClockNotifications {
         }
     }
 
-    /** Shows a notification for each of [clocks], and takes away those of clocks no longer running. */
-    fun show(context: Context, clocks: List<Running>) {
+    /**
+     * Shows a notification for each of [clocks], and takes away those of clocks no longer running;
+     * the clock of the [pomodoro] under way counts down to its end.
+     */
+    fun show(context: Context, clocks: List<Running>, pomodoro: Pomodoro.State? = null) {
         val manager = context.getSystemService(NotificationManager::class.java)
         val ids = clocks.map { id(it) }.toSet()
         manager.activeNotifications.filter { it.tag == TAG && it.id !in ids }.forEach { manager.cancel(TAG, it.id) }
         if (!ReminderNotifications.canPost(context)) return
-        clocks.forEach { clock -> post(context, clock) }
+        clocks.forEach { clock -> post(context, clock, pomodoro?.takeIf { Pomodoro.runs(it, clock.fileUri, clock.title, clock.start) }) }
     }
 
-    private fun post(context: Context, clock: Running) {
+    private fun post(context: Context, clock: Running, pomodoro: Pomodoro.State?) {
         val id = id(clock)
         val open = PendingIntent.getActivity(
             context,
@@ -106,6 +110,13 @@ object ClockNotifications {
             .addAction(0, context.getString(R.string.notification_stop_clock), broadcast(ReminderReceiver.ACTION_CLOCK_OUT, id))
         // A to-do note can be done from here, which stops its clock too
         if (clock.canBeDone) builder.addAction(0, context.getString(R.string.notification_done), broadcast(ReminderReceiver.ACTION_CLOCK_DONE, id + 1))
+        // A pomodoro counts down to its end instead
+        if (pomodoro != null) {
+            builder
+                .setWhen(pomodoro.endsAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                .setChronometerCountDown(true)
+                .setSubText(context.getString(R.string.pomodoro))
+        }
         val notification = builder.build()
         try {
             NotificationManagerCompat.from(context).notify(TAG, id, notification)

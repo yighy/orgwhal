@@ -5,7 +5,10 @@ import io.github.yighy.orgwhal.data.AppLanguage
 import android.app.Application
 import io.github.yighy.orgwhal.data.AppSettings
 import io.github.yighy.orgwhal.data.NoteRepository
+import io.github.yighy.orgwhal.core.Pomodoro
 import io.github.yighy.orgwhal.reminders.ClockNotifications
+import io.github.yighy.orgwhal.reminders.PomodoroTimer
+import java.time.LocalDateTime
 import io.github.yighy.orgwhal.reminders.ReminderNotifications
 import io.github.yighy.orgwhal.reminders.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -33,12 +36,14 @@ class OrgwhalApplication : Application() {
     val repository by lazy { NoteRepository(this) }
     val settings by lazy { AppSettings(this) }
     val scheduler by lazy { ReminderScheduler(this) }
+    val pomodoro by lazy { PomodoroTimer(this) }
 
     @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
         ReminderNotifications.createChannel(this)
         ClockNotifications.createChannel(this)
+        PomodoroTimer.createChannel(this)
 
         // Default state keywords before any file is read, then follow the setting
         repository.defaultKeywords = settings.values.value.keywords
@@ -56,12 +61,17 @@ class OrgwhalApplication : Application() {
                 .collect { (notes, options, alarmClock) -> scheduler.reschedule(notes, options, alarmClock) }
         }
 
-        // A notification for each running clock, as the files say (started or stopped anywhere)
+        // A notification for each running clock, as the files say (started or stopped anywhere);
+        // a pomodoro whose clock was stopped otherwise (its note's screen, Emacs…) is over
         scope.launch {
-            repository.library.filter { it.loaded }
-                .map { ClockNotifications.running(it) }
-                .distinctUntilChanged()
-                .collect { ClockNotifications.show(this@OrgwhalApplication, it) }
+            combine(repository.library.filter { it.loaded }.map { ClockNotifications.running(it) }.distinctUntilChanged(), pomodoro.state) { a, b -> a to b }
+                .collect { (clocks, state) ->
+                    ClockNotifications.show(this@OrgwhalApplication, clocks, state)
+                    val stopped = state != null && state.phase == Pomodoro.Phase.Work &&
+                        LocalDateTime.now().isAfter(state.startedAt.plusSeconds(20)) &&
+                        clocks.none { Pomodoro.runs(state, it.fileUri, it.title, it.start) }
+                    if (stopped) pomodoro.set(null, settings.values.value.useAlarmClock)
+                }
         }
     }
 }

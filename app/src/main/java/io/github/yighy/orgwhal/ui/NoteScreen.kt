@@ -4,6 +4,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontFamily
+import io.github.yighy.orgwhal.core.Pomodoro
 import io.github.yighy.orgwhal.core.ClockReport
 import io.github.yighy.orgwhal.core.Habits
 import io.github.yighy.orgwhal.core.KeywordCompletion
@@ -30,6 +31,7 @@ import io.github.yighy.orgwhal.core.Links
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.PlayArrow
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import io.github.yighy.orgwhal.core.Clock
@@ -840,7 +842,11 @@ fun NoteScreen(
             // Time clocked: a tap starts or stops the clock
             val clocked = remember(content) { Clock.entries(content).isNotEmpty() }
             MetaSlot(clocked) {
-                ClockRow(content, onStart = { commit(); viewModel.clockIn(note) }, onStop = { commit(); viewModel.clockOut(note) })
+                // While a pomodoro runs on it, the time left in it
+                val pomodoro by viewModel.pomodoro.collectAsState()
+                val running = remember(content) { Clock.running(content) }
+                val pomodoroEnds = pomodoro?.takeIf { running != null && Pomodoro.runs(it, note, running.start) }?.endsAt
+                ClockRow(content, pomodoroEnds, onStart = { commit(); viewModel.clockIn(note) }, onStop = { commit(); viewModel.clockOut(note) })
             }
             // Its sub-notes' time with its own, when they have some (as Org's subtree total)
             val subtree = remember(file?.notes, note.index, content) {
@@ -914,6 +920,8 @@ fun NoteScreen(
                 (stringResource(R.string.deadline) to { openDialog(DateDialog.Deadline) }).takeIf { note.deadline == null },
                 (stringResource(R.string.property) to { addedProperty = null; openMeta(MetaEdit.Property) }).takeIf { metaEdit != MetaEdit.Property },
                 (stringResource(R.string.clock) to { viewModel.clockIn(note) }).takeIf { !clocked && newNote == null },
+                (stringResource(R.string.pomodoro) to { commit(); viewModel.startPomodoro(note) })
+                    .takeIf { settings.pomodoroEnabled && newNote == null && remember(content) { Clock.running(content) } == null },
             )
             val addRow = rememberLazyListState()
             // A chip coming back at the start is shown, not left scrolled out of sight
@@ -1474,7 +1482,7 @@ private fun ChoiceRow(
  * since it started (ticking) with the total beside; else the total, with the last clocking beside.
  */
 @Composable
-private fun ClockRow(content: String, onStart: () -> Unit, onStop: () -> Unit) {
+private fun ClockRow(content: String, pomodoroEnds: LocalDateTime?, onStart: () -> Unit, onStop: () -> Unit) {
     val running = remember(content) { Clock.running(content) }
     val entries = remember(content) { Clock.entries(content).size }
     var now by remember { mutableStateOf(LocalDateTime.now()) }
@@ -1491,6 +1499,7 @@ private fun ClockRow(content: String, onStart: () -> Unit, onStop: () -> Unit) {
     // The other figure only says something new when there was more than one clocking
     val main = if (running != null) last ?: total else total
     val aside = when {
+        pomodoroEnds != null -> stringResource(R.string.pomodoro_left, Duration.between(now, pomodoroEnds).toMinutes().coerceAtLeast(0) + 1)
         entries < 2 -> null
         running != null -> stringResource(R.string.clock_total, total)
         else -> last?.let { stringResource(R.string.clock_last, it) }

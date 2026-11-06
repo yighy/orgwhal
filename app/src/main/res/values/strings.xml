@@ -482,4 +482,29 @@
     <string name="ancestors_line">On one line</string>
     <string name="ancestors_stacked">Stacked titles</string>
     <string name="ancestors_hidden">Hidden</string>
+    <string name="pomodoro">Pomodoro</string>
+    <string name="pomodoro_left">pomodoro, %1$d min left</string>
+    <string name="pomodoro_break">Break</string>
+    <string name="pomodoro_long_break">Long break</string>
+    <string name="pomodoro_break_over">Break over</string>
+    <string name="pomodoro_resume">Next pomodoro</string>
+    <string name="pomodoro_skip_break">Skip the break</string>
+    <string name="pomodoro_stop">Stop</string>
+    <string name="channel_pomodoro">Pomodoro</string>
+    <string name="channel_pomodoro_description">The end of a pomodoro and of its break</string>
+    <string name="settings_pomodoro_enabled">Enable pomodoros</string>
+    <string name="settings_pomodoro_enabled_summary">Offer on notes to clock in for a set time, then take a break</string>
+    <string name="settings_pomodoro_work">Pomodoro</string>
+    <string name="settings_pomodoro_short_break">Short break</string>
+    <string name="settings_pomodoro_long_break">Long break</string>
+    <string name="settings_pomodoro_long_every">Long break every</string>
+    <string name="minutes_short">%1$d min</string>
+    <plurals name="pomodoro_done">
+        <item quantity="one">%1$d pomodoro done · %2$s</item>
+        <item quantity="other">%1$d pomodoros done · %2$s</item>
+    </plurals>
+    <plurals name="pomodoro_every">
+        <item quantity="one">%1$d pomodoro</item>
+        <item quantity="other">%1$d pomodoros</item>
+    </plurals>
 </resources>

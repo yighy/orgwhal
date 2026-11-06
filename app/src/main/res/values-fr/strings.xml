@@ -510,4 +510,29 @@
     <string name="ancestors_line">Sur une ligne</string>
     <string name="ancestors_stacked">Titres empilés</string>
     <string name="ancestors_hidden">Masquées</string>
+    <string name="pomodoro">Pomodoro</string>
+    <string name="pomodoro_left">pomodoro, encore %1$d min</string>
+    <string name="pomodoro_break">Pause</string>
+    <string name="pomodoro_long_break">Longue pause</string>
+    <string name="pomodoro_break_over">Pause terminée</string>
+    <string name="pomodoro_resume">Pomodoro suivant</string>
+    <string name="pomodoro_skip_break">Passer la pause</string>
+    <string name="pomodoro_stop">Arrêter</string>
+    <string name="channel_pomodoro">Pomodoro</string>
+    <string name="channel_pomodoro_description">La fin d’un pomodoro et de sa pause</string>
+    <string name="settings_pomodoro_enabled">Activer les pomodoros</string>
+    <string name="settings_pomodoro_enabled_summary">Proposer sur les notes de pointer pour une durée fixe, puis de faire une pause</string>
+    <string name="settings_pomodoro_work">Pomodoro</string>
+    <string name="settings_pomodoro_short_break">Pause courte</string>
+    <string name="settings_pomodoro_long_break">Longue pause</string>
+    <string name="settings_pomodoro_long_every">Longue pause tous les</string>
+    <string name="minutes_short">%1$d min</string>
+    <plurals name="pomodoro_done">
+        <item quantity="one">%1$d pomodoro fait · %2$s</item>
+        <item quantity="other">%1$d pomodoros faits · %2$s</item>
+    </plurals>
+    <plurals name="pomodoro_every">
+        <item quantity="one">%1$d pomodoro</item>
+        <item quantity="other">%1$d pomodoros</item>
+    </plurals>
 </resources>

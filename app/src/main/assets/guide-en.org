@@ -226,6 +226,7 @@ The *Clock* line shows the time spent (2:15 here), and beside it the last time c
 - "Clock running" shows under the note in the lists.
 - Marking a note done stops its clock, as in Emacs.
 - While a clock runs, a notification shows its time, with *Stop* and, for a to-do note, *Done*; it follows the file, so a clock stopped in Emacs takes it away.
+- *Pomodoro*, among the chips once turned on in *Settings → Pomodoro*: the clock runs for 25 minutes, then stops by itself and a 5-minute break starts, 15 minutes every four pomodoros, as org-pomodoro does. A notification counts down and rings at the end of each; *Next pomodoro* goes on with the same note. Stopping the clock ends it. The lengths are set there too.
 - A note whose sub-notes were clocked shows their time with its own, under *With sub-notes*.
 - Menu ☰ → *Time*: the time clocked today, yesterday, this week or last week, this month or last month, or all along, by notebook and note, as Org's clocktable sums it. Tap a line to open it.
 
