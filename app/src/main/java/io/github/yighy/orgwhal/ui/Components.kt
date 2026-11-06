@@ -18,6 +18,7 @@ import io.github.yighy.orgwhal.core.SearchCompletion
 import androidx.compose.ui.text.TextRange
 import androidx.compose.material3.ListItem
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import androidx.compose.ui.composed
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -69,6 +70,9 @@ import androidx.compose.foundation.text.InlineTextContent
 import io.github.yighy.orgwhal.core.Checkboxes
 import io.github.yighy.orgwhal.core.Links
 import java.time.LocalDate
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
+import io.github.yighy.orgwhal.core.Habits
 import io.github.yighy.orgwhal.core.Agenda
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.geometry.Rect
@@ -1341,3 +1345,43 @@ fun CountsSubtitle(notes: Int?, todo: Int, onTodoClick: () -> Unit) {
         }
     }
 }
+
+/**
+ * A habit's consistency graph, as org-habit draws it in the agenda: a cell a day, blue before it
+ * is due, green while it can be done, yellow on its last day, red once overdue; lighter for the
+ * days to come and the days gone by that were not overdue. A dot marks a day it was done; today
+ * is outlined.
+ */
+@Composable
+fun HabitGraph(days: List<Habits.Day>, modifier: Modifier = Modifier) {
+    val outline = MaterialTheme.colorScheme.onSurface
+    Canvas(modifier.fillMaxWidth().height(12.dp)) {
+        val gap = 2.dp.toPx()
+        val cell = (size.width - gap * (days.size - 1)) / days.size
+        val corner = CornerRadius(2.dp.toPx())
+        days.forEachIndexed { i, day ->
+            val left = i * (cell + gap)
+            val color = HABIT_COLORS.getValue(day.face)
+            drawRoundRect(if (day.ahead) color.copy(alpha = 0.35f) else color, Offset(left, 0f), Size(cell, size.height), corner)
+            if (day.today) {
+                val stroke = 1.5.dp.toPx()
+                drawRoundRect(
+                    outline,
+                    Offset(left + stroke / 2, stroke / 2),
+                    Size(cell - stroke, size.height - stroke),
+                    corner,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(stroke),
+                )
+            }
+            if (day.done) drawCircle(HABIT_DONE, minOf(cell, size.height) / 4, Offset(left + cell / 2, size.height / 2))
+        }
+    }
+}
+
+private val HABIT_COLORS = mapOf(
+    Habits.Face.Clear to Color(0xFF5B8DEF),
+    Habits.Face.Ready to Color(0xFF43A047),
+    Habits.Face.Alert to Color(0xFFFBC02D),
+    Habits.Face.Overdue to Color(0xFFE53935),
+)
+private val HABIT_DONE = Color(0xDD000000)

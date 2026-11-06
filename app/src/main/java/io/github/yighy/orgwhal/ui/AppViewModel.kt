@@ -762,7 +762,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             var shifted = false
             val saved = saveLatest(note) { latest ->
-                NoteStates.apply(latest.toEdit(), target, keywords).also { shifted = it.shifted }.edit
+                NoteStates.apply(latest.toEdit(), target, keywords, log = repeatLog(note.fileUri)).also { shifted = it.shifted }.edit
             } ?: return@launch
             updateParentCookie(saved)
             if (shifted) {
@@ -771,6 +771,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    /** How [fileUri]'s repeating tasks marked done are logged (#+STARTUP). */
+    private fun repeatLog(fileUri: String) = NoteStates.repeatLog(library.value.file(fileUri)?.doc?.preface.orEmpty())
 
     fun toggleDone(note: OrgNote) {
         val keywords = library.value.file(note.fileUri)?.doc?.keywords ?: Keywords.DEFAULT
@@ -1233,7 +1236,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
 
     fun setStateOfSelection(target: String?) = editSelection { note, keywords ->
-        NoteStates.apply(note.toEdit(), target, keywords).edit
+        NoteStates.apply(note.toEdit(), target, keywords, log = repeatLog(note.fileUri)).edit
     }
 
     /** Marks the selection done, or back to to-do when all selected notes are done. */
@@ -1242,7 +1245,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val allDone = notes.isNotEmpty() && notes.all { it.isDone }
         editSelection { note, keywords ->
             val target = if (allDone) keywords.todo.firstOrNull() else keywords.done.firstOrNull()
-            NoteStates.apply(note.toEdit(), target, keywords).edit
+            NoteStates.apply(note.toEdit(), target, keywords, log = repeatLog(note.fileUri)).edit
         }
     }
 

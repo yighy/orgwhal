@@ -4,6 +4,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontFamily
+import io.github.yighy.orgwhal.core.Habits
 import io.github.yighy.orgwhal.core.KeywordCompletion
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import io.github.yighy.orgwhal.core.Links
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.PlayArrow
+import java.time.LocalDate
 import java.time.LocalDateTime
 import io.github.yighy.orgwhal.core.Clock
 import io.github.yighy.orgwhal.core.Blocks
@@ -819,6 +821,12 @@ fun NoteScreen(
             val scheduled = lastNonNull(note.scheduled)
             MetaSlot(note.scheduled != null) {
                 MetaRow(stringResource(R.string.scheduled), displayTime(resources, scheduled).orEmpty(), onClick = { openDialog(DateDialog.Scheduled) })
+            }
+            // A habit: how it has been kept, as in the agenda
+            val today = LocalDate.now()
+            val habit = remember(note, keywords, today) { Habits.of(note, keywords.done)?.let { Habits.graph(it, today) } }
+            MetaSlot(habit != null) {
+                lastNonNull(habit)?.let { HabitGraph(it, Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
             }
             val deadline = lastNonNull(note.deadline)
             MetaSlot(note.deadline != null) {

@@ -49,7 +49,8 @@ class ReminderReceiver : BroadcastReceiver() {
                 val note = library.note(uri, index)?.takeIf { it.title == title } ?: return
                 val keywords = library.file(uri)?.doc?.keywords ?: Keywords.DEFAULT
                 val target = keywords.done.firstOrNull() ?: return
-                runCatching { repository.saveNote(note, NoteStates.apply(note.toEdit(), target, keywords).edit) }
+                val log = NoteStates.repeatLog(library.file(uri)?.doc?.preface.orEmpty())
+                runCatching { repository.saveNote(note, NoteStates.apply(note.toEdit(), target, keywords, log = log).edit) }
             }
 
             // The reminder's Clock in button: the clock starts as from the note's screen, stopping another one
@@ -82,7 +83,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 val edit = if (intent.action == ACTION_CLOCK_DONE) {
                     val keywords = library.file(uri)?.doc?.keywords ?: Keywords.DEFAULT
                     val target = keywords.done.firstOrNull() ?: return
-                    NoteStates.apply(note.toEdit(), target, keywords).edit
+                    NoteStates.apply(note.toEdit(), target, keywords, log = NoteStates.repeatLog(library.file(uri)?.doc?.preface.orEmpty())).edit
                 } else {
                     note.toEdit().copy(content = Clock.clockOut(note.content, LocalDateTime.now()))
                 }

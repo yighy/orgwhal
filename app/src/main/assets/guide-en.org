@@ -239,6 +239,22 @@ Menu ☰ → *Agenda*: overdue tasks, today and the next six days. It gathers sc
 SCHEDULED: <{{date:+1}}>
 A task for tomorrow, in the agenda. With a repeater such as =+3d=, it would come back every three days.
 
+Marked DONE, a repeating task is logged in its =:LOGBOOK:=, as =- State "DONE" from "TODO" [date]=, as Emacs does: =#+STARTUP: nologdrawer= logs it in its text instead, =nologrepeat= not at all.
+
+** TODO Read ten pages
+SCHEDULED: <{{date:+0}} .+1d>
+:PROPERTIES:
+:STYLE:    habit
+:END:
+:LOGBOOK:
+- State "DONE"       from "TODO"       [{{date:-1}} 21:00]
+- State "DONE"       from "TODO"       [{{date:-2}} 21:30]
+- State "DONE"       from "TODO"       [{{date:-4}} 20:45]
+:END:
+A habit: a repeating task whose property =STYLE= is =habit=. In the agenda it shows today only, with how it has been kept, from the days it was logged done: a cell a day for the last three weeks and the next days, blue before it is due, green while it can be done, yellow on its last day, red once overdue, a dot when done. Its screen shows it too.
+
+A repeater such as =.+2d/4d= gives it from two to four days.
+
 ** Reminders
 A notification rings at scheduled and deadline times (*Settings → Reminders*). It offers *Done*, a snooze (in 1 hour by default, set in *Settings → Snooze*) and *Clock in*, which starts the note's clock; *Settings → Third button* puts *Tomorrow* in its place. Under the title it shows the note's parent; opened, the whole path and the start of the note.
 

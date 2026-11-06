@@ -69,6 +69,30 @@ class AgendaTest {
     }
 
     @Test
+    fun habitsShowTodayOnly() {
+        val habits = OrgNote.fromDocument(
+            OrgDocument.parse(
+                """
+                * TODO Stretch
+                SCHEDULED: <2026-10-05 Mon .+1d>
+                :PROPERTIES:
+                :STYLE:    habit
+                :END:
+                * TODO Next week
+                SCHEDULED: <2026-10-07 Wed .+2d>
+                :PROPERTIES:
+                :STYLE:    habit
+                :END:
+                """.trimIndent() + "\n",
+            ),
+            "uri", "f.org",
+        )
+        val agenda = Agenda.build(habits, today, 7)
+        assertEquals(listOf("Stretch"), agenda.days[0].entries.map { it.note.title })
+        assertTrue(agenda.days.drop(1).all { it.entries.isEmpty() })
+    }
+
+    @Test
     fun remindersInWindow() {
         val options = Agenda.ReminderOptions()
         val due = Agenda.reminders(notes, today.atTime(8, 0), today.atTime(20, 0), options)

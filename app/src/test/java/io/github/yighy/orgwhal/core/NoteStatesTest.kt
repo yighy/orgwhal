@@ -56,4 +56,28 @@ class NoteStatesTest {
         // Other states keep it running
         assertNotNull(Clock.running(NoteStates.apply(clocked, "NEXT", Keywords.DEFAULT, now).edit.content))
     }
+
+    @Test
+    fun repeatingTaskDoneIsLoggedAsOrgDoes() {
+        val now = java.time.LocalDateTime.of(2026, 11, 6, 8, 5)
+        val line = "- State \"DONE\"       from \"TODO\"       [2026-11-06 Fri 08:05]"
+        val repeating = note("* TODO a\nSCHEDULED: <2026-11-06 Fri .+1d>\nSome text\n").toEdit()
+        // In a new logbook, before the text, with LAST_REPEAT
+        val logged = NoteStates.apply(repeating, "DONE", Keywords.DEFAULT, now).edit
+        assertEquals(":LOGBOOK:\n$line\n:END:\nSome text", logged.content)
+        assertEquals("[2026-11-06 Fri 08:05]", logged.properties.toMap()["LAST_REPEAT"])
+        // Newest first in a logbook already there; LAST_REPEAT replaced
+        val again = NoteStates.apply(logged, "DONE", Keywords.DEFAULT, now.plusDays(1)).edit
+        assertEquals(":LOGBOOK:\n${line.replace("06 Fri", "07 Sat")}\n$line\n:END:\nSome text", again.content)
+        assertEquals(listOf("[2026-11-07 Sat 08:05]"), again.properties.filter { it.first == "LAST_REPEAT" }.map { it.second })
+        // In the text with nologdrawer, not at all with nologrepeat
+        val body = NoteStates.apply(repeating, "DONE", Keywords.DEFAULT, now, NoteStates.repeatLog("#+STARTUP: content nologdrawer")).edit
+        assertEquals("$line\nSome text", body.content)
+        val none = NoteStates.apply(repeating, "DONE", Keywords.DEFAULT, now, NoteStates.repeatLog("#+startup: nologrepeat")).edit
+        assertEquals("Some text", none.content)
+        assertTrue(none.properties.isEmpty())
+        // A task without repeater is closed, not logged
+        val once = NoteStates.apply(note("* TODO b\n").toEdit(), "DONE", Keywords.DEFAULT, now).edit
+        assertEquals("", once.content)
+    }
 }

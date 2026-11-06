@@ -1,6 +1,8 @@
 package io.github.yighy.orgwhal.ui
 
 import androidx.compose.runtime.collectAsState
+import io.github.yighy.orgwhal.core.Keywords
+import io.github.yighy.orgwhal.core.Habits
 import io.github.yighy.orgwhal.core.Templates
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -344,6 +346,9 @@ private fun AgendaRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                val done = library.file(note.fileUri)?.doc?.keywords?.done ?: Keywords.DEFAULT.done
+                val habit = remember(note, done, today) { Habits.of(note, done)?.let { Habits.graph(it, today) } }
+                if (habit != null) HabitGraph(habit, Modifier.padding(top = 6.dp))
             }
         }
     }

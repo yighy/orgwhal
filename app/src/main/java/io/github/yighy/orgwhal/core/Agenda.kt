@@ -26,7 +26,8 @@ object Agenda {
 
     /**
      * Agenda from [today] for [dayCount] days. Notes that are done are left out. A planning
-     * time before today goes to "overdue"; repeating times also appear on each later occurrence.
+     * time before today goes to "overdue"; repeating times also appear on each later occurrence,
+     * but for habits.
      */
     fun build(notes: List<OrgNote>, today: LocalDate, dayCount: Int = 7): Result {
         val end = today.plusDays(dayCount.toLong())
@@ -35,6 +36,8 @@ object Agenda {
 
         for (note in notes) {
             if (note.isDone) continue
+            // A habit shows today only, with its graph, as org-habit-show-habits-only-for-today
+            val until = if (Habits.isHabit(note)) minOf(end, today.plusDays(1)) else end
             for ((kind, timestamp) in planning(note) + OrgTime.events(note).map { Kind.Event to it }) {
                 val planned = Planned.parse(timestamp) ?: continue
                 // An event that has passed is over, not overdue
@@ -44,7 +47,7 @@ object Agenda {
                 }
                 // An overdue repeating task shows once, as overdue, not again today
                 val from = if (isOverdue) today.plusDays(1) else today
-                planned.occurrences(from.atStartOfDay(), end.atStartOfDay()).forEach { at ->
+                planned.occurrences(from.atStartOfDay(), until.atStartOfDay()).forEach { at ->
                     byDay.getOrPut(at.toLocalDate()) { mutableListOf() } +=
                         Entry(note, kind, at.toLocalDate(), planned.timeOfDay?.let { at.toLocalTime() }, planned.endTime)
                 }
