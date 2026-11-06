@@ -300,7 +300,7 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.notebooks)) },
                     icon = { Icon(Icons.Default.Home, null) },
-                    selected = top != Screen.Agenda && top != Screen.Searches,
+                    selected = top != Screen.Agenda && top != Screen.Searches && top != Screen.TimeReport,
                     onClick = { close(viewModel::openHome) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
@@ -319,6 +319,17 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
                         icon = { Icon(Icons.Default.Search, null) },
                         selected = top == Screen.Searches,
                         onClick = { close(viewModel::openSearches) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
+                // Time clocked, shown once some note has been clocked
+                val clocked = remember(library) { library.notes.any { "CLOCK:" in it.content } }
+                if (clocked) {
+                    NavigationDrawerItem(
+                        label = { Text(stringResource(R.string.time_report)) },
+                        icon = { Icon(OrgwhalIcons.Timer, null) },
+                        selected = top == Screen.TimeReport,
+                        onClick = { close(viewModel::openTimeReport) },
                         modifier = Modifier.padding(horizontal = 12.dp),
                     )
                 }
@@ -439,6 +450,8 @@ private fun ScreenContent(
         is Screen.NewNote -> NoteScreen(viewModel, library, viewModel.draftNote(screen), snackbar, newNote = screen)
 
         Screen.Searches -> SearchesScreen(viewModel, snackbar)
+
+        Screen.TimeReport -> TimeReportScreen(viewModel, library)
 
         Screen.Settings -> SettingsScreen(viewModel, library, onPickFolder, notificationsAllowed, onAllowNotifications)
 

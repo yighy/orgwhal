@@ -4,6 +4,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontFamily
+import io.github.yighy.orgwhal.core.ClockReport
 import io.github.yighy.orgwhal.core.Habits
 import io.github.yighy.orgwhal.core.KeywordCompletion
 import androidx.compose.material.icons.filled.Clear
@@ -840,6 +841,15 @@ fun NoteScreen(
             val clocked = remember(content) { Clock.entries(content).isNotEmpty() }
             MetaSlot(clocked) {
                 ClockRow(content, onStart = { commit(); viewModel.clockIn(note) }, onStop = { commit(); viewModel.clockOut(note) })
+            }
+            // Its sub-notes' time with its own, when they have some (as Org's subtree total)
+            val subtree = remember(file?.notes, note.index, content) {
+                file?.notes?.takeIf { newNote == null && note.index in it.indices }?.let { notes ->
+                    ClockReport.subtree(notes, note.index, LocalDateTime.now()).takeIf { it > ClockReport.clocked(notes[note.index].content, null, LocalDateTime.now()) }
+                }
+            }
+            MetaSlot(subtree != null) {
+                lastNonNull(subtree)?.let { MetaRow(stringResource(R.string.clock_with_subnotes), Clock.format(it), onClick = null) }
             }
             // Properties chosen in the settings stay hidden (still in the file)
             val takenProperties = note.properties.map { it.first.uppercase() }.toSet()

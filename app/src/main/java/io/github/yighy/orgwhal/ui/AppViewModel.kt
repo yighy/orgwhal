@@ -71,6 +71,7 @@ sealed interface Screen {
     data object Settings : Screen
     data object Agenda : Screen
     data object Searches : Screen
+    data object TimeReport : Screen
 
     /**
      * A note being created: nothing is written to the file until it gets a title.
@@ -334,6 +335,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openSearches() {
         if (stack.last() != Screen.Searches) push(Screen.Searches)
+    }
+
+    fun openTimeReport() {
+        if (stack.last() != Screen.TimeReport) push(Screen.TimeReport)
     }
 
     fun openAgenda() {

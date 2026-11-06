@@ -32,6 +32,16 @@
     <string name="clock_running">Pointage en cours</string>
     <string name="clock_total">total %1$s</string>
     <string name="clock_last">dernier %1$s</string>
+    <string name="time_report">Temps</string>
+    <string name="nothing_clocked">Rien de pointé sur cette période</string>
+    <string name="clock_with_subnotes">Avec les sous-notes</string>
+    <string name="period_today">Aujourd’hui</string>
+    <string name="period_yesterday">Hier</string>
+    <string name="period_this_week">Cette semaine</string>
+    <string name="period_last_week">Semaine dernière</string>
+    <string name="period_this_month">Ce mois-ci</string>
+    <string name="period_last_month">Mois dernier</string>
+    <string name="period_all">Tout</string>
     <string name="close">Fermer</string>
     <string name="close_search">Fermer la recherche</string>
     <string name="closed">Terminée</string>
