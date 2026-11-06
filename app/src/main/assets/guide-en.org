@@ -326,4 +326,6 @@ On that new note, tap *Inbox ▾* at the top to put it in another notebook, unde
 * Useful settings
 - *Appearance*: light, dark or system theme; wallpaper colors; *Use English language*.
 - *Notes*: show note content in notebooks, strike through done notes, space between notes, sub-note indentation (wide, tapering or compact), parent notes while scrolling, state keywords, hidden properties.
+- *Reminders*: notify at scheduled and deadline times, as alarm clock alarms (the most reliable), the snooze length, the notification's third button, a time for dates without one. *Reliability* below says what could delay them (notifications, exact alarms, battery optimization), a tap fixing it.
+- *Pomodoro*: turn pomodoros on, and set the lengths of a pomodoro, of the short and long breaks, and how many pomodoros come before a long one.
 - *About*: version, source code, license, and *Add the guide notebook* to get this notebook back, or to replace it with a newer version's after an update.
