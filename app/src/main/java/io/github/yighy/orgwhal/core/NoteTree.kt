@@ -111,7 +111,7 @@ object NoteTree {
     data class Stuck(val note: Int, val y: Int)
 
     /**
-     * The titles that stay at the top of an outline showing [rows] (in order, from the top, all
+     * The titles that stay at the top of an outline showing [shownRows] (in order, from the top, all
      * positions from the top of the list), as if each note came up, stopped at its [place] and
      * stayed there while its sub-notes go by; the next one of its level then pushes it away. Only
      * unfolded notes with sub-notes stay, and notes of at least [longNote], whose content goes on
@@ -119,13 +119,15 @@ object NoteTree {
      */
     fun stuck(
         notes: List<OrgNote>,
-        rows: List<ShownRow>,
+        shownRows: List<ShownRow>,
         isFolded: (OrgNote) -> Boolean,
         place: (Int) -> Int,
         height: Int,
         max: Int,
         longNote: Int = Int.MAX_VALUE,
     ): List<Stuck> {
+        // Only notes' rows: not what an empty notebook shows, nor rows of notes just gone
+        val rows = shownRows.filter { it.note in notes.indices }
         val first = rows.indexOfFirst { it.bottom > place(0) }
         if (first < 0) return emptyList()
         // Those above what shows are gone by; then each row as it comes to its place

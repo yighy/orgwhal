@@ -142,6 +142,9 @@ class NoteTreeTest {
         assertEquals(listOf(0 to 0, 1 to 40, 2 to 80), stuck(rows(161, *all), longNote = 100))
         assertEquals(listOf(4 to -20), stuck(rows(480, *all), longNote = 100))
         assertEquals(listOf(0 to 0, 1 to 40), stuck(rows(161, *all), longNote = 101))
+        // A row that is no note (an empty notebook's message, a note just archived) is none of them
+        assertEquals(emptyList<NoteTree.Stuck>(), NoteTree.stuck(emptyList(), rows(50, 0), { false }, { it * 40 }, 40, 3, 10))
+        assertEquals(listOf(0 to 0), stuck(rows(50, 0, 1, 2, 3, 4, 5), longNote = 100).take(1))
     }
 
     @Test
