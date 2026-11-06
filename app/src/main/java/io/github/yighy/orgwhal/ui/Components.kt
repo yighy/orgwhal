@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
 import io.github.yighy.orgwhal.core.Markup
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.Placeholder
@@ -698,6 +699,10 @@ private fun JumpButton(
     }
     // Only scrolled by hand (a fling included), not when the screen scrolls by itself
     val scrolling = inProgress()
+    // The list read as it scrolls, each frame: the button only recomposes as what it shows changes
+    val currentEnabled by rememberUpdatedState(enabled)
+    val visible by remember(long, canDown) { derivedStateOf { currentEnabled && shown && down && long() && canDown() } }
+    val toSectionEnd by remember(toSection) { derivedStateOf { visible && toSection?.invoke() != null } }
     LaunchedEffect(scrolling, byHand) {
         if (scrolling) {
             if (byHand) shown = true
@@ -707,23 +712,22 @@ private fun JumpButton(
             byHand = false
         }
     }
-    val visible = enabled && shown && down && long() && canDown()
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     AnimatedVisibility(visible, modifier, enter = fadeIn(), exit = fadeOut()) {
         // One arrow when a tap stops at the end of the part being read, two when it goes to the end
-        val section = if (visible) toSection?.invoke() else null
+        val section = toSectionEnd
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f),
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ) {
             Icon(
-                if (section != null) Icons.Default.KeyboardArrowDown else OrgwhalIcons.DoubleArrowDown,
-                stringResource(if (section != null) R.string.scroll_to_section_end else R.string.scroll_to_bottom),
+                if (section) Icons.Default.KeyboardArrowDown else OrgwhalIcons.DoubleArrowDown,
+                stringResource(if (section) R.string.scroll_to_section_end else R.string.scroll_to_bottom),
                 modifier = Modifier
                     .combinedClickable(
-                        onClick = { scope.launch { section?.invoke() ?: onBottom() } },
+                        onClick = { scope.launch { toSection?.invoke()?.invoke() ?: onBottom() } },
                         onLongClick = toSection?.let {
                             {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)

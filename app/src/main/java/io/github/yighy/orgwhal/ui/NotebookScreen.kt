@@ -164,6 +164,8 @@ fun NotebookScreen(
     val selecting = selection != null
     val scrollBehavior = largeBarScrollBehavior(selecting)
     val listState = rememberLazyListState()
+    // The notes not under a folded one, worked out again only as the folds change
+    val shownNotes by remember(file.notes) { derivedStateOf { NoteTree.visible(file.notes, viewModel::isFolded).mapTo(HashSet()) { it.index } } }
     // The list, under the titles staying at the top: all a note's row goes over on its way to or
     // from the note's screen, else a long one covers the titles and the app bar until it lands
     var listBounds by remember { mutableStateOf(Rect.Zero) }
@@ -285,7 +287,7 @@ fun NotebookScreen(
                     listState,
                     Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
                     enabled = prefaceDraft == null,
-                    section = { outlineJumpEnd(listState, file.notes, viewModel::isFolded) },
+                    section = { outlineJumpEnd(listState, file.notes, shownNotes) },
                 )
             }
         }
@@ -473,6 +475,7 @@ private fun NotebookOutline(
                         spacing = spacing,
                         indentation = indentation,
                         area = rowsArea,
+                        shared = viewModel.noteFromOutline.let { it != null && it.fileUri == note.fileUri && it.index == note.index },
                         selected = note.index in marked,
                         selecting = selecting,
                         swipeOpen = viewModel.openSwipeRow,
@@ -547,6 +550,8 @@ private fun OutlineRow(
     spacing: Dp,
     indentation: Indentation,
     area: () -> Rect,
+    /** Whether it grows into the note's screen, its title and content moving there. */
+    shared: Boolean,
     selected: Boolean,
     selecting: Boolean,
     swipeOpen: String?,
@@ -586,7 +591,7 @@ private fun OutlineRow(
             Placement.entries.map { placement ->
                 SwipeAction(placementIcon(placement), stringResource(newNoteTitle(placement))) { onAddNear(placement) }
             },
-        modifier = Modifier.sharedContainer("note-$key", RectangleShape, within = area),
+        modifier = if (shared) Modifier.sharedContainer("note-$key", RectangleShape, within = area) else Modifier,
         enabled = !selecting,
     ) {
         Row(
@@ -636,7 +641,7 @@ private fun OutlineRow(
                     subtitle = null,
                     onClick = null,
                     onOpenLink = onOpenLink,
-                    titleModifier = Modifier.sharedText(noteTitleKey(note), within = area),
+                    titleModifier = if (shared) Modifier.sharedText(noteTitleKey(note), within = area) else Modifier,
                 )
                 val hasContent = remember(note.content) { !Blocks.showsNothing(note.content) }
                 if (showContent && hasContent) {
@@ -645,7 +650,7 @@ private fun OutlineRow(
                         note.content.trimIndent(),
                         contentStyle(MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)),
                         onOpenLink,
-                        Modifier.padding(top = 4.dp).sharedText(noteContentKey(note), within = area),
+                        Modifier.padding(top = 4.dp).then(if (shared) Modifier.sharedText(noteContentKey(note), within = area) else Modifier),
                         onToggleCheckbox = onToggleCheckbox,
                         tableNamed = tables,
                         liveFormulas = liveFormulas,
@@ -804,9 +809,8 @@ private const val STACKED_MAX = 3
  * The list item a short jump goes to in a notebook's outline ([NoteTree.jumpEnd]): the header
  * comes first, then one item per note, folded ones of no height.
  */
-private fun outlineJumpEnd(state: LazyListState, notes: List<OrgNote>, isFolded: (OrgNote) -> Boolean): Int? {
+private fun outlineJumpEnd(state: LazyListState, notes: List<OrgNote>, shown: Set<Int>): Int? {
     val info = state.layoutInfo
-    val shown = NoteTree.visible(notes, isFolded).map { it.index }.toSet()
     val rows = info.visibleItemsInfo.filter { it.index - 1 in shown && it.size > 0 }
     val top = rows.firstOrNull { it.offset + it.size > info.viewportStartOffset } ?: return null
     val bottom = rows.lastOrNull { it.offset + it.size <= info.viewportEndOffset } ?: top

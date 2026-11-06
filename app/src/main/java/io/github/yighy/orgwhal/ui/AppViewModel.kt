@@ -480,7 +480,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun openNote(note: OrgNote) = push(Screen.Note(note.fileUri, note.index))
+    /**
+     * The note last opened from its notebook's outline: its row alone grows into its screen and
+     * back (shared elements on every row would cost each frame of a scroll).
+     */
+    var noteFromOutline by mutableStateOf<Screen.Note?>(null)
+        private set
+
+    fun openNote(note: OrgNote) {
+        val screen = Screen.Note(note.fileUri, note.index)
+        if (stack.lastOrNull() == Screen.Notebook(note.fileUri)) noteFromOutline = screen
+        push(screen)
+    }
 
     fun openTree(fileUri: String) = push(Screen.Tree(fileUri))
 
