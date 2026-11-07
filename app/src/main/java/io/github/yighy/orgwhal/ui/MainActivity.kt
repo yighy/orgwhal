@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import io.github.yighy.orgwhal.data.NoteRepository
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : ComponentActivity() {
 
@@ -230,12 +231,11 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
 
     LaunchedEffect(Unit) {
         viewModel.messages.collect { m ->
-            // A message with an action (undo) stays longer
-            val result = snackbar.showSnackbar(
-                m.text,
-                m.actionLabel,
-                duration = if (m.action != null) SnackbarDuration.Long else SnackbarDuration.Short,
-            )
+            // A message with an action (undo) stays a little longer, though not Material's 10 s;
+            // it goes when its time is up (the wait cancelled takes it away), or swiped away
+            val result = withTimeoutOrNull(if (m.action != null) ACTION_MESSAGE_MS else MESSAGE_MS) {
+                snackbar.showSnackbar(m.text, m.actionLabel, duration = SnackbarDuration.Indefinite)
+            }
             if (result == SnackbarResult.ActionPerformed) m.action?.invoke()
         }
     }
@@ -502,3 +502,7 @@ private const val CHANGES_CHECK_MS = 4000L
 
 /** How long the navigation drawer takes to open or close. */
 private const val DRAWER_MS = 250
+
+/** How long a message shows, and one with an action (undo). */
+private const val MESSAGE_MS = 4_000L
+private const val ACTION_MESSAGE_MS = 6_000L

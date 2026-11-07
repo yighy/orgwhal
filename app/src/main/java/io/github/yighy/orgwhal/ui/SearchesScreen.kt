@@ -93,7 +93,7 @@ fun SearchesScreen(viewModel: AppViewModel, snackbar: SnackbarHostState) {
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SwipeableSnackbarHost(snackbar) },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 48.dp)) {
             if (searches.isEmpty()) {

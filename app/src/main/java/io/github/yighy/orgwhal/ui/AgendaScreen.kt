@@ -111,7 +111,7 @@ fun AgendaScreen(
                 modifier = Modifier.tapToTop { listState.animateScrollToItem(0); scrollBehavior.state.expand() },
             )
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SwipeableSnackbarHost(snackbar) },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             PullToRefresh(viewModel) {

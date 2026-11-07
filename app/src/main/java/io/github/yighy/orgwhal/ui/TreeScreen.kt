@@ -288,7 +288,7 @@ fun TreeScreen(viewModel: AppViewModel, library: NoteRepository.Library, file: N
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SwipeableSnackbarHost(snackbar) },
     ) { padding ->
         Box(
             Modifier

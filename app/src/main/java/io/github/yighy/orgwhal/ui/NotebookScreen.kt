@@ -240,7 +240,7 @@ fun NotebookScreen(
                 EditToolbar(draft, onChange = { if (prefaceDraft != null) prefaceDraft = it }, history = prefaceHistory)
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SwipeableSnackbarHost(snackbar) },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).onGloballyPositioned { listBounds = it.boundsInRoot() }) {
             if (viewModel.searchActive) {

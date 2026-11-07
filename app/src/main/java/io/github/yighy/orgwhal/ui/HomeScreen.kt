@@ -176,7 +176,7 @@ fun HomeScreen(
                 FloatingActionButton(onClick = { newNotebook = true }) { Icon(Icons.Default.Add, stringResource(R.string.new_notebook)) }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SwipeableSnackbarHost(snackbar) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             library.error?.let {

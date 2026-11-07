@@ -148,6 +148,13 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.key
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -1400,3 +1407,18 @@ private val HABIT_COLORS = mapOf(
     Habits.Face.Overdue to Color(0xFFE53935),
 )
 private val HABIT_DONE = Color(0xDD000000)
+
+/** The screen's messages, each swiped away to either side as well as going by itself. */
+@Composable
+fun SwipeableSnackbarHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(state, modifier) { data ->
+        // Each message its own swipe, a new one starting in place
+        key(data) {
+            val swipe = rememberSwipeToDismissBoxState()
+            LaunchedEffect(swipe.currentValue) {
+                if (swipe.currentValue != SwipeToDismissBoxValue.Settled) data.dismiss()
+            }
+            SwipeToDismissBox(state = swipe, backgroundContent = {}) { Snackbar(data) }
+        }
+    }
+}

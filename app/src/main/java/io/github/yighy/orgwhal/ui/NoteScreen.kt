@@ -681,7 +681,7 @@ fun NoteScreen(
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SwipeableSnackbarHost(snackbar) },
     ) { padding ->
         val screenFocus = LocalFocusManager.current
         Column(
