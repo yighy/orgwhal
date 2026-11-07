@@ -213,6 +213,26 @@ object SectionEditor {
         return lines.joinToString("\n")
     }
 
+    /**
+     * Removes the properties [names] (ignoring case) from a section's property drawer, and the
+     * drawer once it is empty, as org-entry-delete does; the rest of the text stays as it was.
+     */
+    fun removeProperties(raw: String, names: Set<String>): String {
+        val lines = raw.split('\n').toMutableList()
+        var i = 1
+        while (i < lines.size && isPlanningLine(lines[i])) i++
+        if (i >= lines.size || !lines[i].trim().equals(":PROPERTIES:", ignoreCase = true)) return raw
+        val end = (i + 1 until lines.size).firstOrNull { lines[it].trim().equals(":END:", ignoreCase = true) } ?: return raw
+        val upper = names.map { it.uppercase() }.toSet()
+        val kept = lines.subList(i + 1, end).filterNot { line ->
+            PROPERTY_NAME.find(line)?.groupValues?.get(1)?.uppercase()?.let { it in upper || it.removeSuffix("+") in upper } == true
+        }
+        val drawer = if (kept.isEmpty()) emptyList() else listOf(lines[i]) + kept + lines[end]
+        return (lines.subList(0, i) + drawer + lines.subList(end + 1, lines.size)).joinToString("\n")
+    }
+
+    private val PROPERTY_NAME = Regex("""^\s*:([^:\s]+):""")
+
     private fun isPlanningLine(line: String): Boolean {
         val t = line.trimStart()
         return t.startsWith("SCHEDULED:") || t.startsWith("DEADLINE:") || t.startsWith("CLOSED:")

@@ -346,6 +346,24 @@ class NoteRepository(context: Context) {
     }
 
     /**
+     * Puts an archived [note] back, with its sub-notes, under [parent] (after its sub-notes) or at
+     * the end of [targetUri], without the properties archiving added. Returns its new index.
+     */
+    suspend fun unarchive(note: OrgNote, targetUri: String, parent: OrgNote?): Int {
+        val subtree = Archive.restored(copySubtrees(note.fileUri, listOf(note)).single())
+        var newIndex = 0
+        // Written in its notebook first, so that it is always in one of the files
+        modifyFile(targetUri, listOfNotNull(parent)) { doc, indices ->
+            val parentIndex = indices.firstOrNull()
+            val (at, level) = if (parentIndex == null) doc.sections.size to 1 else doc.subtreeEnd(parentIndex) to doc.sections[parentIndex].level + 1
+            newIndex = at
+            Outline.insert(doc, at, level, listOf(subtree))
+        }
+        modifyFile(note.fileUri, listOf(note)) { doc, indices -> Outline.delete(doc, indices) }
+        return newIndex
+    }
+
+    /**
      * Re-reads the file, finds [notes] by their exact text, applies [transform] and writes the
      * result once. Fails without writing if a note changed on disk since it was loaded.
      */

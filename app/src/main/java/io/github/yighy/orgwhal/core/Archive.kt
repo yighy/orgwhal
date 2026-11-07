@@ -53,6 +53,50 @@ object Archive {
         return Outline.insert(doc, doc.sections.size, 1, entries).text
     }
 
+    /** The properties archiving adds, taken away when the note is put back. */
+    val PROPERTIES = setOf("ARCHIVE_TIME", "ARCHIVE_FILE", "ARCHIVE_OLPATH", "ARCHIVE_CATEGORY", "ARCHIVE_TODO", "ARCHIVE_ITAGS")
+
+    /**
+     * Where an archived note came from: its notebook's [file] as ARCHIVE_FILE gives it (a path in
+     * the folder, or Emacs' full path), the titles of its [parents] (ARCHIVE_OLPATH) and [time].
+     */
+    data class Origin(val file: String, val parents: List<String>, val time: String?)
+
+    fun origin(note: OrgNote): Origin? {
+        fun property(name: String) = note.properties.firstOrNull { it.first.equals(name, ignoreCase = true) }?.second?.trim()
+        val file = property("ARCHIVE_FILE")?.takeIf { it.isNotEmpty() } ?: return null
+        val parents = property("ARCHIVE_OLPATH")?.split('/')?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
+        return Origin(file, parents, property("ARCHIVE_TIME"))
+    }
+
+    /**
+     * Which of the notebooks at [paths] (in the folder) [file] names: the same path, a full path
+     * ending with it (as Emacs writes it), else the same file name. Null if none.
+     */
+    fun notebook(file: String, paths: List<String>): Int? {
+        val wanted = file.replace('\\', '/').removePrefix("./")
+        paths.indexOfFirst { it.equals(wanted, ignoreCase = true) }.takeIf { it >= 0 }?.let { return it }
+        paths.indexOfFirst { wanted.endsWith("/$it", ignoreCase = true) }.takeIf { it >= 0 }?.let { return it }
+        val name = wanted.substringAfterLast('/')
+        return paths.indexOfFirst { it.substringAfterLast('/').equals(name, ignoreCase = true) }.takeIf { it >= 0 }
+    }
+
+    /**
+     * The note of [notes] at the end of the titles [parents], or at the end of as many of them as
+     * are still there (the nearest place); null when not even the first is: the top level.
+     */
+    fun parent(notes: List<OrgNote>, parents: List<String>): OrgNote? {
+        val paths = notes.map { note -> (NoteTree.ancestors(notes, note.index) + note).map { it.title.trim() } }
+        for (n in parents.size downTo 1) {
+            val i = paths.indexOfFirst { it == parents.take(n) }
+            if (i >= 0) return notes[i]
+        }
+        return null
+    }
+
+    /** [subtree] as put back: without the properties archiving added. */
+    fun restored(subtree: Subtree): Subtree = subtree.copy(text = SectionEditor.removeProperties(subtree.text, PROPERTIES))
+
     /** As Org writes it: 2026-10-10 Sat 14:03. */
     private fun timeText(time: LocalDateTime): String =
         "%s %s %02d:%02d".format(time.toLocalDate(), time.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), time.hour, time.minute)

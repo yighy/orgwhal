@@ -509,4 +509,10 @@
     </plurals>
     <string name="search_archives">Include archives</string>
     <string name="msg_note_archived">Archived note, in %1$s</string>
+    <string name="archived">Archived</string>
+    <string name="archived_on">Archived %1$s</string>
+    <string name="archived_from">From %1$s</string>
+    <string name="archived_from_gone">From %1$s, a notebook no longer there</string>
+    <string name="unarchive">Unarchive</string>
+    <string name="msg_unarchived">Put back in %1$s</string>
 </resources>

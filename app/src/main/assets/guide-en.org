@@ -316,6 +316,7 @@ In a notebook, *⋮ → Tree view* draws its notes as boxes from left to right.
 The archive file is not a notebook: archived notes leave the lists, the agenda and the search, and the notebook stays light. The message offers to undo it. They can still be found:
 - A link to an archived note (=id:= or =[[*Title]]=) opens it, as Emacs does, saying it is archived.
 - In the search, *Include archives* looks in the archive files too, their name under each note found.
+- An archived note shows when and where from it was archived; *Unarchive* puts it back there, under the same parent notes (or the nearest still there), without the =ARCHIVE_= properties.
 
 ** DONE Archive me
 Try it: open this note, then *⋮ → Archive*.

@@ -3,6 +3,7 @@ package io.github.yighy.orgwhal.ui
 import io.github.yighy.orgwhal.data.TemplatesHidden
 import io.github.yighy.orgwhal.data.ReminderButton
 import io.github.yighy.orgwhal.core.Pomodoro
+import io.github.yighy.orgwhal.core.Archive
 import io.github.yighy.orgwhal.core.TableLookup
 import io.github.yighy.orgwhal.core.TableFormulas
 import io.github.yighy.orgwhal.core.Blocks
@@ -1183,6 +1184,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 viewModelScope.launch { attempt { repository.unarchive(archived) } }
             },
         )
+    }
+
+    /** Where the archived [note] goes back: its notebook, and the note to go under (null: the top level). */
+    fun unarchiveTarget(note: OrgNote): Pair<NoteRepository.LoadedFile, OrgNote?>? {
+        val origin = Archive.origin(note) ?: return null
+        val files = library.value.files
+        val file = Archive.notebook(origin.file, files.map { it.ref.path })?.let(files::get) ?: return null
+        return file to Archive.parent(file.notes, origin.parents)
+    }
+
+    /** Puts the archived [note] back where it was archived from, its screen following it there. */
+    fun unarchiveNote(note: OrgNote) {
+        val (file, parent) = unarchiveTarget(note) ?: return
+        viewModelScope.launch {
+            saveLock.withLock {
+                attempt {
+                    val index = repository.unarchive(note, file.uri, parent)
+                    val i = stack.indexOfLast { it is Screen.Note && it.fileUri == note.fileUri && it.index == note.index }
+                    if (i >= 0) stack[i] = Screen.Note(file.uri, index)
+                    message(R.string.msg_unarchived, parent?.let { displayTitle(it.title) } ?: file.title)
+                }
+            }
+        }
     }
 
     /** Deletes [note] with its sub-notes. */

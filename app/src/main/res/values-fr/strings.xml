@@ -537,4 +537,10 @@
     </plurals>
     <string name="search_archives">Inclure les archives</string>
     <string name="msg_note_archived">Note archivée, dans %1$s</string>
+    <string name="archived">Archivée</string>
+    <string name="archived_on">Archivée %1$s</string>
+    <string name="archived_from">Depuis %1$s</string>
+    <string name="archived_from_gone">Depuis %1$s, un carnet qui n’existe plus</string>
+    <string name="unarchive">Désarchiver</string>
+    <string name="msg_unarchived">Remise dans %1$s</string>
 </resources>

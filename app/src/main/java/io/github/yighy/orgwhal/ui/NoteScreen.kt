@@ -5,6 +5,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontFamily
 import io.github.yighy.orgwhal.core.Pomodoro
+import io.github.yighy.orgwhal.core.Archive
 import io.github.yighy.orgwhal.core.ClockReport
 import io.github.yighy.orgwhal.core.Habits
 import io.github.yighy.orgwhal.core.KeywordCompletion
@@ -782,6 +783,13 @@ fun NoteScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
+            // An archived note: when and where from, and the way back there
+            val origin = remember(note, file) { note.takeIf { file?.isArchive == true }?.let(Archive::origin) }
+            if (origin != null) {
+                val target = remember(note, library) { viewModel.unarchiveTarget(note) }
+                ArchivedBanner(origin, target, onUnarchive = { commit(); viewModel.unarchiveNote(note) })
+            }
+
             // Metadata: only what is set, edited in place (dates in a dialog); rows unfold
             // when added and fold away when removed
             // The templates to start the new note from, as the note would be made
@@ -862,7 +870,9 @@ fun NoteScreen(
             }
             // Properties chosen in the settings stay hidden (still in the file)
             val takenProperties = note.properties.map { it.first.uppercase() }.toSet()
-            note.properties.filter { it.first.uppercase() !in settings.hiddenProperties }.forEach { (name, value) ->
+            // In an archive, what archiving added shows in its banner instead
+            val archiveProperties = if (file?.isArchive == true && origin != null) Archive.PROPERTIES else emptySet()
+            note.properties.filter { it.first.uppercase() !in settings.hiddenProperties && it.first.uppercase() !in archiveProperties }.forEach { (name, value) ->
                 key(name.uppercase()) {
                     // The property just added replaces its new row without unfolding again
                     Appear(animate = !name.equals(addedProperty, ignoreCase = true)) {
@@ -1123,6 +1133,45 @@ fun NoteScreen(
             onDismiss = { dialog = null },
             onConfirm = { t -> dialog = null; viewModel.update(note) { it.copy(deadline = t) } },
         )
+    }
+}
+
+/**
+ * An archived note's banner: archived when ([Archive.Origin.time]) and from where, with a button
+ * putting it back there ([target]: its notebook and the note to go under), if its notebook is still
+ * there.
+ */
+@Composable
+private fun ArchivedBanner(
+    origin: Archive.Origin,
+    target: Pair<NoteRepository.LoadedFile, OrgNote?>?,
+    onUnarchive: () -> Unit,
+) {
+    val from = (listOf(target?.first?.title ?: origin.file.substringAfterLast('/')) + origin.parents).joinToString(" › ")
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+    ) {
+        Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(OrgwhalIcons.Archive, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    // Its time as the dates are shown ("today 17:00", "Sat 7 Nov.")
+                    origin.time?.let { displayTime(LocalContext.current.resources, "[$it]") }
+                        ?.let { stringResource(R.string.archived_on, it) } ?: stringResource(R.string.archived),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    stringResource(if (target != null) R.string.archived_from else R.string.archived_from_gone, from),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+            if (target != null) TextButton(onClick = onUnarchive) { Text(stringResource(R.string.unarchive)) }
+        }
     }
 }
 
