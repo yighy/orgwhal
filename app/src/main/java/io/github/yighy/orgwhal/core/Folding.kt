@@ -39,6 +39,8 @@ object Folding {
                 }
             }
         }
+        // Archived trees (:ARCHIVE:) stay closed, as Org hides them whatever the rest
+        notes.forEachIndexed { i, note -> if (Archive.TAG in note.tags && NoteTree.hasChildren(notes, i)) folded += i }
         return folded
     }
 

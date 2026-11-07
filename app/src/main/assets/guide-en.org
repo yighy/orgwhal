@@ -318,6 +318,8 @@ The archive file is not a notebook: archived notes leave the lists, the agenda a
 - In the search, *Include archives* looks in the archive files too, their name under each note found.
 - An archived note shows when and where from it was archived; *Unarchive* puts it back there, under the same parent notes (or the nearest still there), without the =ARCHIVE_= properties.
 
+A note can also be archived where it is, as Org's =C-c C-x a= does: give it the tag =ARCHIVE=. It stays in its notebook, folded and faded, with its sub-notes; they leave the agenda, the reminders, the notes to do and the search (*Include archives*, offered when some match, brings them back). Its screen says so, and *Unarchive* takes the tag away.
+
 ** DONE Archive me
 Try it: open this note, then *⋮ → Archive*.
 

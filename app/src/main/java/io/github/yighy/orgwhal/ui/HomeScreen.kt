@@ -184,7 +184,7 @@ fun HomeScreen(
             }
 
             when {
-                viewModel.searchActive -> SearchResults(viewModel, library, library.notes, archived = library.archivedNotes)
+                viewModel.searchActive -> SearchResults(viewModel, library, library.active, archived = library.archivedNotes)
 
                 library.files.isEmpty() && library.loading ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoadingIndicator() }

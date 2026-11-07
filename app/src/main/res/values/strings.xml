@@ -507,7 +507,7 @@
         <item quantity="one">%1$d pomodoro</item>
         <item quantity="other">%1$d pomodoros</item>
     </plurals>
-    <string name="search_archives">Include archives</string>
+    <string name="search_archives_count">Include archives (%1$d)</string>
     <string name="msg_note_archived">Archived note, in %1$s</string>
     <string name="archived">Archived</string>
     <string name="archived_on">Archived %1$s</string>
@@ -515,4 +515,8 @@
     <string name="archived_from_gone">From %1$s, a notebook no longer there</string>
     <string name="unarchive">Unarchive</string>
     <string name="msg_unarchived">Put back in %1$s</string>
+    <string name="archived_tag">Archived with the ARCHIVE tag</string>
+    <string name="archived_tag_parent">Archived with %1$s (ARCHIVE tag)</string>
+    <string name="archived_tag_text">Left in its notebook, out of the agenda and the search</string>
+    <string name="msg_note_archived_tag">Archived note (ARCHIVE tag)</string>
 </resources>

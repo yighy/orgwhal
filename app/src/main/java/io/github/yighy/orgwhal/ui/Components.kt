@@ -576,8 +576,6 @@ fun SearchResults(
     archived: List<OrgNote> = emptyList(),
 ) {
     val idle = viewModel.query.isBlank() && viewModel.tag == null
-    // The archived notes too, when asked (off by default, as in Org)
-    val searched = if (viewModel.searchArchives && archived.isNotEmpty()) notes + archived else notes
     // Orgzly-style query; the selected tag chip adds a t. condition
     val queryText = listOfNotNull(viewModel.query, viewModel.tag?.let { "t.\"$it\"" }).joinToString(" ")
     val context = remember(library) { searchContext(library) }
@@ -585,8 +583,12 @@ fun SearchResults(
     // Template notes left out as set, unless looked for by their tag
     val hidden = viewModel.settings.collectAsState().value.templatesHidden
     val skipTemplates = hidden == TemplatesHidden.AgendaAndSearch && !queryText.contains(Templates.TAG, ignoreCase = true)
-    val results = remember(query, searched, context, skipTemplates) {
-        if (idle) emptyList() else query.apply(if (skipTemplates) searched.filterNot(Templates::isTemplate) else searched, context)
+    fun search(among: List<OrgNote>) = if (idle) emptyList() else query.apply(if (skipTemplates) among.filterNot(Templates::isTemplate) else among, context)
+    // The archived notes matching too, offered when there are some (left out by default, as in Org)
+    val archivedResults = remember(query, archived, context, skipTemplates, idle) { search(archived) }
+    val results = remember(query, notes, context, skipTemplates, idle, archivedResults, viewModel.searchArchives) {
+        val found = search(notes)
+        if (viewModel.searchArchives && archivedResults.isNotEmpty()) query.apply(found + archivedResults, context) else found
     }
     // ad.N: the matching notes as an agenda of N days
     val today = LocalDate.now()
@@ -596,12 +598,13 @@ fun SearchResults(
     val listState = rememberLazyListState()
     Box(modifier) {
         LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 112.dp)) {
-            if (archived.isNotEmpty() && !idle) {
+            // Shown when archived notes match, and while on, so it can be turned off
+            if (!idle && (archivedResults.isNotEmpty() || viewModel.searchArchives)) {
                 item(key = "archives") {
                     FilterChip(
                         selected = viewModel.searchArchives,
                         onClick = { viewModel.searchArchives = !viewModel.searchArchives },
-                        label = { Text(stringResource(R.string.search_archives)) },
+                        label = { Text(stringResource(R.string.search_archives_count, archivedResults.size)) },
                         leadingIcon = { Icon(OrgwhalIcons.Archive, null, Modifier.size(18.dp)) },
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )

@@ -146,7 +146,7 @@ class ReminderReceiver : BroadcastReceiver() {
 
             // Alarm, or boot / update / clock change: also shows reminders missed meanwhile
             else -> {
-                app.scheduler.takeDue(library.notes, options).forEach { reminder ->
+                app.scheduler.takeDue(library.active, options).forEach { reminder ->
                     val file = library.file(reminder.note.fileUri)
                     val notebook = file?.title ?: reminder.note.fileName
                     val ancestors = file?.notes?.let { NoteTree.ancestors(it, reminder.note.index) }.orEmpty().map { displayTitle(it.title) }
@@ -156,7 +156,7 @@ class ReminderReceiver : BroadcastReceiver() {
         }
 
         // Boot, update, clock change, or after showing: set the next alarm
-        app.scheduler.reschedule(repository.library.value.notes, options, alarmClock)
+        app.scheduler.reschedule(repository.library.value.active, options, alarmClock)
     }
 
     /** Starts [note]'s clock at [now], as from its screen, stopping another one. */

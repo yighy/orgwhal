@@ -39,7 +39,10 @@ class NoteRepository(context: Context) {
         val uri: String get() = ref.uri.toString()
         val title: String by lazy { Notebooks.title(doc, ref.name) }
         val preface: String by lazy { Notebooks.prefaceText(doc) }
-        val openTasks: Int by lazy { notes.count { it.state != null && !it.isDone } }
+        /** Whether each note is in a tree archived with the ARCHIVE tag. */
+        val taggedTrees: BooleanArray by lazy { Archive.taggedTrees(notes) }
+        /** Its notes to do, those archived (:ARCHIVE:) left out. */
+        val openTasks: Int by lazy { notes.count { it.state != null && !it.isDone && !taggedTrees[it.index] } }
         /** An archive file (gtd.org_archive): its notes are kept out of the notebooks, agenda and reminders. */
         val isArchive: Boolean get() = ref.name.endsWith("_archive", ignoreCase = true)
     }
@@ -57,13 +60,22 @@ class NoteRepository(context: Context) {
         val files: List<LoadedFile> by lazy { all.filterNot { it.isArchive } }
         val archives: List<LoadedFile> by lazy { all.filter { it.isArchive } }
         val notes: List<OrgNote> by lazy { files.flatMap { it.notes } }
-        val archivedNotes: List<OrgNote> by lazy { archives.flatMap { it.notes } }
+        /** Whether [note] is in a tree archived in place, with the ARCHIVE tag (its own or a parent's). */
+        fun inTaggedTree(note: OrgNote): Boolean = file(note.fileUri)?.takeIf { !it.isArchive }?.taggedTrees?.getOrNull(note.index) == true
+        /** The notes not archived: for the agenda, reminders and search. */
+        val active: List<OrgNote> by lazy { notes.filterNot(::inTaggedTree) }
+        /** The archived notes: in archive files, and in trees with the ARCHIVE tag. */
+        val archivedNotes: List<OrgNote> by lazy { archives.flatMap { it.notes } + notes.filter(::inTaggedTree) }
+        /** [file]'s archived notes: in its trees with the ARCHIVE tag, then in its archive file. */
+        fun archivedNotesOf(file: LoadedFile): List<OrgNote> =
+            file.notes.filter(::inTaggedTree) + archives.filter { it.ref.path == Archive.path(file.ref.path) }.flatMap { it.notes }
         val tags: List<String> by lazy { notes.flatMap { it.tags }.distinctBy { it.lowercase() }.sortedBy { it.lowercase() } }
 
         /** The note with [id], archived ones last. */
         fun noteById(id: String): OrgNote? = notes.firstOrNull { it.id == id } ?: archivedNotes.firstOrNull { it.id == id }
         /** A notebook or an archive file. */
-        fun file(fileUri: String): LoadedFile? = all.firstOrNull { it.uri == fileUri }
+        fun file(fileUri: String): LoadedFile? = byUri[fileUri]
+        private val byUri: Map<String, LoadedFile> by lazy { all.associateBy { it.uri } }
         fun isArchived(note: OrgNote): Boolean = file(note.fileUri)?.isArchive == true
         fun note(fileUri: String, index: Int): OrgNote? = file(fileUri)?.notes?.getOrNull(index)
     }

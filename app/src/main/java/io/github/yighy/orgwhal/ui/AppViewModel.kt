@@ -612,7 +612,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** Opens the note a link leads to, saying when it is in an archive file. */
     private fun openFound(note: OrgNote) {
         openNote(note)
-        library.value.file(note.fileUri)?.takeIf { it.isArchive }?.let { message(R.string.msg_note_archived, it.ref.name) }
+        val lib = library.value
+        lib.file(note.fileUri)?.takeIf { it.isArchive }?.let { message(R.string.msg_note_archived, it.ref.name) }
+            ?: run { if (lib.inTaggedTree(note)) message(R.string.msg_note_archived_tag) }
     }
 
     fun openById(id: String) {

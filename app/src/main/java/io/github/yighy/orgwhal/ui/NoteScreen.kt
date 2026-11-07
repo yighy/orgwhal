@@ -789,6 +789,14 @@ fun NoteScreen(
                 val target = remember(note, library) { viewModel.unarchiveTarget(note) }
                 ArchivedBanner(origin, target, onUnarchive = { commit(); viewModel.unarchiveNote(note) })
             }
+            // Archived in place (:ARCHIVE:), itself or under a parent: out of the agenda and the search
+            val tagged = remember(note, library) { newNote == null && origin == null && library.inTaggedTree(note) }
+            if (tagged) {
+                val parent = remember(note, file) {
+                    note.takeIf { Archive.TAG !in it.tags }?.let { file?.notes?.let { notes -> NoteTree.ancestors(notes, note.index).lastOrNull { Archive.TAG in it.tags } } }
+                }
+                TaggedBanner(parent, onUnarchive = { commit(); viewModel.update(note) { e -> e.copy(tags = e.tags.filterNot { it == Archive.TAG }) } })
+            }
 
             // Metadata: only what is set, edited in place (dates in a dialog); rows unfold
             // when added and fold away when removed
@@ -1148,6 +1156,30 @@ private fun ArchivedBanner(
     onUnarchive: () -> Unit,
 ) {
     val from = (listOf(target?.first?.title ?: origin.file.substringAfterLast('/')) + origin.parents).joinToString(" › ")
+    ArchiveBanner(
+        // Its time as the dates are shown ("today 17:00", "Sat 7 Nov.")
+        title = origin.time?.let { displayTime(LocalContext.current.resources, "[$it]") }
+            ?.let { stringResource(R.string.archived_on, it) } ?: stringResource(R.string.archived),
+        text = stringResource(if (target != null) R.string.archived_from else R.string.archived_from_gone, from),
+        onUnarchive = onUnarchive.takeIf { target != null },
+    )
+}
+
+/**
+ * A note archived in place, with the ARCHIVE tag: its own, which a button takes away, or that of
+ * the [parent] it is under.
+ */
+@Composable
+private fun TaggedBanner(parent: OrgNote?, onUnarchive: () -> Unit) {
+    ArchiveBanner(
+        title = if (parent == null) stringResource(R.string.archived_tag) else stringResource(R.string.archived_tag_parent, displayTitle(parent.title)),
+        text = stringResource(R.string.archived_tag_text),
+        onUnarchive = onUnarchive.takeIf { parent == null },
+    )
+}
+
+@Composable
+private fun ArchiveBanner(title: String, text: String, onUnarchive: (() -> Unit)?) {
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         shape = MaterialTheme.shapes.medium,
@@ -1157,20 +1189,10 @@ private fun ArchivedBanner(
             Icon(OrgwhalIcons.Archive, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    // Its time as the dates are shown ("today 17:00", "Sat 7 Nov.")
-                    origin.time?.let { displayTime(LocalContext.current.resources, "[$it]") }
-                        ?.let { stringResource(R.string.archived_on, it) } ?: stringResource(R.string.archived),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-                Text(
-                    stringResource(if (target != null) R.string.archived_from else R.string.archived_from_gone, from),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
+                Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
-            if (target != null) TextButton(onClick = onUnarchive) { Text(stringResource(R.string.unarchive)) }
+            if (onUnarchive != null) TextButton(onClick = onUnarchive) { Text(stringResource(R.string.unarchive)) }
         }
     }
 }

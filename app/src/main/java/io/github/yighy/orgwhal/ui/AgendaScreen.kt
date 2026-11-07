@@ -82,7 +82,8 @@ fun AgendaScreen(
     val tag = viewModel.agendaTag
     val skipTemplates = viewModel.settings.collectAsState().value.templatesHidden != TemplatesHidden.Nowhere
     val agenda = remember(library, today, notebook, tag, skipTemplates) {
-        val notes = library.notes.filter { n ->
+        // Archived trees (:ARCHIVE:) left out, as Org's agenda does
+        val notes = library.active.filter { n ->
             (notebook == null || n.fileUri == notebook) && (tag == null || n.tags.any { it.equals(tag, ignoreCase = true) }) &&
                 !(skipTemplates && Templates.isTemplate(n))
         }
@@ -91,7 +92,7 @@ fun AgendaScreen(
     // Tags that give something: those of the notes with dates the agenda shows (in the notebook
     // chosen; templates left out as set), and the one chosen
     val tags = remember(library, notebook, skipTemplates, tag) {
-        val shown = library.notes.filter { n -> (notebook == null || n.fileUri == notebook) && !(skipTemplates && Templates.isTemplate(n)) }
+        val shown = library.active.filter { n -> (notebook == null || n.fileUri == notebook) && !(skipTemplates && Templates.isTemplate(n)) }
         (Agenda.tags(shown) + listOfNotNull(tag)).distinctBy { it.lowercase() }.sortedBy { it.lowercase() }
     }
     val todayCount = agenda.overdue.size + agenda.days.first().entries.size

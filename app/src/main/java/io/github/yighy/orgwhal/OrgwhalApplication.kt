@@ -54,7 +54,7 @@ class OrgwhalApplication : Application() {
         // Reschedule the next alarm whenever the notes or the reminder settings change
         scope.launch {
             combine(repository.library.filter { it.loaded }, settings.values) { library, values ->
-                Triple(library.notes, values.reminderOptions, values.useAlarmClock)
+                Triple(library.active, values.reminderOptions, values.useAlarmClock)
             }
                 .distinctUntilChanged()
                 .debounce(500)

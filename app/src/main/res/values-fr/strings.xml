@@ -535,7 +535,7 @@
         <item quantity="one">%1$d pomodoro</item>
         <item quantity="other">%1$d pomodoros</item>
     </plurals>
-    <string name="search_archives">Inclure les archives</string>
+    <string name="search_archives_count">Inclure les archives (%1$d)</string>
     <string name="msg_note_archived">Note archivée, dans %1$s</string>
     <string name="archived">Archivée</string>
     <string name="archived_on">Archivée %1$s</string>
@@ -543,4 +543,8 @@
     <string name="archived_from_gone">Depuis %1$s, un carnet qui n’existe plus</string>
     <string name="unarchive">Désarchiver</string>
     <string name="msg_unarchived">Remise dans %1$s</string>
+    <string name="archived_tag">Archivée avec l’étiquette ARCHIVE</string>
+    <string name="archived_tag_parent">Archivée avec %1$s (étiquette ARCHIVE)</string>
+    <string name="archived_tag_text">Gardée dans son carnet, hors de l’agenda et de la recherche</string>
+    <string name="msg_note_archived_tag">Note archivée (étiquette ARCHIVE)</string>
 </resources>

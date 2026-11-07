@@ -62,6 +62,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -106,6 +107,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
@@ -244,7 +246,10 @@ fun NotebookScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).onGloballyPositioned { listBounds = it.boundsInRoot() }) {
             if (viewModel.searchActive) {
-                SearchResults(viewModel, library, file.notes, notebook = false)
+                // Its archived notes (:ARCHIVE: trees, its archive file) when asked
+                val active = remember(library, file) { file.notes.filterNot(library::inTaggedTree) }
+                val archived = remember(library, file) { library.archivedNotesOf(file) }
+                SearchResults(viewModel, library, active, notebook = false, archived = archived)
             } else {
                 NotebookOutline(
                     viewModel = viewModel,
@@ -471,6 +476,7 @@ private fun NotebookOutline(
                         ancestorLevels = ancestorLevels[note.index],
                         hasChildren = NoteTree.hasChildren(file.notes, note.index),
                         folded = viewModel.isFolded(note),
+                        archived = library.inTaggedTree(note),
                         showContent = showContent,
                         spacing = spacing,
                         indentation = indentation,
@@ -539,13 +545,15 @@ private fun NotebookOutline(
  * One note in the notebook outline: fold chevron (or bullet), then the note.
  * Swipe left for new-note actions and delete, swipe right to toggle TODO / DONE, long press to select.
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 private fun OutlineRow(
     note: OrgNote,
     ancestorLevels: List<Int>,
     hasChildren: Boolean,
     folded: Boolean,
+    /** In a tree archived with the ARCHIVE tag: faded, as Org greys it. */
+    archived: Boolean,
     showContent: Boolean,
     spacing: Dp,
     indentation: Indentation,
@@ -598,6 +606,7 @@ private fun OutlineRow(
             Modifier
                 .fillMaxWidth()
                 .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                .alpha(if (archived) ARCHIVED_ALPHA else 1f)
                 .drawBehind {
                     // Vertical guides: one per expanded ancestor, and one under this note's
                     // chevron when it is expanded, so they join into lines along the subtree
@@ -635,13 +644,20 @@ private fun OutlineRow(
                 }
             }
             Column(Modifier.weight(1f).padding(vertical = spacing)) {
+                // While they move, title and content are drawn above the screens, out of the
+                // row's fading: an archived note's fade with them
+                val fadeMoving = if (archived && shared && LocalSharedTransitionScope.current?.isTransitionActive == true) {
+                    Modifier.alpha(ARCHIVED_ALPHA)
+                } else {
+                    Modifier
+                }
                 // Title and content move into the note screen when the note opens
                 NoteLine(
                     note,
                     subtitle = null,
                     onClick = null,
                     onOpenLink = onOpenLink,
-                    titleModifier = if (shared) Modifier.sharedText(noteTitleKey(note), within = area) else Modifier,
+                    titleModifier = if (shared) Modifier.sharedText(noteTitleKey(note), within = area).then(fadeMoving) else Modifier,
                 )
                 val hasContent = remember(note.content) { !Blocks.showsNothing(note.content) }
                 if (showContent && hasContent) {
@@ -650,7 +666,7 @@ private fun OutlineRow(
                         note.content.trimIndent(),
                         contentStyle(MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)),
                         onOpenLink,
-                        Modifier.padding(top = 4.dp).then(if (shared) Modifier.sharedText(noteContentKey(note), within = area) else Modifier),
+                        Modifier.padding(top = 4.dp).then(if (shared) Modifier.sharedText(noteContentKey(note), within = area).then(fadeMoving) else Modifier),
                         onToggleCheckbox = onToggleCheckbox,
                         tableNamed = tables,
                         liveFormulas = liveFormulas,
@@ -905,3 +921,6 @@ private fun iconWidth(level: Int, indentation: Indentation) = step(depth(level),
 
 /** Horizontal position of the guide line under the chevron of a note at [level]. */
 private fun guideX(level: Int, indentation: Indentation) = indent(level, indentation) + step(depth(level), indentation)
+
+/** How a note archived with the ARCHIVE tag shows in the outline. */
+private const val ARCHIVED_ALPHA = 0.5f

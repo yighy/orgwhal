@@ -53,6 +53,26 @@ object Archive {
         return Outline.insert(doc, doc.sections.size, 1, entries).text
     }
 
+    /**
+     * Org's archive tag (org-archive-tag): a note with it stays in its notebook, archived with its
+     * sub-notes; kept out of the agenda and the search, folded when the notebook opens.
+     */
+    const val TAG = "ARCHIVE"
+
+    /** Whether each of [notes] (a notebook's, in order) is in a tree archived with [TAG]: its own or a parent's. */
+    fun taggedTrees(notes: List<OrgNote>): BooleanArray {
+        val result = BooleanArray(notes.size)
+        // The levels of the archived notes above, the nearest last
+        val open = ArrayDeque<Int>()
+        notes.forEachIndexed { i, note ->
+            while (open.isNotEmpty() && open.last() >= note.level) open.removeLast()
+            val tagged = TAG in note.tags
+            result[i] = tagged || open.isNotEmpty()
+            if (tagged) open.addLast(note.level)
+        }
+        return result
+    }
+
     /** The properties archiving adds, taken away when the note is put back. */
     val PROPERTIES = setOf("ARCHIVE_TIME", "ARCHIVE_FILE", "ARCHIVE_OLPATH", "ARCHIVE_CATEGORY", "ARCHIVE_TODO", "ARCHIVE_ITAGS")
 

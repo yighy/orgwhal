@@ -44,6 +44,16 @@ class UnarchiveTest {
     }
 
     @Test
+    fun treesArchivedWithTheTag() {
+        val doc = OrgDocument.parse("* A\n* B :ARCHIVE:\n** B1\n*** B1a\n** B2\n* C\n** C1 :ARCHIVE:\n* D\n")
+        val notes = OrgNote.fromDocument(doc, "u", "f.org")
+        // A tagged note and all under it, nothing beside
+        assertEquals(listOf(false, true, true, true, true, false, true, false), Archive.taggedTrees(notes).toList())
+        // Those with sub-notes open folded, whatever the file says
+        assertEquals(setOf(1), Folding.initial("#+STARTUP: showall\n", notes))
+    }
+
+    @Test
     fun findsTheNotebook() {
         val paths = listOf("gtd.org", "notes/work.org", "inbox.org")
         assertEquals(0, Archive.notebook("gtd.org", paths))
