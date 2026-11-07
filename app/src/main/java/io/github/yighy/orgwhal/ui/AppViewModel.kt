@@ -498,8 +498,25 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openNote(note: OrgNote) {
         val screen = Screen.Note(note.fileUri, note.index)
-        if (stack.lastOrNull() == Screen.Notebook(note.fileUri)) noteFromOutline = screen
+        if (stack.lastOrNull() == Screen.Notebook(note.fileUri) && noteFromOutline != screen) {
+            // Its row takes its shared elements first, and is laid out with them (see
+            // openOutlineNote), else the screen only fades in, their place where it starts unknown
+            noteFromOutline = screen
+            outlineNote = screen
+            return
+        }
         push(screen)
+    }
+
+    /** A note opened from its notebook's outline, waiting for its row to be ready to grow into it. */
+    var outlineNote by mutableStateOf<Screen.Note?>(null)
+        private set
+
+    /** Opens the [outlineNote], once its row has been laid out with its shared elements. */
+    fun openOutlineNote() {
+        val screen = outlineNote ?: return
+        outlineNote = null
+        if (stack.lastOrNull() == Screen.Notebook(screen.fileUri)) push(screen)
     }
 
     fun openTree(fileUri: String) = push(Screen.Tree(fileUri))

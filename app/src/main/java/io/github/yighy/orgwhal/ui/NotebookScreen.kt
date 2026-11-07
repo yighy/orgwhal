@@ -39,7 +39,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.foundation.gestures.animateScrollBy
 import io.github.yighy.orgwhal.R
 import androidx.compose.ui.res.stringResource
@@ -47,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import android.provider.Settings
 import io.github.yighy.orgwhal.core.Checkboxes
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.foundation.interaction.DragInteraction
 import kotlinx.coroutines.delay
 import io.github.yighy.orgwhal.core.Notebooks

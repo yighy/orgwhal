@@ -25,7 +25,7 @@ Orgwhal reads and writes the =.org= files of a folder on the phone (synced with 
 - *Swipe right*: to do ↔ done.
 - The chevrons fold the sub-notes; *Collapse all / Expand all* at the top of the notebook. Folds stay as you leave them, also after the app is closed.
 - The first time a notebook is shown, it folds as Emacs would show it: after a =#+STARTUP: overview= (or =show2levels=…) line at its top, and each note's =VISIBILITY= property (=folded=, =children=, =content=, =all=).
-- A deletion can be undone with the *Undo* button of the message.
+- A deletion can be undone with the *Undo* button of the message. Swipe a message aside to dismiss it.
 
 *** A sub-note
 Fold and unfold "Notes and sub-notes" to see it go.
@@ -315,7 +315,7 @@ In a notebook, *⋮ → Tree view* draws its notes as boxes from left to right.
 
 The archive file is not a notebook: archived notes leave the lists, the agenda and the search, and the notebook stays light. The message offers to undo it. They can still be found:
 - A link to an archived note (=id:= or =[[*Title]]=) opens it, as Emacs does, saying it is archived.
-- In the search, *Include archives* looks in the archive files too, their name under each note found.
+- In the search, *Include archives* looks in the archive files too, their name under each note found. It shows when archived notes match, with how many.
 - An archived note shows when and where from it was archived; *Unarchive* puts it back there, under the same parent notes (or the nearest still there), without the =ARCHIVE_= properties.
 
 A note can also be archived where it is, as Org's =C-c C-x a= does: give it the tag =ARCHIVE=. It stays in its notebook, folded and faded, with its sub-notes; they leave the agenda, the reminders, the notes to do and the search (*Include archives*, offered when some match, brings them back). Its screen says so, and *Unarchive* takes the tag away.

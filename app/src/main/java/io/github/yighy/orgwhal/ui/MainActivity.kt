@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import io.github.yighy.orgwhal.data.NoteRepository
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : ComponentActivity() {
@@ -227,6 +228,16 @@ fun OrgwhalApp(viewModel: AppViewModel, notificationsAllowed: Boolean, onAllowNo
     // of a drag (and lost), and the default spring takes about a second to settle
     fun moveDrawer(to: DrawerValue) {
         scope.launch { drawer.animateTo(to, tween(DRAWER_MS, easing = FastOutSlowInEasing)) }
+    }
+
+    // A note opened from its notebook's outline: two frames for its row to take its shared
+    // elements and be laid out with them, then its screen, which it grows into
+    val outlineNote = viewModel.outlineNote
+    LaunchedEffect(outlineNote) {
+        if (outlineNote == null) return@LaunchedEffect
+        withFrameNanos { }
+        withFrameNanos { }
+        viewModel.openOutlineNote()
     }
 
     LaunchedEffect(Unit) {
