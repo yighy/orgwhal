@@ -535,4 +535,6 @@
         <item quantity="one">%1$d pomodoro</item>
         <item quantity="other">%1$d pomodoros</item>
     </plurals>
+    <string name="search_archives">Inclure les archives</string>
+    <string name="msg_note_archived">Note archivée, dans %1$s</string>
 </resources>

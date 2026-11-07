@@ -313,7 +313,9 @@ In a notebook, *⋮ → Tree view* draws its notes as boxes from left to right.
 * Archiving
 *⋮ → Archive* on a note (or on a selection) moves it with its sub-notes to the end of the notebook's archive file, next to it: =orgwhal-guide.org_archive= for this one. As in Emacs (=C-c C-x C-s=), it gets properties saying when and where from (=ARCHIVE_TIME=, =ARCHIVE_FILE=, =ARCHIVE_OLPATH=…).
 
-The archive file is not a notebook: archived notes leave the lists, the agenda and the search, and the notebook stays light. Open the file in Emacs to read them again. The message offers to undo it.
+The archive file is not a notebook: archived notes leave the lists, the agenda and the search, and the notebook stays light. The message offers to undo it. They can still be found:
+- A link to an archived note (=id:= or =[[*Title]]=) opens it, as Emacs does, saying it is archived.
+- In the search, *Include archives* looks in the archive files too, their name under each note found.
 
 ** DONE Archive me
 Try it: open this note, then *⋮ → Archive*.

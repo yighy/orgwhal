@@ -532,11 +532,14 @@ fun NoteScreen(
                                 leadingIcon = { Icon(OrgwhalIcons.ToNotebook, null) },
                                 onClick = { moreMenu = false; refiling = true },
                             )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.archive)) },
-                                leadingIcon = { Icon(OrgwhalIcons.Archive, null) },
-                                onClick = { moreMenu = false; commit(); viewModel.archiveNote(note) },
-                            )
+                            // An archived note is not archived again
+                            if (file?.isArchive != true) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.archive)) },
+                                    leadingIcon = { Icon(OrgwhalIcons.Archive, null) },
+                                    onClick = { moreMenu = false; commit(); viewModel.archiveNote(note) },
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.share)) },
                                 leadingIcon = { Icon(Icons.Default.Share, null) },

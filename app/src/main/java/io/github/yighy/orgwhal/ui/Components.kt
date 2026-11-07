@@ -147,6 +147,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -565,8 +566,11 @@ fun SearchResults(
     notes: List<OrgNote>,
     modifier: Modifier = Modifier,
     notebook: Boolean = true,
+    archived: List<OrgNote> = emptyList(),
 ) {
     val idle = viewModel.query.isBlank() && viewModel.tag == null
+    // The archived notes too, when asked (off by default, as in Org)
+    val searched = if (viewModel.searchArchives && archived.isNotEmpty()) notes + archived else notes
     // Orgzly-style query; the selected tag chip adds a t. condition
     val queryText = listOfNotNull(viewModel.query, viewModel.tag?.let { "t.\"$it\"" }).joinToString(" ")
     val context = remember(library) { searchContext(library) }
@@ -574,8 +578,8 @@ fun SearchResults(
     // Template notes left out as set, unless looked for by their tag
     val hidden = viewModel.settings.collectAsState().value.templatesHidden
     val skipTemplates = hidden == TemplatesHidden.AgendaAndSearch && !queryText.contains(Templates.TAG, ignoreCase = true)
-    val results = remember(query, notes, context, skipTemplates) {
-        if (idle) emptyList() else query.apply(if (skipTemplates) notes.filterNot(Templates::isTemplate) else notes, context)
+    val results = remember(query, searched, context, skipTemplates) {
+        if (idle) emptyList() else query.apply(if (skipTemplates) searched.filterNot(Templates::isTemplate) else searched, context)
     }
     // ad.N: the matching notes as an agenda of N days
     val today = LocalDate.now()
@@ -585,6 +589,17 @@ fun SearchResults(
     val listState = rememberLazyListState()
     Box(modifier) {
         LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 112.dp)) {
+            if (archived.isNotEmpty() && !idle) {
+                item(key = "archives") {
+                    FilterChip(
+                        selected = viewModel.searchArchives,
+                        onClick = { viewModel.searchArchives = !viewModel.searchArchives },
+                        label = { Text(stringResource(R.string.search_archives)) },
+                        leadingIcon = { Icon(OrgwhalIcons.Archive, null, Modifier.size(18.dp)) },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            }
             if (agenda != null) {
                 agendaItems(viewModel, library, agenda, today)
                 return@LazyColumn
@@ -1314,7 +1329,7 @@ private fun searchHint(hint: SearchCompletion.Hint): Int = when (hint) {
 
 /** Notebook names, keywords and inherited tags that search queries need. */
 fun searchContext(library: NoteRepository.Library): SearchQuery.Context {
-    val inherited = library.files.associate { it.uri to NoteTree.inheritedTags(it.notes) }
+    val inherited = library.all.associate { it.uri to NoteTree.inheritedTags(it.notes) }
     return SearchQuery.Context(
         now = LocalDateTime.now(),
         keywords = { note -> library.file(note.fileUri)?.doc?.keywords ?: io.github.yighy.orgwhal.core.Keywords.DEFAULT },

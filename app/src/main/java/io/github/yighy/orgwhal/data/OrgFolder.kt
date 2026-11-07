@@ -15,7 +15,10 @@ class OrgFolder(private val resolver: ContentResolver, val treeUri: Uri) {
 
     data class FileRef(val uri: Uri, val name: String, val path: String, val lastModified: Long)
 
-    /** All .org files in the folder and its subfolders, skipping hidden ones (.git, .stfolder…). */
+    /**
+     * All .org files in the folder and its subfolders, and their archives (.org_archive), skipping
+     * hidden ones (.git, .stfolder…).
+     */
     fun listOrgFiles(): List<FileRef> {
         val result = mutableListOf<FileRef>()
         collect(DocumentsContract.getTreeDocumentId(treeUri), "", result)
@@ -38,7 +41,7 @@ class OrgFolder(private val resolver: ContentResolver, val treeUri: Uri) {
                 val path = prefix + name
                 if (c.getString(2) == Document.MIME_TYPE_DIR) {
                     collect(id, "$path/", out)
-                } else if (name.endsWith(".org", ignoreCase = true)) {
+                } else if (name.endsWith(".org", ignoreCase = true) || name.endsWith(".org_archive", ignoreCase = true)) {
                     out += FileRef(DocumentsContract.buildDocumentUriUsingTree(treeUri, id), name, path, c.getLong(3))
                 }
             }

@@ -116,10 +116,12 @@ fun SelectionTopBar(viewModel: AppViewModel, library: NoteRepository.Library, fi
                                     text = { Text(stringResource(R.string.select_all)) },
                                     onClick = { moreMenu = false; viewModel.selectAll(file.notes) },
                                 )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.archive)) },
-                                    onClick = { moreMenu = false; viewModel.archiveSelection() },
-                                )
+                                if (!file.isArchive) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.archive)) },
+                                        onClick = { moreMenu = false; viewModel.archiveSelection() },
+                                    )
+                                }
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.delete)) },
                                     leadingIcon = { Icon(Icons.Default.Delete, null) },

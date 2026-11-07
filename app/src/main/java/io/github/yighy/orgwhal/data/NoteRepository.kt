@@ -40,21 +40,31 @@ class NoteRepository(context: Context) {
         val title: String by lazy { Notebooks.title(doc, ref.name) }
         val preface: String by lazy { Notebooks.prefaceText(doc) }
         val openTasks: Int by lazy { notes.count { it.state != null && !it.isDone } }
+        /** An archive file (gtd.org_archive): its notes are kept out of the notebooks, agenda and reminders. */
+        val isArchive: Boolean get() = ref.name.endsWith("_archive", ignoreCase = true)
     }
 
     data class Library(
         val folderUri: Uri? = null,
-        val files: List<LoadedFile> = emptyList(),
+        /** Every file read: the notebooks and their archives. */
+        val all: List<LoadedFile> = emptyList(),
         val loading: Boolean = false,
         val error: String? = null,
         /** True once the folder has been read at least once. */
         val loaded: Boolean = false,
     ) {
+        /** The notebooks, archives left out. */
+        val files: List<LoadedFile> by lazy { all.filterNot { it.isArchive } }
+        val archives: List<LoadedFile> by lazy { all.filter { it.isArchive } }
         val notes: List<OrgNote> by lazy { files.flatMap { it.notes } }
+        val archivedNotes: List<OrgNote> by lazy { archives.flatMap { it.notes } }
         val tags: List<String> by lazy { notes.flatMap { it.tags }.distinctBy { it.lowercase() }.sortedBy { it.lowercase() } }
 
-        fun noteById(id: String): OrgNote? = notes.firstOrNull { it.id == id }
-        fun file(fileUri: String): LoadedFile? = files.firstOrNull { it.uri == fileUri }
+        /** The note with [id], archived ones last. */
+        fun noteById(id: String): OrgNote? = notes.firstOrNull { it.id == id } ?: archivedNotes.firstOrNull { it.id == id }
+        /** A notebook or an archive file. */
+        fun file(fileUri: String): LoadedFile? = all.firstOrNull { it.uri == fileUri }
+        fun isArchived(note: OrgNote): Boolean = file(note.fileUri)?.isArchive == true
         fun note(fileUri: String, index: Int): OrgNote? = file(fileUri)?.notes?.getOrNull(index)
     }
 
@@ -74,7 +84,7 @@ class NoteRepository(context: Context) {
     suspend fun setDefaultKeywords(keywords: Keywords) {
         if (keywords == defaultKeywords) return
         defaultKeywords = keywords
-        _library.update { it.copy(files = emptyList()) }
+        _library.update { it.copy(all = emptyList()) }
         refresh()
     }
 
@@ -99,11 +109,11 @@ class NoteRepository(context: Context) {
         if (quiet) {
             if (!writeLock.tryLock()) return@withContext
             try {
-                val cached = _library.value.files.associateBy { it.ref.uri }
+                val cached = _library.value.all.associateBy { it.ref.uri }
                 val refs = folder.listOrgFiles()
                 if (refs.size == cached.size && refs.all { cached[it.uri]?.ref?.lastModified == it.lastModified }) return@withContext
                 val files = refs.map { ref -> cached[ref.uri]?.takeIf { it.ref.lastModified == ref.lastModified } ?: load(folder, ref) }
-                _library.update { it.copy(files = files, loaded = true) }
+                _library.update { it.copy(all = files, loaded = true) }
             } catch (_: Exception) {
                 // Next check, or the next visible refresh, will tell
             } finally {
@@ -113,11 +123,11 @@ class NoteRepository(context: Context) {
         }
         _library.update { it.copy(loading = true, error = null) }
         try {
-            val cached = _library.value.files.associateBy { it.ref.uri }
+            val cached = _library.value.all.associateBy { it.ref.uri }
             val files = folder.listOrgFiles().map { ref ->
                 cached[ref.uri]?.takeIf { it.ref.lastModified == ref.lastModified } ?: load(folder, ref)
             }
-            _library.update { it.copy(files = files, loading = false, loaded = true) }
+            _library.update { it.copy(all = files, loading = false, loaded = true) }
         } catch (e: Exception) {
             _library.update { it.copy(loading = false, error = e.message ?: e.toString()) }
         }
@@ -142,7 +152,9 @@ class NoteRepository(context: Context) {
         writeLock.withLock {
             val folder = folder() ?: error("No folder")
             val uri = Uri.parse(notes.first().fileUri)
-            val ref = _library.value.files.first { it.ref.uri == uri }.ref
+            val ref = _library.value.all.first { it.ref.uri == uri }.ref
+            // Archives are not archived again (gtd.org_archive_archive)
+            check(!ref.name.endsWith("_archive", ignoreCase = true)) { "Already archived" }
             val doc = OrgDocument.parse(folder.read(uri), defaultKeywords)
             val indices = notes.map { locate(folder, uri, doc, it) }
             val roots = Outline.roots(doc, indices)
@@ -156,6 +168,8 @@ class NoteRepository(context: Context) {
             folder.write(archive, after)
             folder.write(uri, Outline.delete(doc, indices).toFileText())
             reloadFile(folder, uri)
+            // The archive as now written, where links can still find the notes
+            putFile(folder, OrgFolder.FileRef(archive, ref.name + "_archive", path, folder.lastModified(archive)))
             Archived(uri.toString(), removed, archive, before, after)
         }
     }
@@ -168,7 +182,13 @@ class NoteRepository(context: Context) {
             val doc = OrgDocument.parse(folder.read(uri), defaultKeywords)
             folder.write(uri, Outline.restore(doc, archived.removed).toFileText())
             if (runCatching { folder.read(archived.archive) }.getOrNull() == archived.after) {
-                if (archived.before == null) folder.delete(archived.archive) else folder.write(archived.archive, archived.before)
+                if (archived.before == null) {
+                    folder.delete(archived.archive)
+                    _library.update { lib -> lib.copy(all = lib.all.filterNot { it.ref.uri == archived.archive }) }
+                } else {
+                    folder.write(archived.archive, archived.before)
+                    reloadFile(folder, archived.archive)
+                }
             }
             reloadFile(folder, uri)
         }
@@ -197,7 +217,7 @@ class NoteRepository(context: Context) {
             val folder = folder() ?: error("No folder")
             fileUris.forEach { uri ->
                 folder.delete(Uri.parse(uri))
-                _library.update { lib -> lib.copy(files = lib.files.filterNot { it.uri == uri }) }
+                _library.update { lib -> lib.copy(all = lib.all.filterNot { it.uri == uri }) }
             }
         }
     }
@@ -215,7 +235,7 @@ class NoteRepository(context: Context) {
                 if (preface != doc.preface) folder.write(uri, doc.rebuild(preface + doc.text.substring(doc.preface.length)).toFileText())
             }
             val fileName = title.trim().replace('/', '-').let { if (it.endsWith(".org", ignoreCase = true)) it else "$it.org" }
-            val current = _library.value.files.firstOrNull { it.uri == fileUri }?.ref?.name
+            val current = _library.value.all.firstOrNull { it.uri == fileUri }?.ref?.name
             if (fileName != current) folder.rename(uri, fileName) else uri
         }
         refresh()
@@ -398,10 +418,19 @@ class NoteRepository(context: Context) {
         }
     }
 
+    /** Reads the file [ref] again, or for the first time, into the library. */
+    private fun putFile(folder: OrgFolder, ref: OrgFolder.FileRef) {
+        val loaded = load(folder, ref)
+        _library.update { lib ->
+            val known = lib.all.any { it.ref.uri == ref.uri }
+            lib.copy(all = if (known) lib.all.map { if (it.ref.uri == ref.uri) loaded else it } else lib.all + loaded)
+        }
+    }
+
     private fun reloadFile(folder: OrgFolder, uri: Uri): LoadedFile {
-        val current = _library.value.files.first { it.ref.uri == uri }
+        val current = _library.value.all.first { it.ref.uri == uri }
         val loaded = load(folder, current.ref.copy(lastModified = folder.lastModified(uri)))
-        _library.update { lib -> lib.copy(files = lib.files.map { if (it.ref.uri == uri) loaded else it }) }
+        _library.update { lib -> lib.copy(all = lib.all.map { if (it.ref.uri == uri) loaded else it }) }
         return loaded
     }
 

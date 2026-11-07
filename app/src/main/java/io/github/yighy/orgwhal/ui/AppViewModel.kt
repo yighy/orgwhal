@@ -112,6 +112,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var query by mutableStateOf("")
     var tag by mutableStateOf<String?>(null)
+    /** Whether the search looks in archive files too (as Org's agenda archives mode). */
+    var searchArchives by mutableStateOf(false)
 
     /** Opens the search (of the current screen) with [query], e.g. "it.todo". */
     fun searchFor(query: String) {
@@ -563,10 +565,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             else -> null
         }
         val notes = library.value.notes.sortedBy { it.fileUri != current }
-        val note = InternalLinks.find(notes, target)
+        // Archived notes after all others, before one is offered to be made
+        val note = InternalLinks.find(notes, target) ?: InternalLinks.find(library.value.archivedNotes, target)
         val title = InternalLinks.titleFor(target)
         when {
-            note != null -> openNote(note)
+            note != null -> openFound(note)
             // As Emacs does: a note can be made for it, in the notebook of the link
             title != null && current != null -> missingLink = MissingLink(target, title, current)
             else -> message(R.string.msg_link_not_found, target)
@@ -605,9 +608,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Opens the note a link leads to, saying when it is in an archive file. */
+    private fun openFound(note: OrgNote) {
+        openNote(note)
+        library.value.file(note.fileUri)?.takeIf { it.isArchive }?.let { message(R.string.msg_note_archived, it.ref.name) }
+    }
+
     fun openById(id: String) {
         val note = library.value.noteById(id)
-        if (note != null) openNote(note) else message(R.string.msg_no_note_with_id, id)
+        if (note != null) openFound(note) else message(R.string.msg_no_note_with_id, id)
     }
 
     fun back(): Boolean {
