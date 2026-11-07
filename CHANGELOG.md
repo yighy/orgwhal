@@ -4,6 +4,18 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-11-07
+
+### Added
+- Archived notes can be found again: a link to one (`id:` or `[[*Title]]`) opens it, as Emacs
+  does, saying it is archived, and the search's *Include archives* looks in the archive files too
+- An archived note shows when and where from it was archived; *Unarchive* puts it back there,
+  under the same parent notes (or the nearest still there), without the `ARCHIVE_` properties
+
+### Changed
+- Messages at the bottom of the screen can be swiped away; those offering to undo stay 6 seconds
+  instead of 10
+
 ## [0.38.0] - 2026-11-07
 
 ### Added
@@ -619,7 +631,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.38.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.39.0...HEAD
+[0.39.0]: https://github.com/yighy/orgwhal/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/yighy/orgwhal/compare/v0.37.4...v0.38.0
 [0.37.4]: https://github.com/yighy/orgwhal/compare/v0.37.3...v0.37.4
 [0.37.3]: https://github.com/yighy/orgwhal/compare/v0.37.2...v0.37.3
