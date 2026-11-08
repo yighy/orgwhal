@@ -4,6 +4,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.39.1] - 2026-11-08
+
 ### Fixed
 - With *Add a modification date to changed notes* on, what is done from a notification (clocking
   in or out, *Done*, the next pomodoro) sets LAST_MODIFIED too, as from the note's screen; a clock
@@ -644,7 +646,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.39.0...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.39.1...HEAD
+[0.39.1]: https://github.com/yighy/orgwhal/compare/v0.39.0...v0.39.1
 [0.39.0]: https://github.com/yighy/orgwhal/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/yighy/orgwhal/compare/v0.37.4...v0.38.0
 [0.37.4]: https://github.com/yighy/orgwhal/compare/v0.37.3...v0.37.4
