@@ -670,12 +670,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** [edit] of [note] with LAST_MODIFIED set to now, when so set and it changes something. */
-    private fun stamped(note: OrgNote, edit: NoteEdit): NoteEdit {
-        if (!settings.value.addModified || edit == note.toEdit()) return edit
-        val now = SearchQuery.MODIFIED_PROPERTY to OrgTime.inactive(LocalDateTime.now())
-        val at = edit.properties.indexOfFirst { it.first.equals(SearchQuery.MODIFIED_PROPERTY, true) }
-        return edit.copy(properties = if (at < 0) edit.properties + now else edit.properties.toMutableList().also { it[at] = now })
-    }
+    private fun stamped(note: OrgNote, edit: NoteEdit): NoteEdit =
+        if (settings.value.addModified) note.stamped(edit, LocalDateTime.now()) else edit
 
     /** [edit] with its [/] and [%] cookies counting as they now should (as Org keeps them). */
     private fun withCookies(note: OrgNote, edit: NoteEdit): NoteEdit {

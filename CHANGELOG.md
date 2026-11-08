@@ -4,6 +4,11 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+### Fixed
+- With *Add a modification date to changed notes* on, what is done from a notification (clocking
+  in or out, *Done*, the next pomodoro) sets LAST_MODIFIED too, as from the note's screen; a clock
+  stopped by the end of a pomodoro does not, the app having stopped it
+
 ## [0.39.0] - 2026-11-07
 
 ### Added

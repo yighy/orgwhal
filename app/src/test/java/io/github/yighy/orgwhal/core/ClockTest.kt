@@ -43,4 +43,13 @@ class ClockTest {
         assertEquals(Duration.ofMinutes(20), Clock.duration(Clock.last(started)!!, ten.plusMinutes(20)))
         assertNull(Clock.last("No clocking"))
     }
+
+    @Test
+    fun clockingStampsTheModificationDate() {
+        val note = OrgNote.fromDocument(OrgDocument.parse("* TODO Task\n:PROPERTIES:\n:LAST_MODIFIED: [2026-10-01 Thu 08:00]\n:END:\n"), "u", "f.org").single()
+        val clocked = note.stamped(note.toEdit().copy(content = Clock.clockIn(note.content, ten)), ten)
+        assertEquals(listOf("LAST_MODIFIED" to "[2026-10-09 Fri 10:00]"), clocked.properties)
+        // Nothing changed, nothing stamped
+        assertEquals(note.toEdit(), note.stamped(note.toEdit(), ten))
+    }
 }

@@ -26,6 +26,14 @@ data class OrgNote(
 
     fun toEdit() = NoteEdit(title, state, tags, properties, content, priority, scheduled, deadline, closed)
 
+    /** [edit] of this note with LAST_MODIFIED set to [now], when it changes something. */
+    fun stamped(edit: NoteEdit, now: java.time.LocalDateTime): NoteEdit {
+        if (edit == toEdit()) return edit
+        val stamp = SearchQuery.MODIFIED_PROPERTY to OrgTime.inactive(now)
+        val at = edit.properties.indexOfFirst { it.first.equals(SearchQuery.MODIFIED_PROPERTY, true) }
+        return edit.copy(properties = if (at < 0) edit.properties + stamp else edit.properties.toMutableList().also { it[at] = stamp })
+    }
+
     companion object {
         fun fromDocument(doc: OrgDocument, fileUri: String, fileName: String): List<OrgNote> =
             doc.sections.mapIndexed { index, section ->

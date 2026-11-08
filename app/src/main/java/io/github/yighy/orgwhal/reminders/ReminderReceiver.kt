@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import io.github.yighy.orgwhal.OrgwhalApplication
 import io.github.yighy.orgwhal.core.Keywords
+import io.github.yighy.orgwhal.core.NoteEdit
 import io.github.yighy.orgwhal.core.NoteStates
 import io.github.yighy.orgwhal.core.NoteTree
 import io.github.yighy.orgwhal.core.OrgNote
@@ -53,7 +54,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 val keywords = library.file(uri)?.doc?.keywords ?: Keywords.DEFAULT
                 val target = keywords.done.firstOrNull() ?: return
                 val log = NoteStates.repeatLog(library.file(uri)?.doc?.preface.orEmpty())
-                runCatching { repository.saveNote(note, NoteStates.apply(note.toEdit(), target, keywords, log = log).edit) }
+                save(app, note, NoteStates.apply(note.toEdit(), target, keywords, log = log).edit)
             }
 
             // The reminder's Clock in button: the clock starts as from the note's screen, stopping another one
@@ -79,6 +80,7 @@ class ReminderReceiver : BroadcastReceiver() {
                         if (note == null || clock == null || !Pomodoro.runs(state, note, clock.start)) {
                             app.pomodoro.set(null, alarmClock)
                         } else {
+                            // The app stops it, not the user: no LAST_MODIFIED, as for a recalculated cookie
                             runCatching { repository.saveNote(note, note.toEdit().copy(content = Clock.clockOut(note.content, state.endsAt))) }
                             val pause = Pomodoro.breakAfter(state, app.settings.values.value.pomodoro)
                             app.pomodoro.set(pause, alarmClock)
@@ -130,7 +132,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 } else {
                     note.toEdit().copy(content = Clock.clockOut(note.content, LocalDateTime.now()))
                 }
-                runCatching { repository.saveNote(note, edit) }
+                save(app, note, edit)
             }
 
             // Shown again later: after the snooze set in the settings, or tomorrow at the same time
@@ -164,10 +166,19 @@ class ReminderReceiver : BroadcastReceiver() {
         val repository = app.repository
         repository.library.value.notes
             .filter { (it.fileUri != note.fileUri || it.index != note.index) && Clock.running(it.content) != null }
-            .forEach { other -> runCatching { repository.saveNote(other, other.toEdit().copy(content = Clock.clockOut(other.content, now))) } }
+            .forEach { other -> save(app, other, other.toEdit().copy(content = Clock.clockOut(other.content, now))) }
         // As written now, in case another note of its file was just saved
         val latest = repository.library.value.note(note.fileUri, note.index)?.takeIf { it.title == note.title } ?: note
-        runCatching { repository.saveNote(latest, latest.toEdit().copy(content = Clock.clockIn(latest.content, now))) }
+        save(app, latest, latest.toEdit().copy(content = Clock.clockIn(latest.content, now)))
+    }
+
+    /**
+     * Saves [edit] of [note], a change the user made from a notification: with LAST_MODIFIED set
+     * when so set, as from the note's screen.
+     */
+    private suspend fun save(app: OrgwhalApplication, note: OrgNote, edit: NoteEdit) {
+        val stamped = if (app.settings.values.value.addModified) note.stamped(edit, LocalDateTime.now()) else edit
+        runCatching { app.repository.saveNote(note, stamped) }
     }
 
     /** The pomodoro's note: at its place if it is still there, else the note of that title. */
