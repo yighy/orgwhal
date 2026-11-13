@@ -282,7 +282,9 @@ fun SearchableTopBar(
 
     if (searchActive) {
         val focus = remember { FocusRequester() }
-        LaunchedEffect(Unit) { focus.requestFocus() }
+        // The keyboard only for a search to type: one opened on a query (a saved search, the
+        // notes to do) shows its results, the field taking a tap to change it
+        LaunchedEffect(Unit) { if (query.isEmpty()) focus.requestFocus() }
         // The cursor is kept here, the text comes from [query]
         var field by remember { mutableStateOf(TextFieldValue(query, TextRange(query.length))) }
         if (field.text != query) field = TextFieldValue(query, TextRange(query.length))
