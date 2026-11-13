@@ -4,6 +4,12 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.39.2] - 2026-11-14
+
+### Fixed
+- A saved search, or the count of notes to do, opens its results without bringing up the
+  keyboard; a tap on the search field does. An empty search still opens with it, to type
+
 ## [0.39.1] - 2026-11-08
 
 ### Fixed
@@ -646,7 +652,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.39.1...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.39.2...HEAD
+[0.39.2]: https://github.com/yighy/orgwhal/compare/v0.39.1...v0.39.2
 [0.39.1]: https://github.com/yighy/orgwhal/compare/v0.39.0...v0.39.1
 [0.39.0]: https://github.com/yighy/orgwhal/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/yighy/orgwhal/compare/v0.37.4...v0.38.0
