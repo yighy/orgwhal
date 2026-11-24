@@ -10,7 +10,7 @@ there is no database, and the same files open in Emacs.
   <img src="docs/screenshots/notebook.png" alt="A notebook" width="200">
   <img src="docs/screenshots/note.png" alt="A note with its sub-notes, formatting, checkboxes, a table with formulas and blocks" width="200">
   <img src="docs/screenshots/edit.png" alt="Editing a note, with the toolbar over the keyboard" width="200">
-  <img src="docs/screenshots/agenda.png" alt="The agenda" width="200">
+  <img src="docs/screenshots/agenda.png" alt="The agenda, with a habit's consistency graph" width="200">
 </p>
 
 ## Getting started
