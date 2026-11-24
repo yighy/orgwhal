@@ -4,6 +4,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-11-24
+
 ### Changed
 - The search's words and the notes suggested after `id:` or `[[*` ignore accents as well as
   case: `seance` finds *Séance*, `créme` finds *Crème*
@@ -656,7 +658,8 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 - First prototype: notebooks from a folder of `.org` files, outline, note editing, search, tags,
   and `id:` links to other notes
 
-[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.39.2...HEAD
+[Unreleased]: https://github.com/yighy/orgwhal/compare/v0.40.0...HEAD
+[0.40.0]: https://github.com/yighy/orgwhal/compare/v0.39.2...v0.40.0
 [0.39.2]: https://github.com/yighy/orgwhal/compare/v0.39.1...v0.39.2
 [0.39.1]: https://github.com/yighy/orgwhal/compare/v0.39.0...v0.39.1
 [0.39.0]: https://github.com/yighy/orgwhal/compare/v0.38.0...v0.39.0
