@@ -109,7 +109,7 @@ An inactive timestamp just records a moment: [{{date:0}} 10:00]. The date button
 
 * Links
 ** Links to a note
-Type =id:= in the content, then a few letters of a title: Orgwhal suggests the notes, and the one chosen becomes a link. A parent's title (or the notebook's) also finds the notes under it, after the titles that match. The note linked to gets an ID if it had none.
+Type =id:= in the content, then a few letters of a title (case and accents aside): Orgwhal suggests the notes, and the one chosen becomes a link. A parent's title (or the notebook's) also finds the notes under it, after the titles that match. The note linked to gets an ID if it had none.
 
 Example: [[id:{{id}}][The target note]].
 
@@ -265,7 +265,7 @@ For reminders on time, see *Settings → Reliability*: notifications, exact alar
 
 * Search
 ** Searching
-The magnifier searches the notebook shown, or everywhere from the home screen. Type words, or Orgzly's syntax:
+The magnifier searches the notebook shown, or everywhere from the home screen. Type words (found in titles, content and tags, whatever the case and accents: =seance= finds /Séance/), or Orgzly's syntax:
 
 | Search          | Finds                                   |
 |-----------------+-----------------------------------------|

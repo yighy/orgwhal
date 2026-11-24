@@ -73,6 +73,15 @@ class IdLinksTest {
     }
 
     @Test
+    fun suggestionsIgnoreCaseAndAccents() {
+        fun note(title: String) = OrgNote("u", "f", 0, 1, null, false, null, title, emptyList(), null, null, null, emptyList(), "", "")
+        val notes = listOf(note("Séance de sport"), note("Crème brûlée"), note("Garage"))
+        assertEquals(listOf("Séance de sport"), IdLinks.suggestions(notes, "SEANCE").map { it.title })
+        assertEquals(listOf("Crème brûlée"), IdLinks.suggestions(notes, "creme brulee").map { it.title })
+        assertEquals(listOf("Garage"), IdLinks.suggestions(notes, "garàge").map { it.title })
+    }
+
+    @Test
     fun suggestionsFindSubNotesByTheirParents() {
         fun note(title: String, level: Int) = OrgNote("u", "f", 0, level, null, false, null, title, emptyList(), null, null, null, emptyList(), "", "")
         val notes = listOf(note("Meals", 1), note("Chicken rice", 2), note("Sauce", 3), note("Rice pudding", 1))

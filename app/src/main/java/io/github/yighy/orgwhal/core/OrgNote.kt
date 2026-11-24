@@ -21,6 +21,12 @@ data class OrgNote(
 ) {
     val id: String? get() = property("ID")
 
+    /** The title as searched: lowercase, without accents ([SearchQuery.fold]). */
+    val foldedTitle: String by lazy { SearchQuery.fold(title) }
+
+    /** Title, content and tags as the search's free text looks through them ([SearchQuery.fold]). */
+    val foldedText: String by lazy { SearchQuery.fold(listOf(title, content, tags.joinToString(" ")).joinToString("\n")) }
+
     fun property(name: String): String? =
         properties.firstOrNull { it.first.equals(name, ignoreCase = true) }?.second
 

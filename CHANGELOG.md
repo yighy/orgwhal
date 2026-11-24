@@ -4,6 +4,10 @@ All notable changes to Orgwhal (named Narwhal up to 0.16.0). Versions follow [Se
 
 ## [Unreleased]
 
+### Changed
+- The search's words and the notes suggested after `id:` or `[[*` ignore accents as well as
+  case: `seance` finds *Séance*, `créme` finds *Crème*
+
 ## [0.39.2] - 2026-11-14
 
 ### Fixed

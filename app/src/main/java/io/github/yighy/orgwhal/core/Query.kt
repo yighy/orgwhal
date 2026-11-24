@@ -69,10 +69,10 @@ class SearchQuery private constructor(
         override fun matches(note: OrgNote, ctx: Context) = operands.any { it.matches(note, ctx) }
     }
 
+    /** Free text, in the title, content or tags, whatever the case and accents ("seance" finds "Séance"). */
     private data class Text(val text: String) : Condition {
-        override fun matches(note: OrgNote, ctx: Context) =
-            note.title.contains(text, true) || note.content.contains(text, true) ||
-                note.tags.any { it.contains(text, true) }
+        private val folded = SearchQuery.fold(text)
+        override fun matches(note: OrgNote, ctx: Context) = folded in note.foldedText
     }
 
     private data class InNotebook(val name: String) : Condition {

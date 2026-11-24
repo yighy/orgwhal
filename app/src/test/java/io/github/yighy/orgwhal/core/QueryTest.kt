@@ -35,6 +35,15 @@ class QueryTest {
     private fun titles(query: String) = SearchQuery.parse(query).apply(notes, ctx).map { it.title }
 
     @Test
+    fun freeTextIgnoresCaseAndAccents() {
+        assertEquals(listOf("Shopping list"), titles("BRÉAD"))
+        assertEquals(listOf("Shopping list"), titles("fresh"))
+        assertEquals(listOf("Write report"), titles("rèport"))
+        // In tags too
+        assertEquals(listOf("Pay rent", "Shopping list"), titles("HÔME"))
+    }
+
+    @Test
     fun tableFields() {
         val doc = OrgDocument.parse(
             """

@@ -104,23 +104,24 @@ object IdLinks {
         limit: Int = 20,
         path: (OrgNote) -> List<String> = { emptyList() },
     ): List<OrgNote> {
-        val words = query.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        // Whatever the case and accents: "seance" finds "Séance"
+        val words = SearchQuery.fold(query).split(Regex("\\s+")).filter { it.isNotEmpty() }
         return notes
             .mapNotNull { note ->
                 if (note.title.isBlank()) return@mapNotNull null
-                val missing = words.filterNot { note.title.contains(it, ignoreCase = true) }
+                val missing = words.filterNot { it in note.foldedTitle }
                 if (missing.isEmpty()) return@mapNotNull note to 0
                 // How far up the path the words missing from the title are: the parent is 1
-                val titles = path(note)
+                val titles = path(note).map(SearchQuery::fold)
                 note to missing.maxOf { word ->
-                    val at = titles.indexOfLast { it.contains(word, ignoreCase = true) }
+                    val at = titles.indexOfLast { word in it }
                     if (at < 0) return@mapNotNull null
                     titles.size - at
                 }
             }
             .sortedWith(
                 compareBy<Pair<OrgNote, Int>> { it.second }
-                    .thenByDescending { words.isNotEmpty() && it.first.title.startsWith(words.first(), ignoreCase = true) }
+                    .thenByDescending { words.isNotEmpty() && it.first.foldedTitle.startsWith(words.first()) }
                     .thenBy { it.first.title.length }
             )
             .take(limit)
